@@ -5,11 +5,11 @@ use std::sync::mpsc::{self, Receiver};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-use godot::builtin::meta::{FromGodot, ToGodot};
-use godot::builtin::{Array, Dictionary, GString, Vector2i};
-use godot::engine::{AcceptDialog, INode, Node, TileMap, Timer};
-use godot::log::{godot_error, godot_warn};
-use godot::obj::{Base, Gd, NewAlloc, WithBaseField};
+use godot::builtin::{Array, GString, Vector2i};
+use godot::classes::{AcceptDialog, INode, Node, TileMap};
+use godot::global::godot_warn;
+use godot::meta::ToGodot;
+use godot::obj::{Base, Gd, WithBaseField};
 use godot::register::{godot_api, GodotClass};
 use grid_forge::{GridMap2D, GridPosition, GridSize, GridTile};
 use singular::Analyzer;
@@ -84,19 +84,17 @@ impl INode for TileGenerator {
                     // Runtime error occured - only passing the error message to Godot, generator will retry.
                     GenerationResult::RuntimeErr(mssg) => {
                         self.base_mut().emit_signal(
-                            "generation_runtime_error".into(),
+                            "generation_runtime_error",
                             &[GString::from(mssg).to_variant()],
                         );
                     }
 
                     // Fatal error occured, the generation will be stopped.
                     GenerationResult::Error(mssg) => {
-                        self.base_mut().emit_signal(
-                            "generation_error".into(),
-                            &[GString::from(mssg).to_variant()],
-                        );
                         self.base_mut()
-                            .emit_signal("generation_finished".into(), &[false.to_variant()]);
+                            .emit_signal("generation_error", &[GString::from(mssg).to_variant()]);
+                        self.base_mut()
+                            .emit_signal("generation_finished", &[false.to_variant()]);
                         if self.handle.is_some() {
                             let thread = self.handle.take();
                             thread.unwrap().join().unwrap();
@@ -115,7 +113,7 @@ impl INode for TileGenerator {
                         self.generation_time_us_total = duration_total.as_micros() as u32;
                         self.generation_time_us_success = duration_success.as_micros() as u32;
                         self.base_mut()
-                            .emit_signal("generation_finished".into(), &[true.to_variant()]);
+                            .emit_signal("generation_finished", &[true.to_variant()]);
                         if self.handle.is_some() {
                             let thread = self.handle.take();
                             thread.unwrap().join().unwrap();
@@ -336,7 +334,7 @@ impl TileGenerator {
     fn show_modal(&self, message: &str) {
         if let Some(modal) = &self.modal {
             let mut pntr = modal.clone();
-            pntr.set_text(message.into());
+            pntr.set_text(message);
             pntr.set_visible(true);
         } else {
             godot_warn!("Cannot find modal for TileGenerator. Message to show: {message}");

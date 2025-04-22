@@ -30,7 +30,7 @@ fn test_load_into_gridmap() {
 
     let roads_map = binding.load_vis_map_from_path(ROADS_MAP_PATH).unwrap();
     let mut roads_tilemap = TileMap::new_alloc();
-    roads_tilemap.set_tileset(tileset.clone());
+    roads_tilemap.set_tileset(&tileset);
     write_gridmap_to_tilemap(
         &roads_map,
         &mut roads_tilemap,
@@ -40,7 +40,7 @@ fn test_load_into_gridmap() {
 
     let seas_map = binding.load_vis_map_from_path(SEAS_MAP_PATH).unwrap();
     let mut seas_tilemap = TileMap::new_alloc();
-    seas_tilemap.set_tileset(tileset);
+    seas_tilemap.set_tileset(&tileset);
     write_gridmap_to_tilemap(
         &seas_map,
         &mut seas_tilemap,
@@ -82,7 +82,7 @@ fn test_from_grindmap_identical() {
 
     let roads_map = binding.load_vis_map_from_path(ROADS_MAP_PATH).unwrap();
     let mut roads_tilemap = TileMap::new_alloc();
-    roads_tilemap.set_tileset(tileset.clone());
+    roads_tilemap.set_tileset(&tileset);
     write_gridmap_to_tilemap(
         &roads_map,
         &mut roads_tilemap,
@@ -92,7 +92,7 @@ fn test_from_grindmap_identical() {
 
     let seas_map = binding.load_vis_map_from_path(SEAS_MAP_PATH).unwrap();
     let mut seas_tilemap = TileMap::new_alloc();
-    seas_tilemap.set_tileset(tileset);
+    seas_tilemap.set_tileset(&tileset);
     write_gridmap_to_tilemap(
         &seas_map,
         &mut seas_tilemap,

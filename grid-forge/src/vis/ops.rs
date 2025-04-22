@@ -18,9 +18,9 @@ use super::{PixelWithDefault, VisTile2D, VisTileData};
 /// # Arguments
 /// - `image_buffer` - an [`ImageBuffer`] containing the source image data.
 /// - `collection` - a [`VisCollection`] containing the loaded tile pixels. New tile pixels will be automatically
-/// inserted, calculating the `tile_type_id` on basis of tile pixels.
+///   inserted, calculating the `tile_type_id` on basis of tile pixels.
 /// - `builder` - a struct which can be used to construct new tiles on basis of their `tile_id`. One of [`IdentTileBuilder`]
-/// implementing objects.
+///   implementing objects.
 ///
 /// # Warning
 /// As the `tile_type_id` **is automatically calculated** with this function on basis of pixels, it won't work with specific,
@@ -63,7 +63,7 @@ where
 /// - `image_buffer` - an [`ImageBuffer`] containing the source image data.
 /// - `collection` - a [`VisCollection`] containing the tile pixels. It needs to be populated before usage.
 /// - `builder` - a struct which can be used to construct new tiles on basis of their `tile_id`. One of [`IdentTileBuilder`]
-/// implementing objects.
+///   implementing objects.
 pub fn load_gridmap_identifiable_manual<Data, P, B, const WIDTH: usize, const HEIGHT: usize>(
     image_buffer: &ImageBuffer<P, Vec<P::Subpixel>>,
     collection: &VisCollection<P, WIDTH, HEIGHT>,

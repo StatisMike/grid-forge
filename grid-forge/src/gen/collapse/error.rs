@@ -62,8 +62,8 @@ impl Display for CollapseError {
         match self.kind {
             CollapseErrorKind::Collapse => write!(
                 f,
-                "tile at position: {:?} have no options left while collapsing on iteration {}!",
-                self.pos, self.iter
+                "tile at position: {:?} have no options left while collapsing!",
+                self.pos
             ),
             CollapseErrorKind::Init => write!(
                 f,

@@ -2,6 +2,8 @@ use std::ops::{Index, IndexMut};
 
 use grid::Grid;
 
+pub mod dimensions;
+
 use crate::tile::{GridPosition, GridTile, GridTileRef, GridTileRefMut, TileContainer, TileData};
 
 #[repr(u8)]
