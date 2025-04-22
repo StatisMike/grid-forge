@@ -1,54 +1,61 @@
 use grid_forge::{
-  tile::identifiable::{builders::IdentTileTraitBuilder, BasicIdentTileData},
-  vis::{
-      collection::VisCollection,
-      ops::{
-          init_map_image_buffer, load_gridmap_identifiable_auto,
-          load_gridmap_identifiable_manual, write_gridmap_identifiable,
-      },
-      DefaultVisPixel,
-  },
+    tile::identifiable::{builders::IdentTileTraitBuilder, BasicIdentTileData},
+    vis::{
+        collection::VisCollection,
+        ops::{
+            init_map_image_buffer, load_gridmap_identifiable_auto,
+            load_gridmap_identifiable_manual, write_gridmap_identifiable,
+        },
+        DefaultVisPixel,
+    },
 };
 
 use criterion::*;
 
 fn load_gridmap_auto(c: &mut Criterion) {
-  let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
-  let image = image::open("../assets/samples/roads.png")
-      .unwrap()
-      .into_rgb8();
-  
-  c.bench_function("load_gridmap_auto", |b| b.iter(|| {
-    let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
-    load_gridmap_identifiable_auto(&image, &mut collection, &builder).unwrap();
-  }));}
+    let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
+    let image = image::open("../assets/samples/roads.png")
+        .unwrap()
+        .into_rgb8();
+
+    c.bench_function("load_gridmap_auto", |b| {
+        b.iter(|| {
+            let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
+            load_gridmap_identifiable_auto(&image, &mut collection, &builder).unwrap();
+        })
+    });
+}
 
 fn load_gridmap_manual(c: &mut Criterion) {
-  let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
-  let image = image::open("../assets/samples/roads.png")
-      .unwrap()
-      .into_rgb8();
+    let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
+    let image = image::open("../assets/samples/roads.png")
+        .unwrap()
+        .into_rgb8();
 
-  let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
-  load_gridmap_identifiable_auto(&image, &mut collection, &builder).unwrap();
+    let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
+    load_gridmap_identifiable_auto(&image, &mut collection, &builder).unwrap();
 
-  c.bench_function("load_gridmap_manual", |b| b.iter(|| {
-    load_gridmap_identifiable_manual(&image, &collection, &builder).unwrap();
-  }));
+    c.bench_function("load_gridmap_manual", |b| {
+        b.iter(|| {
+            load_gridmap_identifiable_manual(&image, &collection, &builder).unwrap();
+        })
+    });
 }
 
 fn write_grimap_ident(c: &mut Criterion) {
-  let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
-  let image = image::open("../assets/samples/roads.png")
-      .unwrap()
-      .into_rgb8();
-  let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
-  let gridmap = load_gridmap_identifiable_auto(&image, &mut collection, &builder).unwrap();
+    let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
+    let image = image::open("../assets/samples/roads.png")
+        .unwrap()
+        .into_rgb8();
+    let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
+    let gridmap = load_gridmap_identifiable_auto(&image, &mut collection, &builder).unwrap();
 
-  c.bench_function("write_grimap_ident", |b| b.iter(|| {
-    let mut buffer = init_map_image_buffer::<DefaultVisPixel, 4, 4>(gridmap.size());
-    write_gridmap_identifiable(&mut buffer, &gridmap, &collection).unwrap();
-  }));
+    c.bench_function("write_grimap_ident", |b| {
+        b.iter(|| {
+            let mut buffer = init_map_image_buffer::<DefaultVisPixel, 4, 4>(gridmap.size());
+            write_gridmap_identifiable(&mut buffer, &gridmap, &collection).unwrap();
+        })
+    });
 }
 
 criterion_group!(

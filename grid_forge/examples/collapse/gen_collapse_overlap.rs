@@ -1,10 +1,6 @@
 use std::fs::File;
 
-use grid_forge::{
-    gen::collapse::*,
-    map::GridSize,
-    vis::collection::VisCollection,
-};
+use grid_forge::{gen::collapse::*, map::GridSize, vis::collection::VisCollection};
 use overlap::{CollapsiblePatternGrid, DebugSubscriber};
 use rand_chacha::ChaChaRng;
 use utils::{ArgHelper, GifSingleSubscriber, RngHelper, VisGridLoaderHelper, VisRotate};
@@ -23,8 +19,10 @@ fn main() {
     let mut vis_collection = VisCollection::default();
 
     // Load two sample maps with 90 deegrees rotation to increase variety of rules.
-    let maps = VisGridLoaderHelper::new(&mut vis_collection)
-        .load_w_rotate(&[MAP_10X10, MAP_20X20], &[VisRotate::None]);
+    let maps = VisGridLoaderHelper::new(&mut vis_collection).load_w_rotate(
+        &[MAP_10X10, MAP_20X20],
+        &[VisRotate::None, VisRotate::R90, VisRotate::R180],
+    );
 
     // Create overlap analyzer.
     let mut analyzer = overlap::Analyzer::<overlap::OverlappingPattern2D<2, 2>, _>::default();
@@ -32,13 +30,20 @@ fn main() {
     // Analyze the loaded maps
     for map in maps {
         analyzer.analyze_map(&map);
-
     }
 
     let outputs_size = GridSize::new_xy(30, 30);
 
     // Resolver can be reused, as it is used for the same tile type.
     let mut resolver = overlap::Resolver::default();
+
+    // ----- Overlap with Entrophy Queue ----- //
+    //
+    // EntrophyQueue will keep higher success rate, but is slower than PositionQueue. As the Overlapping pattern
+    // rules are most often very restrictive, it is a good idea to use EntrophyQueue.
+    //
+    // For these examples I were not been able to generate a whole 30x30 grid using my samples with PositionQueue,
+    // though it is possible - the success rate vary depending on the pattern size and the samples.
 
     // Save the collapse process as a GIF.
     if args.gif() {
@@ -50,12 +55,12 @@ fn main() {
 
         resolver = resolver.with_subscriber(Box::new(subscriber));
     } else if args.debug() {
-        let subsciber = DebugSubscriber::new(Some(File::create(format!("{}{}", OUTPUTS_DIR, "overlap_debug.txt")).unwrap()));
+        let subsciber = DebugSubscriber::new(Some(
+            File::create(format!("{}{}", OUTPUTS_DIR, "overlap_entrophy_debug.txt")).unwrap(),
+        ));
         resolver = resolver.with_subscriber(Box::new(subsciber));
     }
 
-    // Using propagating EntrophyQueue we can keep hight success rate, but is a little
-    // slower than PositionQueue.
     let mut rng: ChaChaRng = RngHelper::init_str("overlap_entrophy", 1).into();
     let to_collapse = CollapsiblePatternGrid::new_empty(
         outputs_size,

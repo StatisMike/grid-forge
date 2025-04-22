@@ -1,4 +1,7 @@
-use std::{cmp::Ordering, ops::{Add, AddAssign, Sub}};
+use std::{
+    cmp::Ordering,
+    ops::{Add, AddAssign, Sub},
+};
 
 pub mod identifiable;
 

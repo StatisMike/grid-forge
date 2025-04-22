@@ -150,7 +150,11 @@ impl DebugSubscriber {
 impl Subscriber for DebugSubscriber {
     fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64, pattern_id: u64) {
         if let Some(file) = &mut self.file {
-            writeln!(file, "tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}").unwrap();
+            writeln!(
+                file,
+                "tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}"
+            )
+            .unwrap();
         } else {
             println!(
                 "tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}"

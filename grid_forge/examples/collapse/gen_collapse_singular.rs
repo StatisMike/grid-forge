@@ -1,3 +1,6 @@
+use std::fs::File;
+
+use grid_forge::r#gen::collapse::singular::DebugSubscriber;
 use grid_forge::{
     gen::collapse::{
         singular::{
@@ -26,8 +29,10 @@ fn main() {
     let mut vis_collection = VisCollection::default();
 
     // Load two sample maps with 90 deegrees rotation to increase variety of rules.
-    let maps = VisGridLoaderHelper::new(&mut vis_collection)
-        .load_w_rotate(&[MAP_10X10, MAP_20X20], &[VisRotate::None, VisRotate::R90]);
+    let maps = VisGridLoaderHelper::new(&mut vis_collection).load_w_rotate(
+        &[MAP_10X10, MAP_20X20],
+        &[VisRotate::None, VisRotate::R90, VisRotate::R180],
+    );
 
     // Create Identity and Border analyzers and FrequencyRules
     let mut identity_analyzer = IdentityAnalyzer::default();
@@ -46,89 +51,120 @@ fn main() {
     // Resolver can be reused, as it is used for the same tile type.
     let mut resolver = Resolver::default();
 
-    // Save the collapse process as a GIF.
-    if args.gif() {
-        let file =
-            std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "identity_entrophy.gif")).unwrap();
-        let subscriber =
-            GifSingleSubscriber::new(file, &outputs_size, vis_collection.clone()).with_rescale(3);
+    // ----- Singular with Entrophy Queue ----- //
+    //
+    // EntrophyQueue will keep higher success rate, but is slower than PositionQueue.
+    if !args.skip_entrophy() {
+        {
+            // Save the collapse process as a GIF.
+            if args.gif() {
+                let file =
+                    std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "identity_entrophy.gif"))
+                        .unwrap();
+                let subscriber =
+                    GifSingleSubscriber::new(file, &outputs_size, vis_collection.clone())
+                        .with_rescale(3);
 
-        resolver = resolver.with_subscriber(Box::new(subscriber));
+                resolver = resolver.with_subscriber(Box::new(subscriber));
+            } else if args.debug() {
+                let subsciber = DebugSubscriber::new(Some(
+                    File::create(format!("{}{}", OUTPUTS_DIR, "identity_entrophy_debug.txt"))
+                        .unwrap(),
+                ));
+                resolver = resolver.with_subscriber(Box::new(subsciber));
+            }
+
+            // Using propagating EntrophyQueue, we will use more restrictive `identity`
+            // AdjacencyRules. It will help to keep high success rate, but is a little
+            // slower than PositionQueue.
+            let mut rng: ChaChaRng = RngHelper::init_str("singular_identity", 1).into();
+            let mut to_collapse = CollapsibleTileGrid::new_empty(
+                outputs_size,
+                &frequency_hints,
+                identity_analyzer.adjacency(),
+            );
+            resolver
+                .generate(
+                    &mut to_collapse,
+                    &mut rng,
+                    &outputs_size.get_all_possible_positions(),
+                    EntrophyQueue::default(),
+                )
+                .unwrap();
+
+            let collapsed = to_collapse.retrieve_collapsed();
+            let mut out_buffer = vis_collection.init_map_image_buffer(collapsed.as_ref().size());
+            vis_collection
+                .draw_map(collapsed.as_ref(), &mut out_buffer)
+                .unwrap();
+            out_buffer = image::imageops::resize(
+                &out_buffer,
+                outputs_size.x() * 4 * 3,
+                outputs_size.y() * 4 * 3,
+                image::imageops::FilterType::Nearest,
+            );
+            out_buffer
+                .save(format!("{}{}", OUTPUTS_DIR, "identity_entrophy.png"))
+                .unwrap();
+        }
     }
 
-    // Using propagating EntrophyQueue, we will use more restrictive `identity`
-    // AdjacencyRules. It will help to keep high success rate, but is a little
-    // slower than PositionQueue.
-    let mut rng: ChaChaRng = RngHelper::init_str("singular_identity", 0).into();
-    let mut to_collapse = CollapsibleTileGrid::new_empty(
-        outputs_size,
-        &frequency_hints,
-        identity_analyzer.adjacency(),
-    );
-    resolver
-        .generate(
-            &mut to_collapse,
-            &mut rng,
-            &outputs_size.get_all_possible_positions(),
-            EntrophyQueue::default(),
-        )
-        .unwrap();
+    // ----- Singular with Position Queue ----- //
+    //
+    // PositionQueue is riskier when it comes to the success rate, but is much faster
+    // than EntrophyQueue.
+    if !args.skip_position() {
+        // Save the collapse process as a GIF
+        if args.gif() {
+            let file =
+                std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "border_position.gif")).unwrap();
+            let subscriber = GifSingleSubscriber::new(file, &outputs_size, vis_collection.clone())
+                .with_rescale(3);
 
-    let collapsed = to_collapse.retrieve_collapsed();
-    let mut out_buffer = vis_collection.init_map_image_buffer(collapsed.as_ref().size());
-    vis_collection
-        .draw_map(collapsed.as_ref(), &mut out_buffer)
-        .unwrap();
-    out_buffer = image::imageops::resize(
-        &out_buffer,
-        outputs_size.x() * 4 * 3,
-        outputs_size.y() * 4 * 3,
-        image::imageops::FilterType::Nearest,
-    );
-    out_buffer
-        .save(format!("{}{}", OUTPUTS_DIR, "identity_entrophy.png"))
-        .unwrap();
+            resolver = resolver.with_subscriber(Box::new(subscriber));
+        } else if args.debug() {
+            let subsciber = DebugSubscriber::new(Some(
+                File::create(format!("{}{}", OUTPUTS_DIR, "border_position_debug.txt")).unwrap(),
+            ));
+            resolver = resolver.with_subscriber(Box::new(subsciber));
+        }
 
-    // Using non-propagating PositionQueue, we will use less restrictive `border`
-    // AdjacencyRules. The success rate will be still moderately high - and
-    // errors can be mitigated by just retrying, as non-propagating queue is faster.
-    let mut rng: ChaChaRng = RngHelper::init_str("singular_border", 20)
-        .with_pos(6561)
-        .into();
+        // Using non-propagating PositionQueue, we will use less restrictive `border`
+        // AdjacencyRules. The success rate will be still moderately high - and
+        // errors can be mitigated by just retrying, as non-propagating queue is faster.
+        let mut rng: ChaChaRng = RngHelper::init_str("singular_border", 5)
+            .with_pos(833)
+            .into();
 
-    // Save the collapse process as a GIF
-    if args.gif() {
-        let file =
-            std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "border_position.gif")).unwrap();
-        let subscriber =
-            GifSingleSubscriber::new(file, &outputs_size, vis_collection.clone()).with_rescale(3);
+        let mut to_collapse = CollapsibleTileGrid::new_empty(
+            outputs_size,
+            &frequency_hints,
+            border_analyzer.adjacency(),
+        );
 
-        resolver = resolver.with_subscriber(Box::new(subscriber));
+        resolver
+            .generate(
+                &mut to_collapse,
+                &mut rng,
+                &outputs_size.get_all_possible_positions(),
+                PositionQueue::default(),
+            )
+            .unwrap();
+
+        // let collapsed = collapsed.unwrap().retrieve_collapsed();
+        let collapsed = to_collapse.retrieve_collapsed();
+        let mut out_buffer = vis_collection.init_map_image_buffer(collapsed.as_ref().size());
+        vis_collection
+            .draw_map(collapsed.as_ref(), &mut out_buffer)
+            .unwrap();
+        out_buffer = image::imageops::resize(
+            &out_buffer,
+            outputs_size.x() * 4 * 3,
+            outputs_size.y() * 4 * 3,
+            image::imageops::FilterType::Nearest,
+        );
+        out_buffer
+            .save(format!("{}{}", OUTPUTS_DIR, "border_position.png"))
+            .unwrap();
     }
-
-    let mut to_collapse =
-        CollapsibleTileGrid::new_empty(outputs_size, &frequency_hints, border_analyzer.adjacency());
-    resolver
-        .generate(
-            &mut to_collapse,
-            &mut rng,
-            &outputs_size.get_all_possible_positions(),
-            PositionQueue::default(),
-        )
-        .unwrap();
-
-    let collapsed = to_collapse.retrieve_collapsed();
-    let mut out_buffer = vis_collection.init_map_image_buffer(collapsed.as_ref().size());
-    vis_collection
-        .draw_map(collapsed.as_ref(), &mut out_buffer)
-        .unwrap();
-    out_buffer = image::imageops::resize(
-        &out_buffer,
-        outputs_size.x() * 4 * 3,
-        outputs_size.y() * 4 * 3,
-        image::imageops::FilterType::Nearest,
-    );
-    out_buffer
-        .save(format!("{}{}", OUTPUTS_DIR, "border_position.png"))
-        .unwrap();
 }

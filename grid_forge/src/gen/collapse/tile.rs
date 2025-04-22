@@ -55,9 +55,7 @@ pub trait CollapsibleTileData: TileData + private::Sealed {
 }
 
 pub(crate) mod private {
-    use rand::
-        Rng
-    ;
+    use rand::Rng;
 
     use crate::r#gen::collapse::{entrophy::EntrophyUniform, option::OptionWeights};
     use crate::{
@@ -90,12 +88,7 @@ pub(crate) mod private {
             let mut weight = ways_to_be_option
                 .iter_possible()
                 .map(|option_idx| options_data.get_weights(option_idx))
-                .fold(
-                    OptionWeights::default(),
-                    |sum, other| {
-                        sum + other
-                    },
-                );
+                .fold(OptionWeights::default(), |sum, other| sum + other);
             weight.round();
 
             positions
@@ -124,12 +117,7 @@ pub(crate) mod private {
             let mut weight = ways_to_be_option
                 .iter_possible()
                 .map(|option_idx| options_data.get_weights(option_idx))
-                .fold(
-                    OptionWeights::default(),
-                    |sum, other| {
-                        sum + other
-                    },
-                );
+                .fold(OptionWeights::default(), |sum, other| sum + other);
 
             weight.round();
 

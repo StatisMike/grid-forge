@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use rand_chacha::ChaChaRng;
 use criterion::{criterion_group, criterion_main, Criterion};
+use rand_chacha::ChaChaRng;
 
 use grid_forge::{
     gen::collapse::overlap::*,
@@ -25,10 +25,13 @@ fn analyze_10x10_pattern_2x2(c: &mut Criterion) {
 
     let grid = load_gridmap_identifiable_auto(&img, &mut collection, &builder).unwrap();
 
-    c.bench_function("analyze_10x10_pattern_2x2", |b| b.iter(|| {
-        let mut analyzer = Analyzer::<OverlappingPattern2D<2, 2>, BasicIdentTileData>::default();
-        analyzer.analyze_map(&grid);
-    }));
+    c.bench_function("analyze_10x10_pattern_2x2", |b| {
+        b.iter(|| {
+            let mut analyzer =
+                Analyzer::<OverlappingPattern2D<2, 2>, BasicIdentTileData>::default();
+            analyzer.analyze_map(&grid);
+        })
+    });
 }
 
 fn analyze_10x10_pattern_3x3(c: &mut Criterion) {
@@ -39,14 +42,16 @@ fn analyze_10x10_pattern_3x3(c: &mut Criterion) {
 
     let grid = load_gridmap_identifiable_auto(&img, &mut collection, &builder).unwrap();
 
-    c.bench_function("analyze_10x10_pattern_3x3", |b| b.iter(|| {
-        let mut analyzer = Analyzer::<OverlappingPattern2D<3, 3>, BasicIdentTileData>::default();
-        analyzer.analyze_map(&grid);
-    }));
+    c.bench_function("analyze_10x10_pattern_3x3", |b| {
+        b.iter(|| {
+            let mut analyzer =
+                Analyzer::<OverlappingPattern2D<3, 3>, BasicIdentTileData>::default();
+            analyzer.analyze_map(&grid);
+        })
+    });
 }
 
 fn generate_10x10_pattern_2x2_entrophy(c: &mut Criterion) {
-
     let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
 
     let mut vis_collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
@@ -72,18 +77,20 @@ fn generate_10x10_pattern_2x2_entrophy(c: &mut Criterion) {
         CollapsiblePatternGrid::new_empty(size, pattern_collection, pattern_freq, pattern_rules)
             .unwrap();
 
-    c.bench_function("generate_10x10_pattern_2x2_entrophy", |b| b.iter(|| {
-        let mut rng: ChaChaRng = RngHelper::init_str("overlap_bench", 1).into();
+    c.bench_function("generate_10x10_pattern_2x2_entrophy", |b| {
+        b.iter(|| {
+            let mut rng: ChaChaRng = RngHelper::init_str("overlap_bench", 1).into();
 
-        let mut resolver = Resolver::default();
-        let res = resolver.generate(grid.clone(), &mut rng, &positions, EntrophyQueue::default());
+            let mut resolver = Resolver::default();
+            let res =
+                resolver.generate(grid.clone(), &mut rng, &positions, EntrophyQueue::default());
 
-        assert!(res.is_ok());
-    }));
+            assert!(res.is_ok());
+        })
+    });
 }
 
 fn generate_10x10_pattern_3x3_entrophy(c: &mut Criterion) {
-
     let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
 
     let mut vis_collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
@@ -109,14 +116,17 @@ fn generate_10x10_pattern_3x3_entrophy(c: &mut Criterion) {
         CollapsiblePatternGrid::new_empty(size, pattern_collection, pattern_freq, pattern_rules)
             .unwrap();
 
-    c.bench_function("generate_10x10_pattern_3x3_entrophy", |b| b.iter(|| {
-        let mut rng: ChaChaRng = RngHelper::init_str("overlap_bench", 1).into();
+    c.bench_function("generate_10x10_pattern_3x3_entrophy", |b| {
+        b.iter(|| {
+            let mut rng: ChaChaRng = RngHelper::init_str("overlap_bench", 1).into();
 
-        let mut resolver = Resolver::default();
-        let res = resolver.generate(grid.clone(), &mut rng, &positions, EntrophyQueue::default());
+            let mut resolver = Resolver::default();
+            let res =
+                resolver.generate(grid.clone(), &mut rng, &positions, EntrophyQueue::default());
 
-        assert!(res.is_ok())
-    }));
+            assert!(res.is_ok())
+        })
+    });
 }
 
 criterion_group!(

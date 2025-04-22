@@ -4,8 +4,8 @@ use gd_rehearse::itest::gditest;
 
 use godot::builtin::Rect2i;
 use godot::classes::{TileMap, TileSet};
-use godot::tools::load;
 use godot::obj::{Gd, NewAlloc};
+use godot::tools::load;
 
 use grid_forge::godot::ops::{load_gridmap_from_tilemap_manual, write_gridmap_to_tilemap};
 use grid_forge::map::GridSize;

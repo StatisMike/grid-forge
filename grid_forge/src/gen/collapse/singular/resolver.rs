@@ -1,3 +1,5 @@
+use std::fs::File;
+use std::io::Write;
 use std::marker::PhantomData;
 
 use crate::gen::collapse::grid::private::Sealed;
@@ -124,4 +126,28 @@ where
 /// When applied to the struct allows injecting it into [`adjacency::Resolver`](Resolver) to react on each tile being collapsed.
 pub trait Subscriber {
     fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64);
+}
+
+pub struct DebugSubscriber {
+    file: Option<File>,
+}
+
+impl DebugSubscriber {
+    pub fn new(file: Option<File>) -> Self {
+        Self { file }
+    }
+}
+
+impl Subscriber for DebugSubscriber {
+    fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64) {
+        if let Some(file) = &mut self.file {
+            writeln!(
+                file,
+                "tile_type_id: {tile_type_id} on position: {position:?}"
+            )
+            .unwrap();
+        } else {
+            println!("tile_type_id: {tile_type_id} on position: {position:?}");
+        }
+    }
 }

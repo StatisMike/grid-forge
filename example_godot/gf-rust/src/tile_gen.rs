@@ -61,10 +61,8 @@ impl INode for TileGenerator {
                         );
                     }
                     GenerationResult::Error(mssg) => {
-                        self.base_mut().emit_signal(
-                            "generation_error",
-                            &[GString::from(mssg).to_variant()],
-                        );
+                        self.base_mut()
+                            .emit_signal("generation_error", &[GString::from(mssg).to_variant()]);
                         self.base_mut()
                             .emit_signal("generation_finished", &[false.to_variant()]);
                         if self.handle.is_some() {

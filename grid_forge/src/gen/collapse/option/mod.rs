@@ -5,7 +5,8 @@ use std::{
 
 use crate::{
     map::{DirectionTable, GridDir},
-    tile::identifiable::collection::IdentTileCollection, utils::OrderedFloat,
+    tile::identifiable::collection::IdentTileCollection,
+    utils::OrderedFloat,
 };
 
 use super::AdjacencyTable;
@@ -50,10 +51,10 @@ impl<T> AsMut<Vec<T>> for PerOptionTable<T> {
 }
 
 #[derive(Debug, Clone, Copy, Default)]
-pub struct OptionWeights (pub u32, pub f32);
+pub struct OptionWeights(pub u32, pub f32);
 
 impl OptionWeights {
-    pub fn new(option_weight: u32) -> Self {                
+    pub fn new(option_weight: u32) -> Self {
         Self(option_weight, Self::calc_weigth(option_weight as f32))
     }
 
@@ -90,7 +91,6 @@ impl SubAssign for OptionWeights {
         self.round();
     }
 }
-
 
 #[derive(Debug, Default, Clone)]
 pub struct PerOptionData {
@@ -132,7 +132,9 @@ impl PerOptionData {
         for (n, (option_id, option_weight)) in options_with_weights.iter().enumerate() {
             self.add_tile_data(*option_id, n);
 
-            self.opt_with_weight.as_mut().push(OptionWeights::new(*option_weight));
+            self.opt_with_weight
+                .as_mut()
+                .push(OptionWeights::new(*option_weight));
         }
 
         self.option_count = self.option_map.len();

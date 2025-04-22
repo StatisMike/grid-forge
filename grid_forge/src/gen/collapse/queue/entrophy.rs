@@ -6,9 +6,12 @@ use std::{
 use rand::{distributions::Uniform, prelude::Distribution, Rng};
 
 use super::CollapseQueue;
-use crate::{gen::collapse::{option::PerOptionData, tile::CollapsibleTileData}, utils::OrderedFloat};
 use crate::map::GridMap2D;
 use crate::tile::{GridPosition, GridTile, TileContainer};
+use crate::{
+    gen::collapse::{option::PerOptionData, tile::CollapsibleTileData},
+    utils::OrderedFloat,
+};
 
 #[derive(Clone, Copy)]
 pub(crate) struct EntrophyItem {
@@ -18,7 +21,10 @@ pub(crate) struct EntrophyItem {
 
 impl EntrophyItem {
     pub fn new(pos: GridPosition, entrophy: f32) -> Self {
-        Self { pos, entrophy: entrophy.into() }
+        Self {
+            pos,
+            entrophy: entrophy.into(),
+        }
     }
 }
 
@@ -99,7 +105,7 @@ impl CollapseQueue for EntrophyQueue {
 }
 
 pub(crate) struct EntrophyUniform {
-    inner: Uniform<u8>
+    inner: Uniform<u8>,
 }
 
 impl EntrophyUniform {
@@ -107,7 +113,7 @@ impl EntrophyUniform {
 
     pub fn new() -> Self {
         Self {
-            inner: Uniform::<u8>::new(0, EntrophyUniform::MULTIPLIER)
+            inner: Uniform::<u8>::new(0, EntrophyUniform::MULTIPLIER),
         }
     }
 

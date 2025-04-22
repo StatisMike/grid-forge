@@ -79,13 +79,13 @@ impl Div for OrderedFloat {
 }
 
 impl From<f32> for OrderedFloat {
-  fn from(value: f32) -> Self {
-      Self::new(value)
-  }
+    fn from(value: f32) -> Self {
+        Self::new(value)
+    }
 }
 
 impl From<OrderedFloat> for f32 {
-  fn from(value: OrderedFloat) -> f32 {
-      value.get()
-  }
+    fn from(value: OrderedFloat) -> f32 {
+        value.get()
+    }
 }

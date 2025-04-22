@@ -1,5 +1,3 @@
 pub trait GridDimensionality {
-  const N: usize;
-
-  
+    const N: usize;
 }
