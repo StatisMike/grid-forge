@@ -2,11 +2,11 @@ use std::collections::HashSet;
 use std::marker::PhantomData;
 
 use private::Sealed;
-use rand::distributions::Distribution;
 use rand::Rng;
 
+use crate::gen::collapse::entrophy::EntrophyUniform;
 use crate::gen::collapse::error::CollapsedGridError;
-use crate::gen::collapse::option::{PerOptionData, WaysToBeOption};
+use crate::gen::collapse::option::{OptionWeights, PerOptionData, WaysToBeOption};
 use crate::gen::collapse::{tile::*, CollapsedGrid, CollapsibleGrid, PropagateItem};
 use crate::map::{GridMap2D, GridSize};
 use crate::tile::identifiable::builders::IdentTileBuilder;
@@ -23,8 +23,7 @@ pub struct CollapsiblePattern<P: OverlappingPattern> {
     collapsed_pattern: Option<usize>,
     num_possible_patterns: usize,
     ways_to_be_pattern: WaysToBeOption,
-    weight_sum: u32,
-    weight_log_sum: f32,
+    weight: OptionWeights,
     entrophy_noise: f32,
     pattern_type: PhantomData<P>,
 }
@@ -36,8 +35,7 @@ impl<P: OverlappingPattern> private::Sealed for CollapsiblePattern<P> {
         position: GridPosition,
         num_options: usize,
         ways_to_be_option: WaysToBeOption,
-        weight_sum: u32,
-        weight_log_sum: f32,
+        weight: OptionWeights,
         entrophy_noise: f32,
     ) -> GridTile<Self>
     where
@@ -49,8 +47,7 @@ impl<P: OverlappingPattern> private::Sealed for CollapsiblePattern<P> {
                 collapsed_pattern: None,
                 num_possible_patterns: num_options,
                 ways_to_be_pattern: ways_to_be_option,
-                weight_sum,
-                weight_log_sum,
+                weight,
                 entrophy_noise,
                 pattern_type: PhantomData,
             },
@@ -65,10 +62,9 @@ impl<P: OverlappingPattern> private::Sealed for CollapsiblePattern<P> {
         &mut self.ways_to_be_pattern
     }
 
-    fn remove_option(&mut self, weights: (u32, f32)) {
+    fn remove_option(&mut self, weights: OptionWeights) {
         self.num_possible_patterns -= 1;
-        self.weight_sum -= weights.0;
-        self.weight_log_sum -= weights.1;
+        self.weight -= weights;
     }
 
     fn collapse<R: Rng>(
@@ -76,8 +72,8 @@ impl<P: OverlappingPattern> private::Sealed for CollapsiblePattern<P> {
         rng: &mut R,
         options_data: &crate::gen::collapse::option::PerOptionData,
     ) -> Option<Vec<usize>> {
-        assert!(self.weight_sum > 0);
-        let random = rng.gen_range(0..self.weight_sum);
+        assert!(self.weight.0 > 0);
+        let random = rng.gen_range(0..self.weight.0);
         let mut current_sum = 0;
         let mut chosen = None;
         let mut out = Vec::new();
@@ -92,8 +88,7 @@ impl<P: OverlappingPattern> private::Sealed for CollapsiblePattern<P> {
         assert!(chosen.is_some(), "option should always be chosen!");
         self.collapsed_pattern = chosen;
         self.num_possible_patterns = 0;
-        self.weight_sum = 0;
-        self.weight_log_sum = 0.;
+        self.weight = OptionWeights::default();
         Some(out)
     }
 }
@@ -112,15 +107,14 @@ impl<P: OverlappingPattern> CollapsibleTileData for CollapsiblePattern<P> {
             collapsed_pattern: Some(option_idx),
             num_possible_patterns: 0,
             ways_to_be_pattern: WaysToBeOption::default(),
-            weight_sum: 0,
-            weight_log_sum: 0.,
+            weight: OptionWeights::default(),
             entrophy_noise: 0.,
             pattern_type: PhantomData,
         }
     }
 
     fn calc_entrophy(&self) -> f32 {
-        Self::calc_entrophy_ext(self.weight_sum, self.weight_log_sum) + self.entrophy_noise
+        Self::calc_entrophy_ext(self.weight.0, self.weight.1) + self.entrophy_noise
     }
 }
 
@@ -220,7 +214,7 @@ where
         patterns: &PatternCollection<P>,
         options: &PerOptionData,
     ) -> Result<Vec<GridTile<CollapsiblePattern<P>>>, CollapsedGridError> {
-        let entrophy_uniform = CollapsiblePattern::<P>::entrophy_uniform();
+        let entrophy_uniform = EntrophyUniform::new();
         let ways = options.get_ways_to_become_option();
         let mut out = Vec::new();
 
@@ -259,19 +253,18 @@ where
 
             let num_options = possible_patterns.len();
 
-            let mut weights = (0u32, 0f32);
+            let mut weights = OptionWeights::default();
             for pattern in possible_patterns {
-                let (w, wl) = options.get_weights(pattern);
-                weights.0 += w;
-                weights.1 += wl;
+                let w = options.get_weights(pattern);
+                weights.0 += w.0;
+                weights.1 += w.1;
             }
 
             out.push(CollapsiblePattern::new_uncollapsed_tile(
                 position,
                 num_options,
                 current_ways,
-                weights.0,
-                weights.1,
+                weights,
                 entrophy_uniform.sample(rng),
             ))
         }

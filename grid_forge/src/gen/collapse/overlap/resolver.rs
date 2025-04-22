@@ -1,3 +1,5 @@
+use std::fs::File;
+use std::io::Write;
 use std::marker::PhantomData;
 
 use rand::Rng;
@@ -135,12 +137,24 @@ pub trait Subscriber {
     fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64, pattern_id: u64);
 }
 
-pub struct DebugSubscriber;
+pub struct DebugSubscriber {
+    file: Option<File>,
+}
+
+impl DebugSubscriber {
+    pub fn new(file: Option<File>) -> Self {
+        Self { file }
+    }
+}
 
 impl Subscriber for DebugSubscriber {
     fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64, pattern_id: u64) {
-        println!(
-            "tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}"
-        );
+        if let Some(file) = &mut self.file {
+            writeln!(file, "tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}").unwrap();
+        } else {
+            println!(
+                "tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}"
+            );
+        }
     }
 }

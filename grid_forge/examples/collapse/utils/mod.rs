@@ -16,21 +16,32 @@ pub use gif_subscribers::GifSingleSubscriber;
 
 pub struct ArgHelper {
     gif: bool,
+    debug: bool,
 }
 
 impl ArgHelper {
     pub const GIF: &'static str = "--gif";
+    pub const DEBUG: &'static str = "--debug";
 
     pub fn gather() -> Self {
         let args = std::env::args().collect::<Vec<_>>();
 
         let gif = args.contains(&Self::GIF.to_owned());
+        let debug = args.contains(&Self::DEBUG.to_owned());
 
-        Self { gif }
+        if gif && debug {
+            panic!("cannot use both `--gif` and `--debug` flags at the same time");
+        }
+
+        Self { gif, debug }
     }
 
     pub fn gif(&self) -> bool {
         self.gif
+    }
+
+    pub fn debug(&self) -> bool {
+        self.debug
     }
 }
 

@@ -19,10 +19,10 @@ nohash = { version = "0.2.0" }
 grid = { version = "0.13.*" }
 image = { version = "0.25.*", optional = true, default-features = false }
 rand = { version = "0.8.*", optional = true }
-godot = { git = "https://github.com/godot-rust/gdext", branch = "master", optional = true }
+godot = { version = "^0.2.4", optional = true }
 
 [dev-dependencies]
-bencher = "0.1.*"
+criterion = { version = "*"}
 rand_chacha = "0.3.*"
 image = { version = "0.25.*", features = ["png"]}
 gif = { version ="*" }
@@ -42,3 +42,19 @@ path = "examples/collapse/gen_collapse_singular.rs"
 [[example]]
 name = "gen_collapse_overlap"
 path = "examples/collapse/gen_collapse_overlap.rs"
+
+[[bench]]
+name = "walker"
+harness = false
+
+[[bench]]
+name = "collapsible"
+harness = false
+
+[[bench]]
+name = "overlap"
+harness = false 
+
+[[bench]]
+name = "vis"
+harness = false

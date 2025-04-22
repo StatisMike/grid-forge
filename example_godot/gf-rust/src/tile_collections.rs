@@ -7,9 +7,11 @@
 use std::io::BufReader;
 
 use godot::builtin::{GString, Vector2i};
-use godot::engine::file_access::ModeFlags;
-use godot::engine::{AcceptDialog, GFile, TileMap, TileSet, TileSetAtlasSource};
-use godot::log::{godot_error, godot_warn};
+use godot::classes::file_access::ModeFlags;
+use godot::classes::{AcceptDialog, TileMap, TileSet, TileSetAtlasSource};
+use godot::global::{godot_error, godot_warn};
+use godot::tools::GFile;
+// use godot::{godot_error, godot_warn};
 use godot::obj::Gd;
 use godot::register::{godot_api, GodotClass};
 
@@ -62,7 +64,7 @@ impl TileCollections {
             return;
         }
 
-        let gd_file = GFile::open(self.path_to_image.clone(), ModeFlags::READ);
+        let gd_file = GFile::open(&self.path_to_image, ModeFlags::READ);
         if gd_file.is_err() {
             godot_error!(
                 "cannot open image file at specified Godot location: {}",
@@ -150,7 +152,7 @@ impl TileCollections {
     fn show_modal(&self, message: &str) {
         if let Some(modal) = &self.modal {
             let mut pntr = modal.clone();
-            pntr.set_text(message.into());
+            pntr.set_text(message);
             pntr.set_visible(true);
         } else {
             godot_warn!("Cannot find modal for TileCollections. Message to show: {message}");

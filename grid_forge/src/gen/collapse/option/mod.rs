@@ -1,11 +1,11 @@
 use std::{
     collections::{BTreeMap, HashMap},
-    ops::{Index, IndexMut},
+    ops::{Add, Index, IndexMut, Sub, SubAssign},
 };
 
 use crate::{
     map::{DirectionTable, GridDir},
-    tile::identifiable::collection::IdentTileCollection,
+    tile::identifiable::collection::IdentTileCollection, utils::OrderedFloat,
 };
 
 use super::AdjacencyTable;
@@ -49,13 +49,56 @@ impl<T> AsMut<Vec<T>> for PerOptionTable<T> {
     }
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+pub struct OptionWeights (pub u32, pub f32);
+
+impl OptionWeights {
+    pub fn new(option_weight: u32) -> Self {                
+        Self(option_weight, Self::calc_weigth(option_weight as f32))
+    }
+
+    fn calc_weigth(weight: f32) -> f32 {
+        let weight = weight * weight.log2();
+        (weight % OrderedFloat::EPSILON) * OrderedFloat::EPSILON
+    }
+
+    pub fn round(&mut self) {
+        self.1 = (self.1 % OrderedFloat::EPSILON) * OrderedFloat::EPSILON;
+    }
+}
+
+impl Add for OptionWeights {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0, self.1 + rhs.1)
+    }
+}
+
+impl Sub for OptionWeights {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0 - rhs.0, self.1 - rhs.1)
+    }
+}
+
+impl SubAssign for OptionWeights {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0 -= rhs.0;
+        self.1 -= rhs.1;
+        self.round();
+    }
+}
+
+
 #[derive(Debug, Default, Clone)]
 pub struct PerOptionData {
     option_map: HashMap<u64, usize>,
     option_map_rev: HashMap<u64, u64>,
     adjacencies: PerOptionTable<DirectionTable<Vec<usize>>>,
     ways_to_be_option: WaysToBeOption,
-    opt_with_weight: PerOptionTable<(u32, f32)>,
+    opt_with_weight: PerOptionTable<OptionWeights>,
     option_count: usize,
     possible_options_count: usize,
 }
@@ -81,7 +124,7 @@ impl IdentTileCollection for PerOptionData {
 }
 
 impl PerOptionData {
-    pub fn populate(
+    pub(crate) fn populate(
         &mut self,
         options_with_weights: &BTreeMap<u64, u32>,
         adjacencies: &AdjacencyTable,
@@ -89,10 +132,7 @@ impl PerOptionData {
         for (n, (option_id, option_weight)) in options_with_weights.iter().enumerate() {
             self.add_tile_data(*option_id, n);
 
-            self.opt_with_weight.as_mut().push((
-                *option_weight,
-                (*option_weight as f32) * (*option_weight as f32).log2(),
-            ));
+            self.opt_with_weight.as_mut().push(OptionWeights::new(*option_weight));
         }
 
         self.option_count = self.option_map.len();
@@ -112,11 +152,11 @@ impl PerOptionData {
         &self.adjacencies[option_id][direction]
     }
 
-    pub fn iter_weights(&self) -> impl Iterator<Item = (usize, &(u32, f32))> {
+    pub fn iter_weights(&self) -> impl Iterator<Item = (usize, &OptionWeights)> {
         self.opt_with_weight.table.iter().enumerate()
     }
 
-    pub fn get_weights(&self, option_idx: usize) -> (u32, f32) {
+    pub fn get_weights(&self, option_idx: usize) -> OptionWeights {
         self.opt_with_weight.table[option_idx]
     }
 

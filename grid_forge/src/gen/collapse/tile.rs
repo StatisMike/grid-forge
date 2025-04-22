@@ -55,11 +55,11 @@ pub trait CollapsibleTileData: TileData + private::Sealed {
 }
 
 pub(crate) mod private {
-    use rand::{
-        distributions::{Distribution, Uniform},
-        Rng,
-    };
+    use rand::
+        Rng
+    ;
 
+    use crate::r#gen::collapse::{entrophy::EntrophyUniform, option::OptionWeights};
     use crate::{
         gen::collapse::option::{PerOptionData, WaysToBeOption},
         tile::{self, GridPosition, GridTile},
@@ -70,8 +70,7 @@ pub(crate) mod private {
             position: GridPosition,
             num_options: usize,
             ways_to_be_option: WaysToBeOption,
-            weight_sum: u32,
-            weight_log_sum: f32,
+            weight: OptionWeights,
             entrophy_noise: f32,
         ) -> GridTile<Self>
         where
@@ -85,18 +84,19 @@ pub(crate) mod private {
         where
             Self: tile::TileData,
         {
-            let rng_range = Self::entrophy_uniform();
+            let rng_range = EntrophyUniform::new();
             let ways_to_be_option = options_data.get_ways_to_become_option();
 
-            let (weight_sum, weight_log_sum) = ways_to_be_option
+            let mut weight = ways_to_be_option
                 .iter_possible()
                 .map(|option_idx| options_data.get_weights(option_idx))
                 .fold(
-                    (0u32, 0f32),
-                    |(sum_weight, sum_weight_log), (weight, weight_log)| {
-                        (sum_weight + weight, sum_weight_log + weight_log)
+                    OptionWeights::default(),
+                    |sum, other| {
+                        sum + other
                     },
                 );
+            weight.round();
 
             positions
                 .iter()
@@ -105,8 +105,7 @@ pub(crate) mod private {
                         *position,
                         options_data.num_possible_options(),
                         ways_to_be_option.clone(),
-                        weight_sum,
-                        weight_log_sum,
+                        weight,
                         rng_range.sample(rng),
                     )
                 })
@@ -122,15 +121,17 @@ pub(crate) mod private {
         {
             let ways_to_be_option = options_data.get_ways_to_become_option();
 
-            let (weight_sum, weight_log_sum) = ways_to_be_option
+            let mut weight = ways_to_be_option
                 .iter_possible()
                 .map(|option_idx| options_data.get_weights(option_idx))
                 .fold(
-                    (0u32, 0f32),
-                    |(sum_weight, sum_weight_log), (weight, weight_log)| {
-                        (sum_weight + weight, sum_weight_log + weight_log)
+                    OptionWeights::default(),
+                    |sum, other| {
+                        sum + other
                     },
                 );
+
+            weight.round();
 
             positions
                 .iter()
@@ -139,8 +140,7 @@ pub(crate) mod private {
                         *pos,
                         options_data.num_possible_options(),
                         ways_to_be_option.clone(),
-                        weight_sum,
-                        weight_log_sum,
+                        weight,
                         0.0,
                     )
                 })
@@ -151,11 +151,7 @@ pub(crate) mod private {
 
         fn mut_ways_to_be_option(&mut self) -> &mut WaysToBeOption;
 
-        fn remove_option(&mut self, weights: (u32, f32));
-
-        fn entrophy_uniform() -> Uniform<f32> {
-            Uniform::<f32>::new(0., 0.00001)
-        }
+        fn remove_option(&mut self, weights: OptionWeights);
 
         fn collapse<R: Rng>(
             &mut self,

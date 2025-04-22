@@ -60,6 +60,7 @@ impl Index<GridDir> for Adjacencies {
     }
 }
 
+/// Table of adjacency rules for [`CollapsibleTileData`].
 #[derive(Clone, Debug, Default)]
 pub(crate) struct AdjacencyTable {
     inner: IntMap<u64, Adjacencies>,
@@ -77,29 +78,6 @@ impl AdjacencyTable {
                 e.insert(adjacencies);
             }
         }
-    }
-
-    pub(crate) fn all_ids(&self) -> Vec<u64> {
-        self.inner.keys().copied().collect()
-    }
-
-    pub(crate) fn check_adjacency(&self, el_id: &u64, direction: &GridDir, other_id: &u64) -> bool {
-        if let Some(adjacencies) = self.inner.get(el_id) {
-            return adjacencies.is_at_dir(direction, other_id);
-        }
-        false
-    }
-
-    pub(crate) fn check_adjacency_any(
-        &self,
-        el_id: &u64,
-        direction: &GridDir,
-        other_ids: &[u64],
-    ) -> bool {
-        if let Some(adjacencies) = self.inner.get(el_id) {
-            return adjacencies.any_at_dir(direction, other_ids);
-        }
-        false
     }
 
     pub(crate) fn get_all_adjacencies_in_direction(

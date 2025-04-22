@@ -1,5 +1,5 @@
 use godot::builtin::Rect2i;
-use godot::engine::TileMap;
+use godot::classes::TileMap;
 use godot::obj::Gd;
 
 use crate::map::{GridMap2D, GridSize};

@@ -6,7 +6,4 @@ members = [
 
   # Integration examples
   "example_godot/gf-rust",
-  
-  # Benchmarks
-  "grid_forge_benches",
 ]

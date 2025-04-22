@@ -3,7 +3,8 @@
 use gd_rehearse::itest::gditest;
 
 use godot::builtin::Rect2i;
-use godot::engine::{load, TileMap, TileSet};
+use godot::classes::{TileMap, TileSet};
+use godot::tools::load;
 use godot::obj::{Gd, NewAlloc};
 
 use grid_forge::godot::ops::{load_gridmap_from_tilemap_manual, write_gridmap_to_tilemap};
@@ -29,7 +30,7 @@ fn test_load_into_gridmap() {
 
     let roads_map = binding.load_vis_map_from_path(ROADS_MAP_PATH).unwrap();
     let mut roads_tilemap = TileMap::new_alloc();
-    roads_tilemap.set_tileset(tileset.clone());
+    roads_tilemap.set_tileset(&tileset);
     write_gridmap_to_tilemap(
         &roads_map,
         &mut roads_tilemap,
@@ -39,7 +40,7 @@ fn test_load_into_gridmap() {
 
     let seas_map = binding.load_vis_map_from_path(SEAS_MAP_PATH).unwrap();
     let mut seas_tilemap = TileMap::new_alloc();
-    seas_tilemap.set_tileset(tileset);
+    seas_tilemap.set_tileset(&tileset);
     write_gridmap_to_tilemap(
         &seas_map,
         &mut seas_tilemap,
@@ -81,7 +82,7 @@ fn test_from_grindmap_identical() {
 
     let roads_map = binding.load_vis_map_from_path(ROADS_MAP_PATH).unwrap();
     let mut roads_tilemap = TileMap::new_alloc();
-    roads_tilemap.set_tileset(tileset.clone());
+    roads_tilemap.set_tileset(&tileset);
     write_gridmap_to_tilemap(
         &roads_map,
         &mut roads_tilemap,
@@ -91,7 +92,7 @@ fn test_from_grindmap_identical() {
 
     let seas_map = binding.load_vis_map_from_path(SEAS_MAP_PATH).unwrap();
     let mut seas_tilemap = TileMap::new_alloc();
-    seas_tilemap.set_tileset(tileset);
+    seas_tilemap.set_tileset(&tileset);
     write_gridmap_to_tilemap(
         &seas_map,
         &mut seas_tilemap,

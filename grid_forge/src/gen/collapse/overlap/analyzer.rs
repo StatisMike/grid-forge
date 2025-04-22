@@ -200,7 +200,7 @@ where
         }
     }
 
-    pub fn inner(&self) -> &AdjacencyTable {
+    pub(crate) fn inner(&self) -> &AdjacencyTable {
         &self.inner
     }
 }

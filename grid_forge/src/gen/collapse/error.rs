@@ -42,11 +42,6 @@ impl Display for CollapseError {
                 "tile at position: {:?} have no options left while collapsing!",
                 self.pos
             ),
-            CollapseErrorKind::NeighbourUpdate => write!(
-                f,
-                "tile at position: {:?} have no options left after collapsed neighbours update!",
-                self.pos
-            ),
             CollapseErrorKind::Init => write!(
                 f,
                 "tile at position: {:?} have no options left during initial option removal!",
@@ -66,7 +61,6 @@ impl Error for CollapseError {}
 #[derive(Debug)]
 pub(crate) enum CollapseErrorKind {
     Collapse,
-    NeighbourUpdate,
     Init,
     Propagation,
 }
