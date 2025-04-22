@@ -7,7 +7,7 @@ use std::ops::{Add, Div, Mul, Sub};
 pub struct OrderedFloat(f32);
 
 impl OrderedFloat {
-    pub const EPSILON: f32 = 0.00001;
+    pub const EPSILON: f32 = 0.000001;
 
     /// Create a new OrderedFloat, panicking on NaN
     pub fn new(value: f32) -> Self {

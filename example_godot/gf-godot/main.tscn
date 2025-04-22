@@ -69,9 +69,11 @@ offset_top = 3.0
 offset_right = 1149.0
 offset_bottom = 495.0
 grow_horizontal = 0
+current_tab = 0
 
 [node name="Image" type="Panel" parent="TabContainer"]
 layout_mode = 2
+metadata/_tab_index = 0
 
 [node name="VSplitContainer" type="VSplitContainer" parent="TabContainer/Image"]
 layout_mode = 0
@@ -108,6 +110,7 @@ Resulting [i]TileMap[/i] will have spaces between the tiles, to show the borders
 [node name="Generate" type="Panel" parent="TabContainer"]
 visible = false
 layout_mode = 2
+metadata/_tab_index = 1
 
 [node name="Size" type="VBoxContainer" parent="TabContainer/Generate"]
 layout_mode = 1
@@ -167,10 +170,9 @@ offset_left = 344.0
 offset_top = 179.0
 offset_right = 532.0
 offset_bottom = 237.0
-item_count = 2
 selected = 0
+item_count = 2
 popup/item_0/text = "Border Adjacency"
-popup/item_0/id = 0
 popup/item_1/text = "Identity Adjacency"
 popup/item_1/id = 1
 
@@ -180,10 +182,9 @@ offset_left = 346.0
 offset_top = 238.0
 offset_right = 534.0
 offset_bottom = 296.0
-item_count = 2
 selected = 0
+item_count = 2
 popup/item_0/text = "PositionQueue"
-popup/item_0/id = 0
 popup/item_1/text = "EntrophyQueue"
 popup/item_1/id = 1
 
