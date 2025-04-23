@@ -4,10 +4,8 @@ use std::marker::PhantomData;
 use private::Sealed;
 use rand::Rng;
 
-use crate::gen::collapse::error::CollapsibleGridError;
-use crate::gen::collapse::option::{PerOptionData, WaysToBeOption};
 use crate::gen::collapse::entrophy::EntrophyUniform;
-use crate::gen::collapse::error::CollapsedGridError;
+use crate::gen::collapse::error::CollapsibleGridError;
 use crate::gen::collapse::option::{OptionWeights, PerOptionData, WaysToBeOption};
 use crate::gen::collapse::{tile::*, CollapsedGrid, CollapsibleGrid, PropagateItem};
 use crate::map::{GridMap2D, GridSize};
@@ -101,22 +99,7 @@ impl<P: OverlappingPattern> private::Sealed for CollapsiblePattern<P> {
     }
 
     fn weight_sum(&self) -> u32 {
-        self.weight_sum
-    }
-
-    fn num_possible_options(&self) -> usize {
-        self.num_possible_patterns
-    }
-
-    fn mark_collapsed(&mut self, collapsed_idx: usize) {
-        self.collapsed_pattern = Some(collapsed_idx);
-        self.num_possible_patterns = 0;
-        self.weight_sum = 0;
-        self.weight_log_sum = 0.;
-    }
-
-    fn weight_sum(&self) -> u32 {
-        self.weight_sum
+        self.weight.0
     }
 
     fn num_possible_options(&self) -> usize {
@@ -244,7 +227,7 @@ where
         collapsed: &CollapsedGrid,
         patterns: &PatternCollection<P>,
         options: &PerOptionData,
-    ) -> Result<Vec<GridTile<CollapsiblePattern<P>>>, CollapsedGridError> {
+    ) -> Result<Vec<GridTile<CollapsiblePattern<P>>>, CollapsibleGridError> {
         let entrophy_uniform = EntrophyUniform::new();
         let ways = options.get_ways_to_become_option();
         let mut out = Vec::new();

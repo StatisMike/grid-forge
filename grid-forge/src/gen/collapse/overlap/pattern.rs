@@ -197,6 +197,7 @@ impl<const P_X: usize, const P_Y: usize, const P_Z: usize> OverlappingPattern3D<
         true
     }
 
+    #[allow(dead_code)]
     fn compare_deeper(&self, other: &Self) -> bool {
         if P_Z == 1 {
             return true;
@@ -213,6 +214,7 @@ impl<const P_X: usize, const P_Y: usize, const P_Z: usize> OverlappingPattern3D<
         true
     }
 
+    #[allow(dead_code)]
     fn compare_shallower(&self, other: &Self) -> bool {
         if P_Z == 1 {
             return true;
@@ -461,7 +463,7 @@ mod test {
         OverlappingPattern, OverlappingPattern2D, OverlappingPatternGrid, PatternTileData,
     };
 
-    /// ```
+    /// ```text
     ///     0 1 2 3
     ///     -------
     /// 0 | 0 0 1 1

@@ -72,7 +72,6 @@ grow_horizontal = 0
 current_tab = 0
 
 [node name="Image" type="Panel" parent="TabContainer"]
-visible = false
 layout_mode = 2
 metadata/_tab_index = 0
 
@@ -109,6 +108,7 @@ Choose one of the provided PNGs to generate the tilemap.
 Resulting [i]TileMap[/i] will have spaces between the tiles, to show the borders between tiles. "
 
 [node name="Generate" type="Panel" parent="TabContainer"]
+visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
@@ -150,6 +150,7 @@ item_count = 2
 popup/item_0/text = "Border Adjacency"
 popup/item_1/text = "Identity Adjacency"
 popup/item_1/id = 1
+selected = 1
 
 [node name="Queue" type="OptionButton" parent="TabContainer/Generate"]
 layout_mode = 0
@@ -161,6 +162,7 @@ item_count = 2
 popup/item_0/text = "PositionQueue"
 popup/item_1/text = "EntrophyQueue"
 popup/item_1/id = 1
+selected = 1
 
 [node name="GenerateButton" type="Button" parent="TabContainer/Generate"]
 layout_mode = 0

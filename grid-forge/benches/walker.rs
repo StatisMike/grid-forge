@@ -1,9 +1,5 @@
 use criterion::*;
-use grid_forge::{
-    gen::walker::GridWalker2DBuilder,
-    map::GridSize,
-    tile::{GridPosition, GridTile, TileData},
-};
+use grid_forge::{gen::walker::GridWalker2DBuilder, GridPosition, GridSize, GridTile, TileData};
 use rand::thread_rng;
 
 struct EmptyTileData;

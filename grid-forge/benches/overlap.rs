@@ -5,10 +5,9 @@ use rand_chacha::ChaChaRng;
 
 use grid_forge::{
     gen::collapse::overlap::*,
-    gen::collapse::*,
-    map::GridSize,
-    tile::identifiable::{builders::IdentTileTraitBuilder, BasicIdentTileData},
+    identifiable::{builders::IdentTileTraitBuilder, BasicIdentTileData},
     vis::{collection::VisCollection, ops::load_gridmap_identifiable_auto, DefaultVisPixel},
+    GridSize,
 };
 use utils::RngHelper;
 
@@ -29,7 +28,7 @@ fn analyze_10x10_pattern_2x2(c: &mut Criterion) {
         b.iter(|| {
             let mut analyzer =
                 Analyzer::<OverlappingPattern2D<2, 2>, BasicIdentTileData>::default();
-            analyzer.analyze_map(&grid);
+            analyzer.analyze(&grid);
         })
     });
 }
@@ -46,7 +45,7 @@ fn analyze_10x10_pattern_3x3(c: &mut Criterion) {
         b.iter(|| {
             let mut analyzer =
                 Analyzer::<OverlappingPattern2D<3, 3>, BasicIdentTileData>::default();
-            analyzer.analyze_map(&grid);
+            analyzer.analyze(&grid);
         })
     });
 }
@@ -63,7 +62,7 @@ fn generate_10x10_pattern_2x2_entrophy(c: &mut Criterion) {
 
         let grid = load_gridmap_identifiable_auto(&img, &mut vis_collection, &builder).unwrap();
 
-        analyzer.analyze_map(&grid);
+        analyzer.analyze(&grid);
     }
 
     let pattern_collection = analyzer.get_collection().clone();
@@ -82,8 +81,7 @@ fn generate_10x10_pattern_2x2_entrophy(c: &mut Criterion) {
             let mut rng: ChaChaRng = RngHelper::init_str("overlap_bench", 1).into();
 
             let mut resolver = Resolver::default();
-            let res =
-                resolver.generate(grid.clone(), &mut rng, &positions, EntrophyQueue::default());
+            let res = resolver.generate_entrophy(grid.clone(), &mut rng, &positions);
 
             assert!(res.is_ok());
         })
@@ -102,7 +100,7 @@ fn generate_10x10_pattern_3x3_entrophy(c: &mut Criterion) {
 
         let grid = load_gridmap_identifiable_auto(&img, &mut vis_collection, &builder).unwrap();
 
-        analyzer.analyze_map(&grid);
+        analyzer.analyze(&grid);
     }
 
     let pattern_collection = analyzer.get_collection().clone();
@@ -121,8 +119,7 @@ fn generate_10x10_pattern_3x3_entrophy(c: &mut Criterion) {
             let mut rng: ChaChaRng = RngHelper::init_str("overlap_bench", 1).into();
 
             let mut resolver = Resolver::default();
-            let res =
-                resolver.generate(grid.clone(), &mut rng, &positions, EntrophyQueue::default());
+            let res = resolver.generate_entrophy(grid.clone(), &mut rng, &positions);
 
             assert!(res.is_ok())
         })

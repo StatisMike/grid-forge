@@ -1,6 +1,6 @@
 [package]
 name = "grid-forge"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [lib]
@@ -44,22 +44,6 @@ path = "examples/collapse/gen_collapse_singular.rs"
 [[example]]
 name = "gen_collapse_overlap"
 path = "examples/collapse/gen_collapse_overlap.rs"
-
-[[bench]]
-name = "walker"
-harness = false
-
-[[bench]]
-name = "collapsible"
-harness = false
-
-[[bench]]
-name = "overlap"
-harness = false 
-
-[[bench]]
-name = "vis"
-harness = false
 
 [[bench]]
 name = "walker"

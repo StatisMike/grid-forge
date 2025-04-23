@@ -15,6 +15,7 @@ pub use {collection::*, error::*, ops::*};
 pub(crate) enum TileSourceType {
     Atlas,
     Collection,
+    #[allow(dead_code)]
     Mesh,
 }
 

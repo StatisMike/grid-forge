@@ -8,7 +8,7 @@ use crate::{
     },
 };
 
-use super::{error::CollapsedGridError, CollapsedTileData, CollapsibleTileData};
+use super::{error::CollapsibleGridError, CollapsedTileData, CollapsibleTileData};
 
 /// [`GridMap2D`] containing data of [`CollapsedTileData`].
 pub struct CollapsedGrid {

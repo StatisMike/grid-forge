@@ -2,11 +2,10 @@ use std::time::Duration;
 
 use criterion::*;
 use grid_forge::{
-    gen::collapse::singular::*,
-    gen::collapse::*,
-    map::GridSize,
-    tile::identifiable::{builders::IdentTileTraitBuilder, BasicIdentTileData},
+    gen::collapse::{singular::*, *},
+    identifiable::{builders::IdentTileTraitBuilder, BasicIdentTileData},
     vis::{collection::VisCollection, ops::load_gridmap_identifiable_auto, DefaultVisPixel},
+    GridSize,
 };
 use rand::SeedableRng;
 use rand_chacha::ChaChaRng;
@@ -63,7 +62,7 @@ fn analyze_frequency_10x10(c: &mut Criterion) {
     c.bench_function("analyze_frequency_10x10", |b| {
         b.iter(|| {
             let mut freq_hints = FrequencyHints::default();
-            freq_hints.analyze_grid_map(&seas_grid);
+            freq_hints.analyze(&seas_grid);
         })
     });
 }
@@ -82,7 +81,7 @@ fn analyze_build_collapsible_grid(c: &mut Criterion) {
     analyzer.analyze(&seas_grid);
     let adj_rules = analyzer.adjacency();
     let mut freq_hints = FrequencyHints::default();
-    freq_hints.analyze_grid_map(&seas_grid);
+    freq_hints.analyze(&seas_grid);
 
     c.bench_function("analyze_build_collapsible_grid", |b| {
         b.iter(|| {
@@ -112,8 +111,8 @@ fn gen_identity_position_10x10(c: &mut Criterion) {
     analyzer.analyze(&roads_grid);
 
     let mut frequency_hints = FrequencyHints::default();
-    frequency_hints.analyze_grid_map(&seas_grid);
-    frequency_hints.analyze_grid_map(&roads_grid);
+    frequency_hints.analyze(&seas_grid);
+    frequency_hints.analyze(&roads_grid);
 
     let size = GridSize::new_xy(10, 10);
     let mut grid = CollapsibleTileGrid::new_empty(size, &frequency_hints, analyzer.adjacency());
@@ -127,7 +126,7 @@ fn gen_identity_position_10x10(c: &mut Criterion) {
 
             let mut resolver = Resolver::default();
             resolver
-                .generate(
+                .generate_position(
                     &mut grid,
                     &mut rng,
                     &size.get_all_possible_positions(),
@@ -158,8 +157,8 @@ fn gen_identity_entrophy_10x10(c: &mut Criterion) {
     analyzer.analyze(&roads_grid);
 
     let mut frequency_hints = FrequencyHints::default();
-    frequency_hints.analyze_grid_map(&seas_grid);
-    frequency_hints.analyze_grid_map(&roads_grid);
+    frequency_hints.analyze(&seas_grid);
+    frequency_hints.analyze(&roads_grid);
 
     let size = GridSize::new_xy(10, 10);
     let mut grid = CollapsibleTileGrid::new_empty(size, &frequency_hints, analyzer.adjacency());
@@ -175,12 +174,7 @@ fn gen_identity_entrophy_10x10(c: &mut Criterion) {
 
             let mut resolver = Resolver::default();
             resolver
-                .generate(
-                    &mut grid,
-                    &mut rng,
-                    &size.get_all_possible_positions(),
-                    EntrophyQueue::default(),
-                )
+                .generate_entrophy(&mut grid, &mut rng, &size.get_all_possible_positions())
                 .unwrap();
         })
     });
@@ -206,8 +200,8 @@ fn gen_border_position_10x10(c: &mut Criterion) {
     analyzer.analyze(&roads_grid);
 
     let mut frequency_hints = FrequencyHints::default();
-    frequency_hints.analyze_grid_map(&seas_grid);
-    frequency_hints.analyze_grid_map(&roads_grid);
+    frequency_hints.analyze(&seas_grid);
+    frequency_hints.analyze(&roads_grid);
 
     let size = GridSize::new_xy(10, 10);
     let mut grid = CollapsibleTileGrid::new_empty(size, &frequency_hints, analyzer.adjacency());
@@ -221,7 +215,7 @@ fn gen_border_position_10x10(c: &mut Criterion) {
 
             let mut resolver = Resolver::default();
             resolver
-                .generate(
+                .generate_position(
                     &mut grid,
                     &mut rng,
                     &size.get_all_possible_positions(),
@@ -252,8 +246,8 @@ fn gen_border_entrophy_10x10(c: &mut Criterion) {
     analyzer.analyze(&roads_grid);
 
     let mut frequency_hints = FrequencyHints::default();
-    frequency_hints.analyze_grid_map(&seas_grid);
-    frequency_hints.analyze_grid_map(&roads_grid);
+    frequency_hints.analyze(&seas_grid);
+    frequency_hints.analyze(&roads_grid);
 
     let size = GridSize::new_xy(10, 10);
     let mut grid = CollapsibleTileGrid::new_empty(size, &frequency_hints, analyzer.adjacency());
@@ -269,12 +263,7 @@ fn gen_border_entrophy_10x10(c: &mut Criterion) {
 
             let mut resolver = Resolver::default();
             resolver
-                .generate(
-                    &mut grid,
-                    &mut rng,
-                    &size.get_all_possible_positions(),
-                    EntrophyQueue::default(),
-                )
+                .generate_entrophy(&mut grid, &mut rng, &size.get_all_possible_positions())
                 .unwrap();
         })
     });

@@ -13,10 +13,10 @@
 //! - [`AdjacencyRules`] and [`FrequencyHints`] are self-descriptive, and both can be created by the analyzer.
 //! - [`Analyzer`] can generate [`AdjacencyRules`], [`FrequencyHints`] and [`PatternCollection`].
 //! - [`PatternCollection`] is a collection of [`OverlappingPattern`]s gathered from sample maps. It is an additional
-//! element over [`singular`](crate::gen::collapse::singular) workflow needed for translation between collapsed patterns
-//! and underlying individual `tile_type_id`.
+//!   element over [`singular`](crate::gen::collapse::singular) workflow needed for translation between collapsed patterns
+//!   and underlying individual `tile_type_id`.
 //! - [`CollapsiblePatternGrid`] is the collection of [`CollapsiblePattern`], and is used by [`Resolver`] to generate
-//! new map.
+//!   new map.
 
 mod analyzer;
 mod pattern;

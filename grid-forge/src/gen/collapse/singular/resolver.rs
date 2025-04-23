@@ -63,10 +63,10 @@ where
     ///
     /// # Arguments
     /// * `grid` - [`CollapsibleTileGrid`] to be processed. All non-collapsed tiles provided within will be
-    /// removed on the beginning of the process.
+    ///   removed on the beginning of the process.
     /// * `rng` - [`Rng`] to be used for randomness.
     /// * `positions` - [`GridPosition`]s to be collapsed. If any collapsed tile is present inside the provided `grid`
-    /// at one of the positions provided, the tile will be overwritten with uncollapsed one.
+    ///   at one of the positions provided, the tile will be overwritten with uncollapsed one.
     ///
     /// Provided `grid` can be translated into either a [`CollapsedGrid`](crate::gen::collapse::grid::CollapsedGrid)
     /// or [`GridMap2D`](crate::map::GridMap2D) of some [`IdentifiableTileData`] after the process.

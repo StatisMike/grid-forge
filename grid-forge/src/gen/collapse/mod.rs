@@ -13,12 +13,12 @@
 //!
 //! Two main types of algorithms are provided in distinct submodules:
 //! - [`singular`] - implementation that can be used to generate maps. Each tile type needs to be self-descriptive in
-//! regards to its possible neighbours. Constraints for this type of generation is based strictly on possible neighbours for each given tile,
-//! set of rules which can be described as: tile `X` can be placed in direction `D` of tile `Y`.
+//!   regards to its possible neighbours. Constraints for this type of generation is based strictly on possible neighbours for each given tile,
+//!   set of rules which can be described as: tile `X` can be placed in direction `D` of tile `Y`.
 //! - [`overlap`] - implementation that can be used to generate maps based on observed patterns. Direct possible adjacents of each tile are
-//! less important there, the pattern context is more important. First step for this type of generation is to create a collection of patterns
-//! from sample gridmaps, which then will be tested for possible neigbours. During the process the possible patterns will then be collapsed
-//! instead of individual tiles.
+//!   less important there, the pattern context is more important. First step for this type of generation is to create a collection of patterns
+//!   from sample gridmaps, which then will be tested for possible neigbours. During the process the possible patterns will then be collapsed
+//!   instead of individual tiles.
 //!
 //! ## Struct types
 //!
@@ -27,13 +27,13 @@
 //!
 //! - *adjacency rules* are the rules that are used to determine possible neighbours for each tile.
 //! - *frequency hints* can be described as a weights per option - they can be derived from sample gridmaps and are a way to influence the
-//! frequency of options occuring in the generated grid.
+//!   frequency of options occuring in the generated grid.
 //! - *analyzers* provide methods for analyzing sample gridmaps and creating rulesets out of them.
 //! - *collapsible grids* are the source of information for the *resolvers*, from the collection of collapsible tiles to the prepared
-//! adjacency rules and frequency hints. They can also contain some pre-collapsed tiles, providing initial constraints for the generation.
+//!   adjacency rules and frequency hints. They can also contain some pre-collapsed tiles, providing initial constraints for the generation.
 //! - *resolvers* are the main executors of the algorithm and are responsible for collapsing the tiles in the *collapsible grids*.
 //! - *queues* are used to determine the order in which tiles are collapsed: [`PositionQueue`] takes next position to collapse in a fixed
-//! order, while [`EntrophyQueue`] fetch the next position to collapse with the lowest entrophy.
+//!   order, while [`EntrophyQueue`] fetch the next position to collapse with the lowest entrophy.
 
 mod error;
 mod grid;
@@ -43,7 +43,7 @@ mod queue;
 pub mod singular;
 mod tile;
 
-use std::{collections::HashSet, ops::Index};
+use std::{collections::HashSet, fs::File, io::Write, ops::Index};
 
 // Flattened reexports
 pub use error::CollapseError;
@@ -88,12 +88,28 @@ impl Index<GridDir> for Adjacencies {
 ///
 /// Implements both [`overlap::Subscriber`] and [`singular::Subscriber`], making it usable with both resolvers.
 /// Upon collapsing a tile, it will print the collapsed `GridPosition`, `tile_type_id` and (if applicable) `pattern_id`.
-#[derive(Clone, Debug, Default)]
-pub struct DebugSubscriber;
+#[derive(Debug, Default)]
+pub struct DebugSubscriber {
+    file: Option<File>,
+}
+
+impl DebugSubscriber {
+    pub fn new(file: Option<File>) -> Self {
+        Self { file }
+    }
+}
 
 impl singular::Subscriber for DebugSubscriber {
     fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64) {
-        println!("collapsed tile_type_id: {tile_type_id} on position: {position:?}");
+        if let Some(file) = &mut self.file {
+            writeln!(
+                file,
+                "collapsed tile_type_id: {tile_type_id} on position: {position:?}"
+            )
+            .unwrap();
+        } else {
+            println!("collapsed tile_type_id: {tile_type_id} on position: {position:?}");
+        }
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
@@ -103,9 +119,17 @@ impl singular::Subscriber for DebugSubscriber {
 
 impl overlap::Subscriber for DebugSubscriber {
     fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64, pattern_id: u64) {
-        println!(
-            "collapsed tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}"
-        );
+        if let Some(file) = &mut self.file {
+            writeln!(
+                file,
+                "collapsed tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}"
+            )
+            .unwrap();
+        } else {
+            println!(
+                "collapsed tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}"
+            );
+        }
     }
 }
 

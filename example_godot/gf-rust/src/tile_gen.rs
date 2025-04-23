@@ -5,11 +5,11 @@ use std::sync::mpsc::{self, Receiver};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-use godot::builtin::{Array, GString, Vector2i};
-use godot::classes::{AcceptDialog, INode, Node, TileMap};
-use godot::global::godot_warn;
-use godot::meta::ToGodot;
-use godot::obj::{Base, Gd, WithBaseField};
+use godot::builtin::{Array, Dictionary, GString, Vector2i};
+use godot::classes::{AcceptDialog, INode, Node, TileMap, Timer};
+use godot::global::{godot_error, godot_warn};
+use godot::meta::{FromGodot, ToGodot};
+use godot::obj::{Base, Gd, NewAlloc, WithBaseField};
 use godot::register::{godot_api, GodotClass};
 use grid_forge::{GridMap2D, GridPosition, GridSize, GridTile};
 use singular::Analyzer;
@@ -456,7 +456,7 @@ impl GenerationHistoryState {
 
         if let Some(map) = &mut self.tilemap {
             map.call(
-                "adjust_generation".into(),
+                "adjust_generation",
                 &[
                     Vector2i::new(gridmap.size().x() as i32, gridmap.size().y() as i32)
                         .to_variant(),
@@ -467,7 +467,7 @@ impl GenerationHistoryState {
         self.current = 0;
         self.total = self.history.len() as u32 + 1;
         self.base_mut()
-            .emit_signal("current_state".into(), &[0.to_variant()]);
+            .emit_signal("current_state", &[0.to_variant()]);
     }
 
     /// Plays the generation history starting from the current step with the given speed.
@@ -478,9 +478,9 @@ impl GenerationHistoryState {
         }
         self.playing = true;
         let mut timer = Timer::new_alloc();
-        self.base_mut().add_child(timer.clone().upcast());
+        self.base_mut().add_child(&timer);
         timer.set_wait_time(1. / count_per_sec as f64);
-        timer.connect("timeout".into(), self.base_mut().callable("forward"));
+        timer.connect("timeout", &self.base_mut().callable("forward"));
         timer.start();
         self.timer = Some(timer);
     }
@@ -511,7 +511,7 @@ impl GenerationHistoryState {
         }
         let current = self.current;
         self.base_mut()
-            .emit_signal("current_state".into(), &[current.to_variant()]);
+            .emit_signal("current_state", &[current.to_variant()]);
     }
 
     /// Rewinds the generation history to the previous step.
@@ -524,7 +524,7 @@ impl GenerationHistoryState {
         self.current -= 1;
         let current = self.current;
         self.base_mut()
-            .emit_signal("current_state".into(), &[current.to_variant()]);
+            .emit_signal("current_state", &[current.to_variant()]);
     }
 
     /// Rewinds the generation history completely.

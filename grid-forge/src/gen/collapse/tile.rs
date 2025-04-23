@@ -70,6 +70,7 @@ pub(crate) mod private {
         Rng,
     };
 
+    use crate::r#gen::collapse::option::OptionWeights;
     use crate::{
         gen::collapse::option::{PerOptionData, WaysToBeOption},
         map::{GridDir, GridMap2D},
@@ -86,8 +87,7 @@ pub(crate) mod private {
             position: GridPosition,
             num_options: usize,
             ways_to_be_option: WaysToBeOption,
-            weight_sum: u32,
-            weight_log_sum: f32,
+            weight: OptionWeights,
             entrophy_noise: f32,
         ) -> GridTile<Self>;
 
@@ -100,15 +100,10 @@ pub(crate) mod private {
             let rng_range = Self::entrophy_uniform();
             let ways_to_be_option = options_data.get_ways_to_become_option();
 
-            let (weight_sum, weight_log_sum) = ways_to_be_option
+            let weight = ways_to_be_option
                 .iter_possible()
                 .map(|option_idx| options_data.get_weights(option_idx))
-                .fold(
-                    (0u32, 0f32),
-                    |(sum_weight, sum_weight_log), (weight, weight_log)| {
-                        (sum_weight + weight, sum_weight_log + weight_log)
-                    },
-                );
+                .fold(OptionWeights::default(), |sum, new| sum + new);
 
             positions
                 .iter()
@@ -117,8 +112,7 @@ pub(crate) mod private {
                         *position,
                         options_data.num_possible_options(),
                         ways_to_be_option.clone(),
-                        weight_sum,
-                        weight_log_sum,
+                        weight,
                         rng_range.sample(rng),
                     )
                 })
@@ -132,15 +126,10 @@ pub(crate) mod private {
         ) -> Vec<GridTile<Self>> {
             let ways_to_be_option = options_data.get_ways_to_become_option();
 
-            let (weight_sum, weight_log_sum) = ways_to_be_option
+            let weight = ways_to_be_option
                 .iter_possible()
                 .map(|option_idx| options_data.get_weights(option_idx))
-                .fold(
-                    (0u32, 0f32),
-                    |(sum_weight, sum_weight_log), (weight, weight_log)| {
-                        (sum_weight + weight, sum_weight_log + weight_log)
-                    },
-                );
+                .fold(OptionWeights::default(), |sum, new| sum + new);
 
             positions
                 .iter()
@@ -149,8 +138,7 @@ pub(crate) mod private {
                         *pos,
                         options_data.num_possible_options(),
                         ways_to_be_option.clone(),
-                        weight_sum,
-                        weight_log_sum,
+                        weight,
                         0.0,
                     )
                 })
@@ -164,7 +152,7 @@ pub(crate) mod private {
         fn mut_ways_to_be_option(&mut self) -> &mut WaysToBeOption;
 
         /// Removes single option from tile.
-        fn remove_option(&mut self, weights: (u32, f32));
+        fn remove_option(&mut self, weights: OptionWeights);
 
         /// Range of uniformly distributed data for entrophy noise.
         fn entrophy_uniform() -> Uniform<f32> {

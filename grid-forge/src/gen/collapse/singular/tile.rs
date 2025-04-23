@@ -95,12 +95,11 @@ impl crate::gen::collapse::tile::private::Sealed for CollapsibleTile {
     fn mark_collapsed(&mut self, collapsed_idx: usize) {
         self.collapsed_option = Some(collapsed_idx);
         self.num_possible_options = 0;
-        self.weight_sum = 0;
-        self.weight_log_sum = 0.;
+        self.weight = OptionWeights::default();
     }
 
     fn weight_sum(&self) -> u32 {
-        self.weight_sum
+        self.weight.0
     }
 }
 
