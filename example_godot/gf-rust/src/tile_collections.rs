@@ -7,8 +7,10 @@
 use std::collections::HashSet;
 
 use godot::builtin::{Array, Color, GString, Vector2i};
+use godot::classes::image::Format;
 use godot::classes::{AcceptDialog, Image, Texture2D, TileMap, TileSet, TileSetAtlasSource};
-use godot::log::{godot_error, godot_warn};
+use godot::global::{godot_error, godot_warn};
+use godot::meta::AsArg;
 use godot::obj::Gd;
 use godot::register::{godot_api, GodotClass};
 
@@ -78,7 +80,7 @@ impl TileCollections {
         }
 
         // Open image file
-        let image = image_buffer_from_texture_2d(self.path_to_image.clone());
+        let image = image_buffer_from_texture_2d(&self.path_to_image);
 
         let grid_size = check_grid_vis_size::<DefaultVisPixel, 4, 4>(&image);
 
@@ -107,7 +109,7 @@ impl TileCollections {
             let godot_tile_info =
                 GodotTileMapTileInfo::new_atlas(self.source_id, position.get_godot_coords(), 0);
 
-            self.tiles.push(SingleTile::new(
+            self.tiles.push(&SingleTile::new(
                 tile_type_id as i32,
                 godot_tile_info,
                 gd_image,
@@ -143,7 +145,7 @@ impl TileCollections {
     fn show_modal(&self, message: &str) {
         if let Some(modal) = &self.modal {
             let mut pntr = modal.clone();
-            pntr.set_text(message.into());
+            pntr.set_text(message);
             pntr.set_visible(true);
         } else {
             godot_warn!("Cannot find modal for TileCollections. Message to show: {message}");
@@ -281,7 +283,7 @@ impl SingleTile {
     }
 
     fn pixels_to_image(pixels: &[[DefaultVisPixel; 4]; 4]) -> Gd<Image> {
-        let mut image = Image::create(4, 4, false, godot::engine::image::Format::RGB8).unwrap();
+        let mut image = Image::create(4, 4, false, Format::RGB8).unwrap();
         for (y, row) in pixels.iter().enumerate() {
             for (x, pixel) in row.iter().enumerate() {
                 let color = Color::from_rgba8(pixel.0[0], pixel.0[1], pixel.0[2], 0);
@@ -294,10 +296,10 @@ impl SingleTile {
 
 /// Utility function to load [`image::ImageBuffer`] from Godot's [`Texture2D`] resource path.
 fn image_buffer_from_texture_2d(
-    texture_path: impl Into<GString>,
+    texture_path: impl AsArg<GString>,
 ) -> image::ImageBuffer<image::Rgb<u8>, Vec<u8>> {
     let texture = godot::prelude::load::<Texture2D>(texture_path);
-    let image_data = texture.get_image().unwrap().get_data().to_vec();
+    let image_data: Vec<u8> = texture.get_image().unwrap().get_data().to_vec();
 
     image::ImageBuffer::from_raw(
         texture.get_width() as u32,

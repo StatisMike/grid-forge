@@ -1,6 +1,6 @@
 [package]
 name = "grid-forge"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [lib]
@@ -21,7 +21,7 @@ num-traits = "*"
 grid = { version = "0.13.*" }
 image = { version = "0.25.*", optional = true, default-features = false }
 rand = { version = "0.8.*", optional = true }
-godot = { git = "https://github.com/godot-rust/gdext", branch = "master", optional = true }
+godot = { version = "^0.2.4", optional = true }
 
 [dev-dependencies]
 criterion = { version = "0.4", features = ["html_reports"] }
@@ -46,17 +46,17 @@ name = "gen_collapse_overlap"
 path = "examples/collapse/gen_collapse_overlap.rs"
 
 [[bench]]
-name = "gen_collapse_singular"
+name = "walker"
 harness = false
 
 [[bench]]
-name = "gen_collapse_overlap"
+name = "collapsible"
 harness = false
 
 [[bench]]
-name = "gen_walker"
-harness = false
+name = "overlap"
+harness = false 
 
 [[bench]]
-name = "vis_io"
+name = "vis"
 harness = false

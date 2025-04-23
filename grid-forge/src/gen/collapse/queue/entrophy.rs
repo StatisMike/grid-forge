@@ -3,22 +3,28 @@ use std::{
     collections::{BTreeSet, HashMap},
 };
 
-use rand::Rng;
+use rand::{distributions::Uniform, prelude::Distribution, Rng};
 
 use super::CollapseQueue;
-use crate::gen::collapse::{option::PerOptionData, tile::CollapsibleTileData};
 use crate::map::GridMap2D;
 use crate::tile::{GridPosition, GridTile, TileContainer};
+use crate::{
+    gen::collapse::{option::PerOptionData, tile::CollapsibleTileData},
+    utils::OrderedFloat,
+};
 
 #[derive(Clone, Copy)]
 pub(crate) struct EntrophyItem {
     pos: GridPosition,
-    entrophy: f32,
+    entrophy: OrderedFloat,
 }
 
 impl EntrophyItem {
     pub fn new(pos: GridPosition, entrophy: f32) -> Self {
-        Self { pos, entrophy }
+        Self {
+            pos,
+            entrophy: entrophy.into(),
+        }
     }
 }
 
@@ -26,7 +32,7 @@ impl Eq for EntrophyItem {}
 
 impl PartialEq for EntrophyItem {
     fn eq(&self, other: &Self) -> bool {
-        self.entrophy == other.entrophy
+        self.entrophy == other.entrophy && self.pos == other.pos
     }
 }
 
@@ -51,7 +57,7 @@ impl Ord for EntrophyItem {
 #[derive(Default)]
 pub struct EntrophyQueue {
     by_entrophy: BTreeSet<EntrophyItem>,
-    by_pos: HashMap<GridPosition, f32>,
+    by_pos: HashMap<GridPosition, OrderedFloat>,
 }
 
 impl EntrophyQueue {
@@ -77,7 +83,7 @@ impl CollapseQueue for EntrophyQueue {
         let item = EntrophyItem::new(tile.grid_position(), tile.as_ref().calc_entrophy());
         if let Some(existing_entrophy) = self.by_pos.remove(&item.pos) {
             self.by_entrophy
-                .remove(&EntrophyItem::new(item.pos, existing_entrophy));
+                .remove(&EntrophyItem::new(item.pos, existing_entrophy.into()));
         }
         self.by_pos.insert(item.pos, item.entrophy);
         self.by_entrophy.insert(item);
@@ -95,6 +101,24 @@ impl CollapseQueue for EntrophyQueue {
         for element in tiles {
             self.update_queue(element)
         }
+    }
+}
+
+pub(crate) struct EntrophyUniform {
+    inner: Uniform<u8>,
+}
+
+impl EntrophyUniform {
+    const MULTIPLIER: u8 = 124;
+
+    pub fn new() -> Self {
+        Self {
+            inner: Uniform::<u8>::new(0, EntrophyUniform::MULTIPLIER),
+        }
+    }
+
+    pub fn sample<R: Rng>(&self, rng: &mut R) -> f32 {
+        self.inner.sample(rng) as f32 * OrderedFloat::EPSILON
     }
 }
 

@@ -22,9 +22,9 @@ pub mod collection;
 /// when implementing this trait manually should be:
 ///
 /// - its position **should not be ever taken into account**. Tile of these same type could be placed on different positions
-/// on the GridMap.
+///   on the GridMap.
 /// - other properties of the tile (such as visual representation) *can* be taken into account depending on your specific
-/// needs.
+///   needs.
 pub trait IdentifiableTileData
 where
     Self: TileData,

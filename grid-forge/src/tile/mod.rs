@@ -1,4 +1,7 @@
-use std::ops::{Add, AddAssign, Sub};
+use std::{
+    cmp::Ordering,
+    ops::{Add, AddAssign, Sub},
+};
 
 pub mod identifiable;
 
@@ -92,13 +95,13 @@ where
     data: &'a mut Data,
 }
 
-impl<'a, Data: TileData> AsRef<Data> for GridTileRefMut<'a, Data> {
+impl<Data: TileData> AsRef<Data> for GridTileRefMut<'_, Data> {
     fn as_ref(&self) -> &Data {
         self.data
     }
 }
 
-impl<'a, Data: TileData> AsMut<Data> for GridTileRefMut<'a, Data> {
+impl<Data: TileData> AsMut<Data> for GridTileRefMut<'_, Data> {
     fn as_mut(&mut self) -> &mut Data {
         self.data
     }
@@ -133,7 +136,7 @@ impl<Data: TileData> TileContainer for GridTileRefMut<'_, Data> {
 }
 
 /// Position of the [`TileData`] within a [`GridMap2D`](crate::map::GridMap2D).
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct GridPosition {
     x: u32,
     y: u32,
@@ -233,6 +236,26 @@ impl GridPosition {
     /// Filter the `pos` vector, removing from it all positions contained within `to_filter`.
     pub fn filter_positions(pos: &mut Vec<GridPosition>, to_filter: &[GridPosition]) {
         pos.retain(|p| !to_filter.contains(p));
+    }
+}
+
+impl Ord for GridPosition {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let mut cmp = self.x.cmp(&other.x);
+        if cmp != Ordering::Equal {
+            return cmp;
+        };
+        cmp = self.y.cmp(&other.y);
+        if cmp != Ordering::Equal {
+            return cmp;
+        };
+        self.z.cmp(&other.z)
+    }
+}
+
+impl PartialOrd for GridPosition {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 

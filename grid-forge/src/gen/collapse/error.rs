@@ -10,13 +10,13 @@ use crate::{map::GridSize, tile::GridPosition};
 ///
 /// There are some methods available to get more information about the type and possible fallback solutions:
 /// - [`CollapseError::failed_pos()`] returns [`GridPosition`] of tile which caused the error, while [`CollapseError::failed_iter()`]
-/// returns the count of successful collapse iterations before the error occured. If the same position fails consistently
-/// on multiple retries or failure occurs just at the beginning of the process, most likely the rulesets are
-/// too restrictive. In this case you can try to increase the number of analyzed samples, try to modify used *adjacency rules* or
-/// tweak the *frequency hints*.
+///   returns the count of successful collapse iterations before the error occured. If the same position fails consistently
+///   on multiple retries or failure occurs just at the beginning of the process, most likely the rulesets are
+///   too restrictive. In this case you can try to increase the number of analyzed samples, try to modify used *adjacency rules* or
+///   tweak the *frequency hints*.
 /// - [`CollapseError::is_probabilistic()`] returns `true` if the error can be solved by retrying the operation. If the error
-/// occurs at the sole beginning of the process, before first successful collapse it is deemed not probabilistic and is most likely caused
-/// by placing some incompatible pre-collapsed tiles in *collapsible grid* provided to the *resolver*.
+///   occurs at the sole beginning of the process, before first successful collapse it is deemed not probabilistic and is most likely caused
+///   by placing some incompatible pre-collapsed tiles in *collapsible grid* provided to the *resolver*.
 #[derive(Debug)]
 pub struct CollapseError {
     pos: GridPosition,
@@ -62,8 +62,8 @@ impl Display for CollapseError {
         match self.kind {
             CollapseErrorKind::Collapse => write!(
                 f,
-                "tile at position: {:?} have no options left while collapsing on iteration {}!",
-                self.pos, self.iter
+                "tile at position: {:?} have no options left while collapsing!",
+                self.pos
             ),
             CollapseErrorKind::Init => write!(
                 f,

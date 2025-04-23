@@ -1,3 +1,5 @@
+use std::fs::File;
+
 use grid_forge::{gen::collapse::*, vis::collection::VisCollection, GridSize};
 use overlap::CollapsiblePatternGrid;
 use rand_chacha::ChaChaRng;
@@ -31,104 +33,113 @@ fn main() {
     // Resolver can be reused, as it is used for the same tile type.
     let mut resolver = overlap::Resolver::default();
 
-    // Save the collapse process as a GIF.
-    if args.gif() {
-        let file =
-            std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "overlap_entrophy.gif")).unwrap();
+    if !args.skip_entrophy() {
+        // Save the collapse process as a GIF.
+        if args.gif() {
+            let file = std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "overlap_entrophy.gif"))
+                .unwrap();
 
-        let subscriber =
-            GifSingleSubscriber::new(file, &outputs_size, vis_collection.clone()).with_rescale(3);
+            let subscriber = GifSingleSubscriber::new(file, &outputs_size, vis_collection.clone())
+                .with_rescale(3);
 
-        resolver = resolver.with_subscriber(Box::new(subscriber));
-    }
+            resolver = resolver.with_subscriber(Box::new(subscriber));
+        } else if args.debug() {
+            let subsciber = DebugSubscriber::new(Some(
+                File::create(format!("{}{}", OUTPUTS_DIR, "overlap_entrophy_debug.txt")).unwrap(),
+            ));
+            resolver = resolver.with_subscriber(Box::new(subsciber));
+        }
 
-    // Using propagating EntrophyQueue, we will use more restrictive `identity`
-    // AdjacencyRules. It will help to keep high success rate, but is a little
-    // slower than PositionQueue.
-    let mut rng: ChaChaRng = RngHelper::init_str("overlap_entrophy", 2).into();
-    let to_collapse = CollapsiblePatternGrid::new_empty(
-        outputs_size,
-        analyzer.get_collection().clone(),
-        analyzer.get_frequency(),
-        analyzer.get_adjacency(),
-    )
-    .unwrap();
-
-    let after_collapse = resolver
-        .generate_entrophy(
-            to_collapse,
-            &mut rng,
-            &outputs_size.get_all_possible_positions(),
+        // Using propagating EntrophyQueue, we will use more restrictive `identity`
+        // AdjacencyRules. It will help to keep high success rate, but is a little
+        // slower than PositionQueue.
+        let mut rng: ChaChaRng = RngHelper::init_str("overlap_entrophy", 2).into();
+        let to_collapse = CollapsiblePatternGrid::new_empty(
+            outputs_size,
+            analyzer.get_collection().clone(),
+            analyzer.get_frequency(),
+            analyzer.get_adjacency(),
         )
         .unwrap();
 
-    let collapsed = after_collapse.retrieve_collapsed();
-    let mut out_buffer = vis_collection.init_map_image_buffer(collapsed.as_ref().size());
-    vis_collection
-        .draw_map(collapsed.as_ref(), &mut out_buffer)
-        .unwrap();
-    out_buffer = image::imageops::resize(
-        &out_buffer,
-        outputs_size.x() * 4 * 3,
-        outputs_size.y() * 4 * 3,
-        image::imageops::FilterType::Nearest,
-    );
-    out_buffer
-        .save(format!("{}{}", OUTPUTS_DIR, "overlap_entrophy.png"))
-        .unwrap();
+        let after_collapse = resolver
+            .generate_entrophy(
+                to_collapse,
+                &mut rng,
+                &outputs_size.get_all_possible_positions(),
+            )
+            .unwrap();
 
-    // Using non-propagating PositionQueue, we will use less restrictive `border`
-    // AdjacencyRules. The success rate will be still moderately high - and
-    // errors can be mitigated by just retrying, as non-propagating queue is faster.
-
-    let mut analyzer = overlap::Analyzer::<overlap::OverlappingPattern2D<2, 2>, _>::default();
-    for map in maps.iter() {
-        analyzer.analyze(map);
-    }
-    let mut resolver = overlap::Resolver::default();
-
-    // Save the collapse process as a GIF.
-    if args.gif() {
-        let file =
-            std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "overlap_position.gif")).unwrap();
-
-        let subscriber =
-            GifSingleSubscriber::new(file, &outputs_size, vis_collection.clone()).with_rescale(3);
-
-        resolver = resolver.with_subscriber(Box::new(subscriber));
+        let collapsed = after_collapse.retrieve_collapsed();
+        let mut out_buffer = vis_collection.init_map_image_buffer(collapsed.as_ref().size());
+        vis_collection
+            .draw_map(collapsed.as_ref(), &mut out_buffer)
+            .unwrap();
+        out_buffer = image::imageops::resize(
+            &out_buffer,
+            outputs_size.x() * 4 * 3,
+            outputs_size.y() * 4 * 3,
+            image::imageops::FilterType::Nearest,
+        );
+        out_buffer
+            .save(format!("{}{}", OUTPUTS_DIR, "overlap_entrophy.png"))
+            .unwrap();
     }
 
-    let to_collapse = CollapsiblePatternGrid::new_empty(
-        outputs_size,
-        analyzer.get_collection().clone(),
-        analyzer.get_frequency(),
-        analyzer.get_adjacency(),
-    )
-    .unwrap();
+    if !args.skip_position() {
+        // Using non-propagating PositionQueue, we will use less restrictive `border`
+        // AdjacencyRules. The success rate will be still moderately high - and
+        // errors can be mitigated by just retrying, as non-propagating queue is faster.
 
-    let mut rng: ChaChaRng = RngHelper::init_str("overlap_position", 0)
-        .with_pos(13934)
-        .into();
+        let mut analyzer = overlap::Analyzer::<overlap::OverlappingPattern2D<2, 2>, _>::default();
+        for map in maps.iter() {
+            analyzer.analyze(map);
+        }
+        let mut resolver = overlap::Resolver::default();
 
-    let after_collapse = resolver.generate_position(
-        to_collapse.clone(),
-        &mut rng,
-        &outputs_size.get_all_possible_positions(),
-        PositionQueue::default(),
-    );
+        // Save the collapse process as a GIF.
+        if args.gif() {
+            let file = std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "overlap_position.gif"))
+                .unwrap();
 
-    let collapsed = after_collapse.unwrap().retrieve_collapsed();
-    let mut out_buffer = vis_collection.init_map_image_buffer(collapsed.as_ref().size());
-    vis_collection
-        .draw_map(collapsed.as_ref(), &mut out_buffer)
+            let subscriber = GifSingleSubscriber::new(file, &outputs_size, vis_collection.clone())
+                .with_rescale(3);
+
+            resolver = resolver.with_subscriber(Box::new(subscriber));
+        }
+
+        let to_collapse = CollapsiblePatternGrid::new_empty(
+            outputs_size,
+            analyzer.get_collection().clone(),
+            analyzer.get_frequency(),
+            analyzer.get_adjacency(),
+        )
         .unwrap();
-    out_buffer = image::imageops::resize(
-        &out_buffer,
-        outputs_size.x() * 4 * 3,
-        outputs_size.y() * 4 * 3,
-        image::imageops::FilterType::Nearest,
-    );
-    out_buffer
-        .save(format!("{}{}", OUTPUTS_DIR, "overlap_position.png"))
-        .unwrap();
+
+        let mut rng: ChaChaRng = RngHelper::init_str("overlap_position", 0)
+            .with_pos(13934)
+            .into();
+
+        let after_collapse = resolver.generate_position(
+            to_collapse.clone(),
+            &mut rng,
+            &outputs_size.get_all_possible_positions(),
+            PositionQueue::default(),
+        );
+
+        let collapsed = after_collapse.unwrap().retrieve_collapsed();
+        let mut out_buffer = vis_collection.init_map_image_buffer(collapsed.as_ref().size());
+        vis_collection
+            .draw_map(collapsed.as_ref(), &mut out_buffer)
+            .unwrap();
+        out_buffer = image::imageops::resize(
+            &out_buffer,
+            outputs_size.x() * 4 * 3,
+            outputs_size.y() * 4 * 3,
+            image::imageops::FilterType::Nearest,
+        );
+        out_buffer
+            .save(format!("{}{}", OUTPUTS_DIR, "overlap_position.png"))
+            .unwrap();
+    }
 }

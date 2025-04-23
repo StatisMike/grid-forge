@@ -17,7 +17,7 @@ use super::error::GodotTileError;
 ///
 /// Automatic character of the process means that:
 /// - not all tiles from underlying [`TileSet`](godot::classes::TileSet) sources will be loaded into [`GodotTileMapCollection`], only
-/// those which are used in the [`TileMap`].
+///   those which are used in the [`TileMap`].
 /// - `tile_type_id` for each tile will be automatically generated.
 ///
 /// If more control over the process is needed, [`load_gridmap_from_tilemap_manual`] can be used.

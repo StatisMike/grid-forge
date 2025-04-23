@@ -5,10 +5,10 @@ use std::sync::mpsc::{self, Receiver};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-use godot::builtin::meta::{FromGodot, ToGodot};
 use godot::builtin::{Array, Dictionary, GString, Vector2i};
-use godot::engine::{AcceptDialog, INode, Node, TileMap, Timer};
-use godot::log::{godot_error, godot_warn};
+use godot::classes::{AcceptDialog, INode, Node, TileMap, Timer};
+use godot::global::{godot_error, godot_warn};
+use godot::meta::{FromGodot, ToGodot};
 use godot::obj::{Base, Gd, NewAlloc, WithBaseField};
 use godot::register::{godot_api, GodotClass};
 use grid_forge::{GridMap2D, GridPosition, GridSize, GridTile};
@@ -84,19 +84,17 @@ impl INode for TileGenerator {
                     // Runtime error occured - only passing the error message to Godot, generator will retry.
                     GenerationResult::RuntimeErr(mssg) => {
                         self.base_mut().emit_signal(
-                            "generation_runtime_error".into(),
+                            "generation_runtime_error",
                             &[GString::from(mssg).to_variant()],
                         );
                     }
 
                     // Fatal error occured, the generation will be stopped.
                     GenerationResult::Error(mssg) => {
-                        self.base_mut().emit_signal(
-                            "generation_error".into(),
-                            &[GString::from(mssg).to_variant()],
-                        );
                         self.base_mut()
-                            .emit_signal("generation_finished".into(), &[false.to_variant()]);
+                            .emit_signal("generation_error", &[GString::from(mssg).to_variant()]);
+                        self.base_mut()
+                            .emit_signal("generation_finished", &[false.to_variant()]);
                         if self.handle.is_some() {
                             let thread = self.handle.take();
                             thread.unwrap().join().unwrap();
@@ -115,7 +113,7 @@ impl INode for TileGenerator {
                         self.generation_time_us_total = duration_total.as_micros() as u32;
                         self.generation_time_us_success = duration_success.as_micros() as u32;
                         self.base_mut()
-                            .emit_signal("generation_finished".into(), &[true.to_variant()]);
+                            .emit_signal("generation_finished", &[true.to_variant()]);
                         if self.handle.is_some() {
                             let thread = self.handle.take();
                             thread.unwrap().join().unwrap();
@@ -336,7 +334,7 @@ impl TileGenerator {
     fn show_modal(&self, message: &str) {
         if let Some(modal) = &self.modal {
             let mut pntr = modal.clone();
-            pntr.set_text(message.into());
+            pntr.set_text(message);
             pntr.set_visible(true);
         } else {
             godot_warn!("Cannot find modal for TileGenerator. Message to show: {message}");
@@ -458,7 +456,7 @@ impl GenerationHistoryState {
 
         if let Some(map) = &mut self.tilemap {
             map.call(
-                "adjust_generation".into(),
+                "adjust_generation",
                 &[
                     Vector2i::new(gridmap.size().x() as i32, gridmap.size().y() as i32)
                         .to_variant(),
@@ -469,7 +467,7 @@ impl GenerationHistoryState {
         self.current = 0;
         self.total = self.history.len() as u32 + 1;
         self.base_mut()
-            .emit_signal("current_state".into(), &[0.to_variant()]);
+            .emit_signal("current_state", &[0.to_variant()]);
     }
 
     /// Plays the generation history starting from the current step with the given speed.
@@ -480,9 +478,9 @@ impl GenerationHistoryState {
         }
         self.playing = true;
         let mut timer = Timer::new_alloc();
-        self.base_mut().add_child(timer.clone().upcast());
+        self.base_mut().add_child(&timer);
         timer.set_wait_time(1. / count_per_sec as f64);
-        timer.connect("timeout".into(), self.base_mut().callable("forward"));
+        timer.connect("timeout", &self.base_mut().callable("forward"));
         timer.start();
         self.timer = Some(timer);
     }
@@ -513,7 +511,7 @@ impl GenerationHistoryState {
         }
         let current = self.current;
         self.base_mut()
-            .emit_signal("current_state".into(), &[current.to_variant()]);
+            .emit_signal("current_state", &[current.to_variant()]);
     }
 
     /// Rewinds the generation history to the previous step.
@@ -526,7 +524,7 @@ impl GenerationHistoryState {
         self.current -= 1;
         let current = self.current;
         self.base_mut()
-            .emit_signal("current_state".into(), &[current.to_variant()]);
+            .emit_signal("current_state", &[current.to_variant()]);
     }
 
     /// Rewinds the generation history completely.

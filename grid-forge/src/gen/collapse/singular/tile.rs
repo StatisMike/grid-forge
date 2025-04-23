@@ -5,7 +5,7 @@ use rand::Rng;
 
 use crate::gen::collapse::error::CollapsibleGridError;
 use crate::gen::collapse::grid::CollapsibleGrid;
-use crate::gen::collapse::option::{PerOptionData, WaysToBeOption};
+use crate::gen::collapse::option::{OptionWeights, PerOptionData, WaysToBeOption};
 use crate::gen::collapse::{self, tile::*, CollapsedGrid, PropagateItem};
 use crate::map::{GridMap2D, GridSize};
 use crate::tile::identifiable::builders::IdentTileBuilder;
@@ -21,26 +21,23 @@ pub struct CollapsibleTile {
     collapsed_option: Option<usize>,
     num_possible_options: usize,
     ways_to_be_option: WaysToBeOption,
-    weight_sum: u32,
-    weight_log_sum: f32,
+    weight: OptionWeights,
     entrophy_noise: f32,
 }
 
 impl TileData for CollapsibleTile {}
 
 impl crate::gen::collapse::tile::private::Sealed for CollapsibleTile {
-    fn remove_option(&mut self, weights: (u32, f32)) {
+    fn remove_option(&mut self, weights: OptionWeights) {
         self.num_possible_options -= 1;
-        self.weight_sum -= weights.0;
-        self.weight_log_sum -= weights.1;
+        self.weight -= weights;
     }
 
     fn new_uncollapsed_tile(
         position: GridPosition,
         num_possible_options: usize,
         ways_to_be_option: WaysToBeOption,
-        weight_sum: u32,
-        weight_log_sum: f32,
+        weight: OptionWeights,
         entrophy_noise: f32,
     ) -> GridTile<Self>
     where
@@ -52,8 +49,7 @@ impl crate::gen::collapse::tile::private::Sealed for CollapsibleTile {
                 collapsed_option: None,
                 num_possible_options,
                 ways_to_be_option,
-                weight_sum,
-                weight_log_sum,
+                weight,
                 entrophy_noise,
             },
         )
@@ -76,8 +72,8 @@ impl crate::gen::collapse::tile::private::Sealed for CollapsibleTile {
         rng: &mut R,
         options_data: &PerOptionData,
     ) -> Option<Vec<usize>> {
-        assert!(self.weight_sum > 0);
-        let random = rng.gen_range(0..self.weight_sum);
+        assert!(self.weight.0 > 0);
+        let random = rng.gen_range(0..self.weight.0);
         let mut current_sum = 0;
         let mut chosen = None;
         let mut out = Vec::new();
@@ -92,20 +88,18 @@ impl crate::gen::collapse::tile::private::Sealed for CollapsibleTile {
         assert!(chosen.is_some(), "option should always be chosen!");
         self.collapsed_option = chosen;
         self.num_possible_options = 0;
-        self.weight_sum = 0;
-        self.weight_log_sum = 0.;
+        self.weight = OptionWeights::default();
         Some(out)
     }
 
     fn mark_collapsed(&mut self, collapsed_idx: usize) {
         self.collapsed_option = Some(collapsed_idx);
         self.num_possible_options = 0;
-        self.weight_sum = 0;
-        self.weight_log_sum = 0.;
+        self.weight = OptionWeights::default();
     }
 
     fn weight_sum(&self) -> u32 {
-        self.weight_sum
+        self.weight.0
     }
 }
 
@@ -115,7 +109,7 @@ impl CollapsibleTileData for CollapsibleTile {
     }
 
     fn calc_entrophy(&self) -> f32 {
-        Self::calc_entrophy_ext(self.weight_sum, self.weight_log_sum) + self.entrophy_noise
+        Self::calc_entrophy_ext(self.weight.0, self.weight.1) + self.entrophy_noise
     }
 
     fn num_compatible_options(&self) -> usize {
@@ -127,8 +121,7 @@ impl CollapsibleTileData for CollapsibleTile {
             collapsed_option: Some(option_idx),
             num_possible_options: 0,
             ways_to_be_option: WaysToBeOption::default(),
-            weight_sum: 0,
-            weight_log_sum: 0.,
+            weight: OptionWeights::default(),
             entrophy_noise: 0.,
         }
     }
