@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["GridDir"],"mod":["dimensions","gen","godot","identifiable","vis"],"struct":["BuilderError","DirectionTable","GridMap2D","GridPosition","GridSize","GridTile","GridTileRef","GridTileRefMut"],"trait":["TileContainer","TileData"]};

@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["grid_forge",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.86.0/core/cmp/trait.PartialOrd.html\" title=\"trait core::cmp::PartialOrd\">PartialOrd</a> for <a class=\"struct\" href=\"grid_forge/struct.GridPosition.html\" title=\"struct grid_forge::GridPosition\">GridPosition</a>"]]],["image",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.86.0/core/cmp/trait.PartialOrd.html\" title=\"trait core::cmp::PartialOrd\">PartialOrd</a> for <a class=\"enum\" href=\"image/flat/enum.NormalForm.html\" title=\"enum image::flat::NormalForm\">NormalForm</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.86.0/core/cmp/trait.PartialOrd.html\" title=\"trait core::cmp::PartialOrd\">PartialOrd</a> for <a class=\"struct\" href=\"image/struct.Delay.html\" title=\"struct image::Delay\">Delay</a>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[298,534]}

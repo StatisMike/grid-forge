@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["gf_rust",[["impl GodotDefault for <a class=\"struct\" href=\"gf_rust/tile_collections/struct.TileCollections.html\" title=\"struct gf_rust::tile_collections::TileCollections\">TileCollections</a>"],["impl GodotDefault for <a class=\"struct\" href=\"gf_rust/tile_gen/struct.GenerationHistoryState.html\" title=\"struct gf_rust::tile_gen::GenerationHistoryState\">GenerationHistoryState</a>"],["impl GodotDefault for <a class=\"struct\" href=\"gf_rust/tile_gen/struct.TileGenerator.html\" title=\"struct gf_rust::tile_gen::TileGenerator\">TileGenerator</a>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[560]}
