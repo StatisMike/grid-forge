@@ -12,8 +12,14 @@ use std::error::Error;
 use std::fmt::Display;
 use std::marker::PhantomData;
 
+use crate::dimensions::Dimensionality;
 use crate::tile::identifiable::IdentifiableTileData;
-use crate::tile::{GridPosition, GridTile};
+use crate::dimensions::GridPositionTrait;
+use crate::dimensions::two_dim::*;
+use crate::dimensions::three_dims::*;
+use crate::GridMap;
+use crate::GridTile;
+// use crate::tile::{GridPosition, GridTile};
 
 /// [`IdentTileBuilder`] which creates new tiles of [`Clone`]-implementing tile struct. Prototype of tile with each `tile_id` need to be
 /// provided to the builder via [`add_tiles`](Self::add_tiles).
@@ -92,22 +98,26 @@ impl<Data: IdentifiableTileData + Clone> IdentTileCloneBuilder<Data> {
     }
 }
 
-impl<Data: IdentifiableTileData + Clone> IdentTileBuilder<Data> for IdentTileCloneBuilder<Data> {
-    fn build_tile_unchecked(&self, position: GridPosition, tile_type_id: u64) -> GridTile<Data> {
+impl<Dim, Data> IdentTileBuilder<Dim, Data> for IdentTileCloneBuilder<Data> 
+where 
+    Data: Clone + IdentifiableTileData,
+    Dim: Dimensionality,
+{
+    fn build_tile_unchecked(&self, position: Dim::Pos, tile_type_id: u64) -> impl GridTile<Dim, Data> {
         let tile_data = self
             .tiles
             .get(&tile_type_id)
             .unwrap_or_else(|| panic!("can't get tile_data with `tile_type_id`: {tile_type_id}"))
             .clone();
 
-        GridTile::new(position, tile_data)
+        GridMap::<Dim, Data>::new(position, tile_data)
     }
 
     fn build_tile(
         &self,
-        position: GridPosition,
+        position: Dim::Pos,
         tile_type_id: u64,
-    ) -> Result<GridTile<Data>, TileBuilderError> {
+    ) -> Result<G, TileBuilderError> {
         if let Some(tile) = self.tiles.get(&tile_type_id) {
             let data = tile.clone();
             Ok(GridTile::new(position, data))
@@ -331,21 +341,21 @@ impl<Data: IdentifiableTileData + ConstructableViaIdentifierTile> IdentTileBuild
 /// [`build_tile`](IdentTileBuilder::build_tile) methods. The `unchecked` version is usually faster and is recommended
 /// to be used when creating a batch of tiles at once - can be used reliably if [`check_missing_ids`](IdentTileBuilder::check_missing_ids)
 /// is called before beginning the batch operation.
-pub trait IdentTileBuilder<Data: IdentifiableTileData> {
+pub trait IdentTileBuilder<Dim: Dimensionality, Data: IdentifiableTileData> {
     /// Creates tile with given tile identifier at given grid position.
     ///
     /// # Panics
     /// Can panic if builder does not have possibility to construct tile of given `tile_id` based on the gathered information. You can check
     /// for missing tile ids with [`check_missing_ids`](IdentTileBuilder::check_missing_ids) or use its fallible version:
     /// [`build_tile`](IdentTileBuilder::build_tile).
-    fn build_tile_unchecked(&self, position: GridPosition, tile_type_id: u64) -> GridTile<Data>;
+    fn build_tile_unchecked(&self, position: Dim::Pos, tile_type_id: u64) -> impl GridTile<Dim, Data>;
 
     /// Creates tile with given tile identifier at given grid position. Returns error if cannot construct tile of given `tile_id`.
     fn build_tile(
         &self,
-        position: GridPosition,
+        position: Dim::Pos,
         tile_type_id: u64,
-    ) -> Result<GridTile<Data>, TileBuilderError>;
+    ) -> Result<impl GridTile<Dim, Data>, TileBuilderError>;
 
     /// Checks for missing tile creators out of provided slice of `tile_id`.
     fn check_missing_ids(&self, tile_type_ids: &[u64]) -> Result<(), TileBuilderError>;

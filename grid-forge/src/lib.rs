@@ -217,6 +217,7 @@ mod error;
 mod map;
 mod tile;
 mod utils;
+mod private;
 
 pub use error::*;
 pub use map::*;

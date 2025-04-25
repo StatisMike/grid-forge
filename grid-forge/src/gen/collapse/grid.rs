@@ -38,7 +38,7 @@ impl CollapsedGrid {
 
     /// Inserts [`GridTile`] of [`CollapsedTileData`] into the internal grid.
     pub fn insert_tile(&mut self, tile: GridTile<CollapsedTileData>) -> bool {
-        self.insert_data(&tile.grid_position(), tile.into_inner())
+        self.insert_data(&tile.grid_position(), tile.into_data())
     }
 
     /// Returns iterator over all `tile_type_id`s of the collapsed tiles in the grid.
