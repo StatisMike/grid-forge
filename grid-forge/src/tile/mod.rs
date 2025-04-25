@@ -1,10 +1,10 @@
-use crate::{dimensions::{Dimensionality, GridPositionTrait}, private};
+use crate::{map::dimensions::{Dimensionality, GridPositionTrait}, private};
 
 pub mod identifiable;
 
 pub mod two_dim {
 
-    use crate::dimensions::two_dim::*; 
+    use crate::map::dimensions::two_dim::*; 
     use super::*;
 
     pub struct PosData2D<Data: TileData>(pub GridPosition2D, pub Data);
@@ -83,71 +83,83 @@ pub mod two_dim {
 }
 
 pub mod three_dims {
-    use crate::dimensions::three_dims::*;
-    use crate::private;
-    use super::{GridTile, TileData};
+    use crate::map::dimensions::three_dims::*;
+    use super::{TileContainer, TileData};
 
-    pub struct GridTile3D<Data>
-    where
-        Data: TileData,
-    {
-        position: GridPosition3D,
-        data: Data,
-    }
+    pub struct PosData3D<Data: TileData>(pub GridPosition3D, pub Data);
 
-    impl<Data: TileData> private::SealedContainer for GridTile3D<Data> {}
-
-    impl<Data: TileData> GridTile<ThreeDim, Data> for GridTile3D<Data> {
-
-        fn new(pos: GridPosition3D, data: Data) -> Self {
-            Self { position: pos, data }
-        }
-
-        fn grid_position(&self) -> &GridPosition3D {
-            &self.position
-        }
-
-        fn data(&self) -> &Data {
-            &self.data
-        }
-
-        fn data_mut(&mut self) -> &mut Data {
-            &mut self.data
-        }
-
-        fn into_data(self) -> Data {
-            self.data
+    impl <Data: TileData> From<(GridPosition3D, Data)> for PosData3D<Data> {
+        fn from(tuple: (GridPosition3D, Data)) -> Self {
+            Self(tuple.0, tuple.1)
         }
     }
 
+    impl <Data: TileData>TileContainer<ThreeDim> for PosData3D<Data> {
+        fn grid_position(&self) -> GridPosition3D {
+            self.0
+        }
+    }
+
+    impl <Data: TileData> AsRef<Data> for PosData3D<Data> {
+        fn as_ref(&self) -> &Data {
+            &self.1
+        }
+    }
+
+    impl <Data: TileData> AsMut<Data> for PosData3D<Data> {
+        fn as_mut(&mut self) -> &mut Data {
+            &mut self.1
+        }
+    }
+
+
+    pub struct PosDataRef3D<'a, Data: TileData>(pub GridPosition3D, pub &'a Data);
+
+    impl <'a, Data: TileData> From<(GridPosition3D, &'a Data)> for PosDataRef3D<'a, Data> {
+        fn from(tuple: (GridPosition3D, &'a Data)) -> Self {
+            Self(tuple.0, tuple.1)
+        }
+    }
+
+    impl <Data: TileData>TileContainer<ThreeDim> for PosDataRef3D<'_, Data> {
+        fn grid_position(&self) -> GridPosition3D {
+            self.0
+        }
+    }
+
+    impl <Data: TileData> AsRef<Data> for PosDataRef3D<'_, Data> {
+        fn as_ref(&self) -> &Data {
+            self.1
+        }
+    }
+
+    pub struct PosDataMutRef3D<'a, Data: TileData>(pub GridPosition3D, pub &'a mut Data);
+
+    impl <'a, Data: TileData> From<(GridPosition3D, &'a mut Data)> for PosDataMutRef3D<'a, Data> {
+        fn from(tuple: (GridPosition3D, &'a mut Data)) -> Self {
+            Self(tuple.0, tuple.1)
+        }
+    }
+    
+    impl <Data: TileData>TileContainer<ThreeDim> for PosDataMutRef3D<'_, Data> {
+        fn grid_position(&self) -> GridPosition3D {
+            self.0
+        }
+    }
+
+    impl <Data: TileData> AsRef<Data> for PosDataMutRef3D<'_, Data> {
+        fn as_ref(&self) -> &Data {
+            self.1
+        }
+    }
+
+    impl <Data: TileData> AsMut<Data> for PosDataMutRef3D<'_, Data> {
+        fn as_mut(&mut self) -> &mut Data {
+            &mut self.1
+        }
+    }
+
 }
-
-pub trait GridTile<D: Dimensionality, Data>: private::SealedContainer {
-
-    fn new(pos: D::Pos, data: Data) -> Self;
-    fn grid_position(&self) -> &D::Pos;
-    fn data(&self) -> &Data;
-    fn data_mut(&mut self) -> &mut Data;
-    fn into_data(self) -> Data;
-}
-
-pub trait GridTileRef<'a, D: Dimensionality, Data: TileData>: private::SealedRef {
-
-    fn new(pos: D::Pos, data: &'a Data) -> Self;
-    fn grid_position(&self) -> D::Pos;
-    fn data(&'a self) -> &'a Data;
-}
-
-pub trait GridTileRefMut<'a , D: Dimensionality, Data: TileData>: private::SealedRefMut {
-
-    fn new(pos: D::Pos, data: &'a mut Data) -> Self;
-    fn grid_position(&self) -> D::Pos;
-    fn data(&'a self) -> &Data;
-    fn data_mut(&'a mut self) -> &mut Data;
-}
-
-
-
 
 
 /// Marker trait for structs that can be contained withing [`GridMap2D`](crate::map::GridMap2D) and [`TileContainer`]

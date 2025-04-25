@@ -5,5 +5,5 @@ members = [
   "grid-forge",
 
   # Integration example
-  "example_godot/gf-rust",
+  #"example_godot/gf-rust",
 ]

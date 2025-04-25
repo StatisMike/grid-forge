@@ -219,22 +219,37 @@ mod tile;
 mod utils;
 mod private;
 
-pub use error::*;
-pub use map::*;
-pub use tile::*;
-
-#[allow(clippy::non_minimal_cfg)]
-#[cfg(any(feature = "godot"))]
-pub(crate) mod ext;
-
-#[cfg(feature = "godot")]
-pub mod godot {
-    use crate::ext;
-    pub use ext::godot::*;
+pub mod prelude {
+    pub use crate::error::*;
+    pub use crate::map::GridMap;
+    pub use crate::tile::{TileData, TileContainer};
+    pub use crate::map::dimensions::{Dimensionality, GridPositionTrait, GridSize};
 }
 
-#[cfg(feature = "vis")]
-pub mod vis;
+pub mod two_dim {
+    pub use crate::map::two_dim::*;
+}
 
-#[cfg(feature = "gen")]
-pub mod gen;
+pub mod three_dims {
+    pub use crate::map::three_dims::*;
+}
+
+pub use error::*;
+// pub use map::*;
+// pub use tile::*;
+
+// #[allow(clippy::non_minimal_cfg)]
+// #[cfg(any(feature = "godot"))]
+// pub(crate) mod ext;
+
+// #[cfg(feature = "godot")]
+// pub mod godot {
+//     use crate::ext;
+//     pub use ext::godot::*;
+// }
+
+// #[cfg(feature = "vis")]
+// pub mod vis;
+
+// #[cfg(feature = "gen")]
+// pub mod gen;

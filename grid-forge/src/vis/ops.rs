@@ -10,7 +10,7 @@ use crate::tile::identifiable::IdentifiableTileData;
 
 use super::collection::VisCollection;
 use super::error::VisError;
-use super::{PixelWithDefault, VisTile2D, VisTileData};
+use super::{PixelWithDefault, VisTile, VisTileData};
 
 /// Easily load [`GridMap2D`] of [`IdentifiableTileData`]-implementing TileData, automatically saving each tile into provided
 /// [`VisCollection`].

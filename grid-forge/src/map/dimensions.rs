@@ -75,6 +75,7 @@ pub mod two_dim {
             Some(GridPosition2D::new(x, y)) 
         }
 
+        #[inline]
         fn opposite(&self) -> Self {
             match self {
                 Self::Up => Self::Down,
@@ -100,10 +101,12 @@ pub mod two_dim {
     impl super::GridPositionTrait<TwoDim> for GridPosition2D {
         type Coords = [u32; 2];
 
+        #[inline]
         fn coords(&self) -> Self::Coords {
             [self.x, self.y]
         }
         
+        #[inline]
         fn from_coords(coords: Self::Coords) -> Self {
             let [x, y] = coords;
             Self { x, y }
@@ -126,9 +129,12 @@ pub mod two_dim {
             Self { x, y }
         }
 
+        #[inline]
         pub fn x(&self) -> u32 {
             self.x
         }
+
+        #[inline]
         pub fn y(&self) -> u32 {
             self.y
         }
@@ -155,6 +161,7 @@ pub mod two_dim {
     impl Add for GridPosition2D {
         type Output = Self;
 
+        #[inline]
         fn add(self, rhs: Self) -> Self {
             Self {
                 x: self.x + rhs.x,
@@ -166,6 +173,7 @@ pub mod two_dim {
     impl Sub for GridPosition2D {
         type Output = Self;
 
+        #[inline]
         fn sub(self, rhs: Self) -> Self::Output {
             Self {
                 x: self.x.max(rhs.x) - self.x.min(rhs.x),
@@ -175,6 +183,7 @@ pub mod two_dim {
     }
 
     impl AddAssign for GridPosition2D {
+        #[inline]
         fn add_assign(&mut self, rhs: Self) {
             self.x += rhs.x;
             self.y += rhs.y;
@@ -194,10 +203,11 @@ pub mod two_dim {
 
     impl Eq for GridPosition2D {}
 
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub struct GridSize2D {
         x: u32,
         y: u32,
+        x_usize: usize,
         center: (u32, u32),
     }
     impl super::private::Sealed for GridSize2D {}
@@ -205,10 +215,12 @@ pub mod two_dim {
     impl super::GridSize<TwoDim> for GridSize2D {    
         type Center = (u32, u32);
 
+        #[inline]
         fn is_position_valid(&self, position: &GridPosition2D) -> bool {
             position.x() < self.x && position.y() < self.y
         }
     
+        #[inline]
         fn is_contained_within(&self, other: &Self) -> bool {
             self.x <= other.x && self.y <= other.y
         }
@@ -250,24 +262,27 @@ pub mod two_dim {
             })
         }
     
+        #[inline]
         fn center(&self) -> Self::Center {
             self.center
         }
 
+        #[inline]
         fn tile_count(&self) -> usize {
             (self.x * self.y) as usize
         }
 
+        #[inline(always)]
         fn offset(&self, pos: &GridPosition2D) -> usize {
-            pos.x() as usize * self.x() as usize + pos.y() as usize
+            pos.x() as usize * self.x_usize + pos.y() as usize
         }
 
         #[inline(always)]
         fn pos_from_offset(&self, offset: usize) -> GridPosition2D {
 
-            let y = offset / self.x as usize;
+            let y = offset / self.x_usize;
 
-            let x = offset % self.x as usize;
+            let x = offset % self.x_usize;
 
             GridPosition2D { x: x as u32, y: y as u32 }
 
@@ -276,7 +291,7 @@ pub mod two_dim {
 
     impl GridSize2D {
         pub fn new(x: u32, y: u32) -> Self {
-            Self { x, y , center: (x / 2, y / 2) }
+            Self { x, y , x_usize: x as usize, center: (x / 2, y / 2) }
         }
 
         pub fn x(&self) -> u32 {
@@ -449,10 +464,12 @@ pub mod three_dims {
     impl super::GridPositionTrait<ThreeDim> for GridPosition3D {
         type Coords = [u32; 3];
 
+        #[inline]
         fn coords(&self) -> Self::Coords {
             [self.x, self.y, self.z]
         }
         
+        #[inline]
         fn from_coords(coords: Self::Coords) -> Self {
             let [x, y, z] = coords;
             Self { x, y, z }
@@ -557,12 +574,13 @@ pub mod three_dims {
 
     impl Eq for GridPosition3D {}
 
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub struct GridSize3D {
         x: u32,
         y: u32,
         z: u32,
         yz: usize,
+        z_usize: usize,
 
         center: (u32, u32, u32),
     }
@@ -572,10 +590,12 @@ pub mod three_dims {
     
         type Center = (u32, u32, u32);
 
+        #[inline]
         fn is_position_valid(&self, position: &GridPosition3D) -> bool {
             position.x() < self.x && position.y() < self.y && position.z() < self.z
         }
     
+        #[inline]
         fn is_contained_within(&self, other: &Self) -> bool {
             self.x <= other.x && self.y <= other.y && self.z <= other.z
         }
@@ -626,10 +646,12 @@ pub mod three_dims {
             })
         }
     
+        #[inline]
         fn center(&self) -> Self::Center {
             self.center
         }
 
+        #[inline]
         fn tile_count(&self) -> usize {
             (self.x * self.y * self.z) as usize
         }
@@ -638,7 +660,7 @@ pub mod three_dims {
         fn offset(&self, pos: &GridPosition3D) -> usize {
             // Use precomputed values and leverage wrapping casts
             (pos.x as usize).wrapping_mul(self.yz)
-                .wrapping_add((pos.y as usize).wrapping_mul(self.z as usize))
+                .wrapping_add((pos.y as usize).wrapping_mul(self.z_usize))
                 .wrapping_add(pos.z as usize)
         }
 
@@ -647,8 +669,8 @@ pub mod three_dims {
             // Use precomputed values and avoid division
             let x = offset / self.yz;
             let remainder = offset % self.yz;
-            let y = remainder / self.z as usize;
-            let z = remainder % self.z as usize;
+            let y = remainder / self.z_usize;
+            let z = remainder % self.z_usize;
             
             // Use unsafe transmute for zero-cost type conversion
             unsafe {
@@ -666,7 +688,7 @@ pub mod three_dims {
         pub fn new(x: u32, y: u32, z: u32) -> Self {
             let yz = (y as usize).checked_mul(z as usize).expect("Dimension overflow");
 
-            Self { x, y, z ,yz, center: (x / 2, y / 2, z / 2) }
+            Self { x, y, z ,yz, center: (x / 2, y / 2, z / 2), z_usize: z as usize }
         }
 
         #[inline]
@@ -788,7 +810,7 @@ Self: private::Sealed + Ord + PartialOrd + Add<Output = Self> + Sub + AddAssign 
     }
 }
 
-pub trait GridSize<D: Dimensionality + ?Sized>: private::Sealed + Clone
+pub trait GridSize<D: Dimensionality + ?Sized>: private::Sealed + Clone + Copy
 {
     type Center;
 

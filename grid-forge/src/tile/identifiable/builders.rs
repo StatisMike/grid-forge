@@ -12,13 +12,12 @@ use std::error::Error;
 use std::fmt::Display;
 use std::marker::PhantomData;
 
-use crate::dimensions::Dimensionality;
+use crate::map::dimensions::Dimensionality;
 use crate::tile::identifiable::IdentifiableTileData;
-use crate::dimensions::GridPositionTrait;
-use crate::dimensions::two_dim::*;
-use crate::dimensions::three_dims::*;
-use crate::GridMap;
-use crate::GridTile;
+use crate::map::dimensions::GridPositionTrait;
+use crate::map::dimensions::two_dim::*;
+use crate::map::dimensions::three_dims::*;
+use crate::map::GridMap;
 // use crate::tile::{GridPosition, GridTile};
 
 /// [`IdentTileBuilder`] which creates new tiles of [`Clone`]-implementing tile struct. Prototype of tile with each `tile_id` need to be
@@ -103,24 +102,24 @@ where
     Data: Clone + IdentifiableTileData,
     Dim: Dimensionality,
 {
-    fn build_tile_unchecked(&self, position: Dim::Pos, tile_type_id: u64) -> impl GridTile<Dim, Data> {
+    fn build_tile_unchecked(&self, position: Dim::Pos, tile_type_id: u64) -> (Dim::Pos, Data) {
         let tile_data = self
             .tiles
             .get(&tile_type_id)
             .unwrap_or_else(|| panic!("can't get tile_data with `tile_type_id`: {tile_type_id}"))
             .clone();
 
-        GridMap::<Dim, Data>::new(position, tile_data)
+        (position, tile_data)
     }
 
     fn build_tile(
         &self,
         position: Dim::Pos,
         tile_type_id: u64,
-    ) -> Result<G, TileBuilderError> {
+    ) -> Result<(Dim::Pos, Data), TileBuilderError> {
         if let Some(tile) = self.tiles.get(&tile_type_id) {
             let data = tile.clone();
-            Ok(GridTile::new(position, data))
+            Ok((position, data))
         } else {
             Err(TileBuilderError::new(&[tile_type_id]))
         }
@@ -204,22 +203,22 @@ impl<Data: IdentifiableTileData> Default for IdentTileFunBuilder<Data> {
     }
 }
 
-impl<Data: IdentifiableTileData> IdentTileBuilder<Data> for IdentTileFunBuilder<Data> {
-    fn build_tile_unchecked(&self, position: GridPosition, tile_type_id: u64) -> GridTile<Data> {
+impl<Dim: Dimensionality, Data: IdentifiableTileData> IdentTileBuilder<Dim, Data> for IdentTileFunBuilder<Data> {
+    fn build_tile_unchecked(&self, position: Dim::Pos, tile_type_id: u64) -> (Dim::Pos, Data) {
         let fun = self.funs.get(&tile_type_id).unwrap_or_else(|| {
             panic!("can't get tile constructor function for `tile_type_id`: {tile_type_id}")
         });
 
-        GridTile::new(position, fun())
+        (position, fun())
     }
 
     fn build_tile(
         &self,
-        position: GridPosition,
+        position: Dim::Pos,
         tile_id: u64,
-    ) -> Result<GridTile<Data>, TileBuilderError> {
+    ) -> Result<(Dim::Pos, Data), TileBuilderError> {
         if let Some(fun) = self.funs.get(&tile_id) {
-            Ok(GridTile::new(position, fun()))
+            Ok((position, fun()))
         } else {
             Err(TileBuilderError::new(&[tile_id]))
         }
@@ -309,19 +308,19 @@ impl<Data: IdentifiableTileData + ConstructableViaIdentifierTile> Default
     }
 }
 
-impl<Data: IdentifiableTileData + ConstructableViaIdentifierTile> IdentTileBuilder<Data>
+impl<Dim: Dimensionality, Data: IdentifiableTileData + ConstructableViaIdentifierTile> IdentTileBuilder<Dim, Data>
     for IdentTileTraitBuilder<Data>
 {
-    fn build_tile_unchecked(&self, position: GridPosition, tile_type_id: u64) -> GridTile<Data> {
-        GridTile::new(position, Data::tile_new(tile_type_id))
+    fn build_tile_unchecked(&self, position: Dim::Pos, tile_type_id: u64) -> (Dim::Pos, Data) {
+        (position, Data::tile_new(tile_type_id))
     }
 
     fn build_tile(
         &self,
-        position: GridPosition,
+        position: Dim::Pos,
         tile_type_id: u64,
-    ) -> Result<GridTile<Data>, TileBuilderError> {
-        Ok(self.build_tile_unchecked(position, tile_type_id))
+    ) -> Result<(Dim::Pos, Data), TileBuilderError> {
+        Ok(<Self as IdentTileBuilder<Dim, Data>>::build_tile_unchecked(self, position, tile_type_id))
     }
 
     fn check_missing_ids(&self, _tile_ids: &[u64]) -> Result<(), TileBuilderError> {
@@ -348,14 +347,14 @@ pub trait IdentTileBuilder<Dim: Dimensionality, Data: IdentifiableTileData> {
     /// Can panic if builder does not have possibility to construct tile of given `tile_id` based on the gathered information. You can check
     /// for missing tile ids with [`check_missing_ids`](IdentTileBuilder::check_missing_ids) or use its fallible version:
     /// [`build_tile`](IdentTileBuilder::build_tile).
-    fn build_tile_unchecked(&self, position: Dim::Pos, tile_type_id: u64) -> impl GridTile<Dim, Data>;
+    fn build_tile_unchecked(&self, position: Dim::Pos, tile_type_id: u64) -> (Dim::Pos, Data);
 
     /// Creates tile with given tile identifier at given grid position. Returns error if cannot construct tile of given `tile_id`.
     fn build_tile(
         &self,
         position: Dim::Pos,
         tile_type_id: u64,
-    ) -> Result<impl GridTile<Dim, Data>, TileBuilderError>;
+    ) -> Result<(Dim::Pos, Data), TileBuilderError>;
 
     /// Checks for missing tile creators out of provided slice of `tile_id`.
     fn check_missing_ids(&self, tile_type_ids: &[u64]) -> Result<(), TileBuilderError>;

@@ -1,15 +1,15 @@
+pub (crate) mod dimensions;
+use dimensions::*;
+use crate::{private, tile::TileData};
 
-use grid::Grid;
-
-use crate::{private, GridTile, TileData};
-use crate::tile::{GridTileRef, GridTileRefMut};
-use crate::dimensions::*;
-
-pub mod dimensions;
 
 pub mod two_dim {
-    use crate::TileData;
-    use crate::dimensions::two_dim::*;
+    
+    use crate::{private, tile::*};
+    pub use crate::tile::two_dim::*;
+
+    pub use super::dimensions::two_dim::*;
+    use super::dimensions::Dimensionality;
     use super::*;
 
     pub struct GridMap2D<Data: TileData> {
@@ -25,6 +25,16 @@ pub mod two_dim {
     
         fn tiles_mut(&mut self) -> &mut [Option<Data>] {
             &mut self.tiles
+        }
+
+        #[inline(always)]
+        unsafe fn get_unchecked(&self, index: usize) -> &Option<Data> {
+            self.tiles.get_unchecked(index)
+        }
+
+        #[inline(always)]
+        unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut Option<Data> {
+            self.tiles.get_unchecked_mut(index)
         }
         
     }
@@ -46,14 +56,12 @@ pub mod two_dim {
 }
 
 pub mod three_dims {
-    use crate::TileData;
-    use crate::dimensions::three_dims::*;
+    use crate::{private, tile::*};
+    pub use crate::tile::three_dims::*;
+
+    pub use super::dimensions::three_dims::*;
+    use super::dimensions::Dimensionality;
     use super::*;
-
-
-    type PosData3D<Data> = (GridPosition3D, Data); 
-    type PosDataRef3D<'a, Data> = (GridPosition3D, &'a Data);
-    type PosDataMutRef3D<'a, Data> = (GridPosition3D, &'a mut Data);
 
     pub struct GridMap3D<Data: TileData> {
         size: GridSize3D,
@@ -61,12 +69,24 @@ pub mod three_dims {
     }
 
     impl <Data: TileData> private::SealedGrid<Data, ThreeDim> for GridMap3D<Data> {
+        #[inline]
         fn tiles(&self) -> &[Option<Data>] {
             &self.tiles
         }
+
+        #[inline(always)]
+        unsafe fn get_unchecked(&self, index: usize) -> &Option<Data> {
+            self.tiles.get_unchecked(index)
+        }
     
+        #[inline]
         fn tiles_mut(&mut self) -> &mut [Option<Data>] {
             &mut self.tiles
+        }
+
+        #[inline(always)]
+        unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut Option<Data> {
+            self.tiles.get_unchecked_mut(index)
         }
     }
 
@@ -98,13 +118,11 @@ pub trait GridMap<D: Dimensionality, Data: TileData>: private::SealedGrid<Data, 
         if !size.is_position_valid(position) {
             return None;
         }
-        self.tiles()
-                .get(size.offset(&position))
-                .unwrap()
-                .as_ref()
-                .map(|data| (*position, data))
-                
-
+        unsafe {
+            self.get_unchecked(size.offset(&position))
+            .as_ref()
+            .map(|data| (*position, data))
+        }        
     }
 
     fn get_mut_tile_at_position(&mut self, position: &D::Pos) -> Option<(D::Pos, &mut Data)> {
@@ -112,11 +130,11 @@ pub trait GridMap<D: Dimensionality, Data: TileData>: private::SealedGrid<Data, 
             return None;
         }
         let offset = self.size().offset(position);
-        self.tiles_mut()
-                .get_mut(offset)
-                .unwrap()
+        unsafe {
+            self.get_unchecked_mut(offset)
                 .as_mut()
                 .map(|data| (*position, data))
+        }
     }
 
     fn get_tiles_at_positions(&self, positions: &[D::Pos]) -> Vec<(D::Pos, &Data)> {
@@ -131,7 +149,9 @@ pub trait GridMap<D: Dimensionality, Data: TileData>: private::SealedGrid<Data, 
             return false;
         }
         let offset = self.size().offset(&tile.0);
-        self.tiles_mut().get_mut(offset).unwrap().replace(tile.1);
+        unsafe {
+            self.get_unchecked_mut(offset).replace(tile.1);
+        }
         true
     }
 
@@ -140,8 +160,9 @@ pub trait GridMap<D: Dimensionality, Data: TileData>: private::SealedGrid<Data, 
             return false;
         }
         let offset = self.size().offset(position);
-
-        self.tiles_mut().get_mut(offset).unwrap().replace(data);
+        unsafe {
+            self.get_unchecked_mut(offset).replace(data);
+        }
         true
     }
 
@@ -151,9 +172,10 @@ pub trait GridMap<D: Dimensionality, Data: TileData>: private::SealedGrid<Data, 
         }
         let offset = self.size().offset(position);
 
-        if let Some(tile) = self.tiles_mut().get_mut(offset) {
-            *tile = None;
+        unsafe {
+            self.get_unchecked_mut(offset).take();
         }
+
         true
     }
 
