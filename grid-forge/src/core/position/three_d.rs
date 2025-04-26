@@ -1,0 +1,133 @@
+use std::cmp::Ordering;
+use std::ops::Add;
+use std::ops::AddAssign;
+use std::ops::Sub;
+
+use crate::core::three_d::*;
+
+#[derive(Debug, Copy, Clone)]
+pub struct GridPosition3D {
+    x: u32,
+    y: u32,
+    z: u32,
+}
+impl super::private::Sealed for GridPosition3D {}
+
+impl GridPositionTrait<ThreeDim> for GridPosition3D {
+    type Coords = [u32; 3];
+
+    #[inline]
+    fn coords(&self) -> Self::Coords {
+        [self.x, self.y, self.z]
+    }
+
+    #[inline]
+    fn from_coords(coords: Self::Coords) -> Self {
+        let [x, y, z] = coords;
+        Self { x, y, z }
+    }
+
+    fn from_slice(slice: &[u32]) -> Self {
+        let [x, y, z] = slice else {
+            panic!("slice should have length 3")
+        };
+        Self::new(*x, *y, *z)
+    }
+
+    fn generate_rect_area(a: &Self, b: &Self) -> Vec<Self> {
+        let mut out = Vec::new();
+
+        for x in a.x.min(b.x)..a.x.max(b.x) + 1 {
+            for y in a.y.min(b.y)..a.y.max(b.y) + 1 {
+                for z in a.z.min(b.z)..a.z.max(b.z) + 1 {
+                    out.push(Self { x, y, z });
+                }
+            }
+        }
+        out
+    }
+}
+
+impl GridPosition3D {
+    #[inline]
+    pub fn new(x: u32, y: u32, z: u32) -> Self {
+        Self { x, y, z }
+    }
+
+    #[inline]
+    pub fn x(&self) -> u32 {
+        self.x
+    }
+
+    #[inline]
+    pub fn y(&self) -> u32 {
+        self.y
+    }
+
+    #[inline]
+    pub fn z(&self) -> u32 {
+        self.z
+    }
+}
+
+impl Ord for GridPosition3D {
+    fn cmp(&self, other: &Self) -> Ordering {
+        for i in 0..ThreeDim::N {
+            let cmp = self.coords()[i].cmp(&other.coords()[i]);
+            if cmp != Ordering::Equal {
+                return cmp;
+            };
+        }
+        Ordering::Equal
+    }
+}
+
+impl PartialOrd for GridPosition3D {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Add for GridPosition3D {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> GridPosition3D {
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+        }
+    }
+}
+
+impl Sub for GridPosition3D {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> GridPosition3D {
+        Self {
+            x: self.x.max(rhs.x) - self.x.min(rhs.x),
+            y: self.y.max(rhs.y) - self.y.min(rhs.y),
+            z: self.z.max(rhs.z) - self.z.min(rhs.z),
+        }
+    }
+}
+
+impl AddAssign for GridPosition3D {
+    fn add_assign(&mut self, rhs: Self) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+    }
+}
+
+impl PartialEq for GridPosition3D {
+    fn eq(&self, other: &Self) -> bool {
+        for i in 0..ThreeDim::N {
+            if self.coords()[i] != other.coords()[i] {
+                return false;
+            }
+        }
+        true
+    }
+}
+
+impl Eq for GridPosition3D {}

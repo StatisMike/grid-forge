@@ -1,13 +1,18 @@
-use std::{cmp::Ordering, fmt::Debug, ops::{Add, AddAssign, Index, IndexMut, Sub}};
+use std::{
+    cmp::Ordering,
+    fmt::Debug,
+    ops::{Add, AddAssign, Index, IndexMut, Sub},
+};
 
 use grid::Order;
 
-
 pub mod two_dim {
-    use std::{cmp::Ordering, ops::{Add, AddAssign, Index, IndexMut, Sub}};
+    use std::{
+        cmp::Ordering,
+        ops::{Add, AddAssign, Index, IndexMut, Sub},
+    };
 
     use super::*;
-
 
     /// Two-dimensional space.
     #[derive(Debug, Copy, Clone)]
@@ -34,7 +39,6 @@ pub mod two_dim {
     impl super::private::Sealed for Directions2D {}
 
     impl super::Directions<TwoDim> for Directions2D {
-
         const N: usize = 4;
 
         fn all() -> &'static [Self] {
@@ -72,7 +76,7 @@ pub mod two_dim {
                 (x_dif.wrapping_add_unsigned(from.x())) as u32,
                 (y_dif.wrapping_add_unsigned(from.y())) as u32,
             );
-            Some(GridPosition2D::new(x, y)) 
+            Some(GridPosition2D::new(x, y))
         }
 
         #[inline]
@@ -105,13 +109,13 @@ pub mod two_dim {
         fn coords(&self) -> Self::Coords {
             [self.x, self.y]
         }
-        
+
         #[inline]
         fn from_coords(coords: Self::Coords) -> Self {
             let [x, y] = coords;
             Self { x, y }
         }
-        
+
         fn generate_rect_area(a: &Self, b: &Self) -> Vec<Self> {
             let mut out = Vec::new();
 
@@ -151,7 +155,7 @@ pub mod two_dim {
             Ordering::Equal
         }
     }
-    
+
     impl PartialOrd for GridPosition2D {
         fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
             Some(self.cmp(other))
@@ -212,19 +216,19 @@ pub mod two_dim {
     }
     impl super::private::Sealed for GridSize2D {}
 
-    impl super::GridSize<TwoDim> for GridSize2D {    
+    impl super::GridSize<TwoDim> for GridSize2D {
         type Center = (u32, u32);
 
         #[inline]
         fn is_position_valid(&self, position: &GridPosition2D) -> bool {
             position.x() < self.x && position.y() < self.y
         }
-    
+
         #[inline]
         fn is_contained_within(&self, other: &Self) -> bool {
             self.x <= other.x && self.y <= other.y
         }
-    
+
         fn get_all_possible_positions(&self) -> Vec<GridPosition2D> {
             let mut out = Vec::with_capacity((self.x * self.y) as usize);
 
@@ -236,7 +240,7 @@ pub mod two_dim {
 
             out
         }
-    
+
         fn distance_from_border(&self, position: &GridPosition2D) -> u32 {
             *[
                 position.x(),
@@ -248,7 +252,7 @@ pub mod two_dim {
             .min()
             .unwrap()
         }
-    
+
         fn distance_from_center(&self, position: &GridPosition2D) -> u32 {
             if self.center.0 < position.x() {
                 position.x() - self.center.0
@@ -261,7 +265,7 @@ pub mod two_dim {
                 self.center.1 - position.y()
             })
         }
-    
+
         #[inline]
         fn center(&self) -> Self::Center {
             self.center
@@ -279,19 +283,25 @@ pub mod two_dim {
 
         #[inline(always)]
         fn pos_from_offset(&self, offset: usize) -> GridPosition2D {
-
             let y = offset / self.x_usize;
 
             let x = offset % self.x_usize;
 
-            GridPosition2D { x: x as u32, y: y as u32 }
-
+            GridPosition2D {
+                x: x as u32,
+                y: y as u32,
+            }
         }
     }
 
     impl GridSize2D {
         pub fn new(x: u32, y: u32) -> Self {
-            Self { x, y , x_usize: x as usize, center: (x / 2, y / 2) }
+            Self {
+                x,
+                y,
+                x_usize: x as usize,
+                center: (x / 2, y / 2),
+            }
         }
 
         pub fn x(&self) -> u32 {
@@ -318,7 +328,7 @@ pub mod two_dim {
         }
     }
 
-    impl <T: Default>Default for DirectionTable2D<T> {
+    impl<T: Default> Default for DirectionTable2D<T> {
         fn default() -> Self {
             Self {
                 table: [T::default(), T::default(), T::default(), T::default()],
@@ -326,7 +336,7 @@ pub mod two_dim {
         }
     }
 
-    impl <T>Index<Directions2D> for DirectionTable2D<T> {
+    impl<T> Index<Directions2D> for DirectionTable2D<T> {
         type Output = T;
 
         fn index(&self, index: Directions2D) -> &Self::Output {
@@ -334,16 +344,18 @@ pub mod two_dim {
         }
     }
 
-    impl <T> IndexMut<Directions2D> for DirectionTable2D<T> {
+    impl<T> IndexMut<Directions2D> for DirectionTable2D<T> {
         fn index_mut(&mut self, index: Directions2D) -> &mut Self::Output {
             &mut self.table[index.as_idx()]
         }
     }
-
 }
 
 pub mod three_dims {
-    use std::{cmp::Ordering, ops::{Add, AddAssign, Index, IndexMut, Sub}};
+    use std::{
+        cmp::Ordering,
+        ops::{Add, AddAssign, Index, IndexMut, Sub},
+    };
 
     use super::*;
 
@@ -373,7 +385,6 @@ pub mod three_dims {
     impl super::private::Sealed for Directions3D {}
 
     impl super::Directions<ThreeDim> for Directions3D {
-
         const N: usize = 6;
 
         fn all() -> &'static [Self] {
@@ -433,7 +444,6 @@ pub mod three_dims {
             );
 
             Some(GridPosition3D::new(x, y, z))
-
         }
 
         fn opposite(&self) -> Self {
@@ -468,13 +478,13 @@ pub mod three_dims {
         fn coords(&self) -> Self::Coords {
             [self.x, self.y, self.z]
         }
-        
+
         #[inline]
         fn from_coords(coords: Self::Coords) -> Self {
             let [x, y, z] = coords;
             Self { x, y, z }
         }
-        
+
         fn generate_rect_area(a: &Self, b: &Self) -> Vec<Self> {
             let mut out = Vec::new();
 
@@ -484,13 +494,12 @@ pub mod three_dims {
                         out.push(Self { x, y, z });
                     }
                 }
-            } 
+            }
             out
         }
     }
 
     impl GridPosition3D {
-
         #[inline]
         pub fn new(x: u32, y: u32, z: u32) -> Self {
             Self { x, y, z }
@@ -523,7 +532,7 @@ pub mod three_dims {
             Ordering::Equal
         }
     }
-    
+
     impl PartialOrd for GridPosition3D {
         fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
             Some(self.cmp(other))
@@ -587,19 +596,18 @@ pub mod three_dims {
     impl super::private::Sealed for GridSize3D {}
 
     impl super::GridSize<ThreeDim> for GridSize3D {
-    
         type Center = (u32, u32, u32);
 
         #[inline]
         fn is_position_valid(&self, position: &GridPosition3D) -> bool {
             position.x() < self.x && position.y() < self.y && position.z() < self.z
         }
-    
+
         #[inline]
         fn is_contained_within(&self, other: &Self) -> bool {
             self.x <= other.x && self.y <= other.y && self.z <= other.z
         }
-    
+
         fn get_all_possible_positions(&self) -> Vec<GridPosition3D> {
             let mut out = Vec::with_capacity((self.x * self.y * self.z) as usize);
 
@@ -613,7 +621,7 @@ pub mod three_dims {
 
             out
         }
-    
+
         fn distance_from_border(&self, position: &GridPosition3D) -> u32 {
             *[
                 position.x(),
@@ -627,7 +635,7 @@ pub mod three_dims {
             .min()
             .unwrap()
         }
-    
+
         fn distance_from_center(&self, position: &GridPosition3D) -> u32 {
             if self.center.0 < position.x() {
                 position.x() - self.center.0
@@ -645,7 +653,7 @@ pub mod three_dims {
                 self.center.2 - position.z()
             })
         }
-    
+
         #[inline]
         fn center(&self) -> Self::Center {
             self.center
@@ -659,7 +667,8 @@ pub mod three_dims {
         #[inline(always)]
         fn offset(&self, pos: &GridPosition3D) -> usize {
             // Use precomputed values and leverage wrapping casts
-            (pos.x as usize).wrapping_mul(self.yz)
+            (pos.x as usize)
+                .wrapping_mul(self.yz)
                 .wrapping_add((pos.y as usize).wrapping_mul(self.z_usize))
                 .wrapping_add(pos.z as usize)
         }
@@ -671,7 +680,7 @@ pub mod three_dims {
             let remainder = offset % self.yz;
             let y = remainder / self.z_usize;
             let z = remainder % self.z_usize;
-            
+
             // Use unsafe transmute for zero-cost type conversion
             unsafe {
                 GridPosition3D {
@@ -686,9 +695,18 @@ pub mod three_dims {
     impl GridSize3D {
         #[inline]
         pub fn new(x: u32, y: u32, z: u32) -> Self {
-            let yz = (y as usize).checked_mul(z as usize).expect("Dimension overflow");
+            let yz = (y as usize)
+                .checked_mul(z as usize)
+                .expect("Dimension overflow");
 
-            Self { x, y, z ,yz, center: (x / 2, y / 2, z / 2), z_usize: z as usize }
+            Self {
+                x,
+                y,
+                z,
+                yz,
+                center: (x / 2, y / 2, z / 2),
+                z_usize: z as usize,
+            }
         }
 
         #[inline]
@@ -723,15 +741,22 @@ pub mod three_dims {
         }
     }
 
-    impl <T: Default>Default for DirectionTable3D<T> {
+    impl<T: Default> Default for DirectionTable3D<T> {
         fn default() -> Self {
             Self {
-                table: [T::default(), T::default(), T::default(), T::default(), T::default(), T::default()],
+                table: [
+                    T::default(),
+                    T::default(),
+                    T::default(),
+                    T::default(),
+                    T::default(),
+                    T::default(),
+                ],
             }
         }
     }
 
-    impl <T>Index<Directions3D> for DirectionTable3D<T> {
+    impl<T> Index<Directions3D> for DirectionTable3D<T> {
         type Output = T;
 
         fn index(&self, index: Directions3D) -> &Self::Output {
@@ -739,17 +764,15 @@ pub mod three_dims {
         }
     }
 
-    impl <T> IndexMut<Directions3D> for DirectionTable3D<T> {
+    impl<T> IndexMut<Directions3D> for DirectionTable3D<T> {
         fn index_mut(&mut self, index: Directions3D) -> &mut Self::Output {
             &mut self.table[index.as_idx()]
         }
     }
 }
 
-
 /// Trait declaring the number of dimensions in the space
 pub trait Dimensionality: private::Sealed + 'static {
-
     /// Number of dimensions
     const N: usize;
 
@@ -763,10 +786,11 @@ pub trait Dimensionality: private::Sealed + 'static {
     type Pos: GridPositionTrait<Self>;
 }
 
-pub trait Directions<D: Dimensionality + ?Sized>: private::Sealed + Sized + Copy + Clone + Debug{
-
+pub trait Directions<D: Dimensionality + ?Sized>:
+    private::Sealed + Sized + Copy + Clone + Debug
+{
     const N: usize;
-    
+
     fn all() -> &'static [Self];
 
     fn march_step(&self, from: &D::Pos, size: &D::Size) -> Option<D::Pos>;
@@ -777,14 +801,25 @@ pub trait Directions<D: Dimensionality + ?Sized>: private::Sealed + Sized + Copy
 }
 
 pub trait GridPositionTrait<D>
-where 
-D: Dimensionality + ?Sized,
-Self: private::Sealed + Ord + PartialOrd + Add<Output = Self> + Sub + AddAssign + Copy + Clone + Debug + Sized + Send + Sync 
+where
+    D: Dimensionality + ?Sized,
+    Self: private::Sealed
+        + Ord
+        + PartialOrd
+        + Add<Output = Self>
+        + Sub
+        + AddAssign
+        + Copy
+        + Clone
+        + Debug
+        + Sized
+        + Send
+        + Sync,
 {
     type Coords: AsRef<[u32]> + Index<usize, Output = u32>;
 
     /// Returns the coordinates of the position.
-    /// 
+    ///
     /// It is guranteed that the length of the returned slice is equal to the [Dimensionality::N] of the space.
     fn coords(&self) -> Self::Coords;
 
@@ -794,7 +829,8 @@ Self: private::Sealed + Ord + PartialOrd + Add<Output = Self> + Sub + AddAssign 
         let mut distance = 0;
 
         for i in 0..D::N {
-            distance += self.coords()[i].max(other.coords()[i]) - self.coords()[i].min(other.coords()[i]);
+            distance +=
+                self.coords()[i].max(other.coords()[i]) - self.coords()[i].min(other.coords()[i]);
             if distance > range {
                 return false;
             }
@@ -810,8 +846,7 @@ Self: private::Sealed + Ord + PartialOrd + Add<Output = Self> + Sub + AddAssign 
     }
 }
 
-pub trait GridSize<D: Dimensionality + ?Sized>: private::Sealed + Clone + Copy
-{
+pub trait GridSize<D: Dimensionality + ?Sized>: private::Sealed + Clone + Copy {
     type Center;
 
     fn is_position_valid(&self, position: &D::Pos) -> bool;
@@ -833,13 +868,14 @@ pub trait GridSize<D: Dimensionality + ?Sized>: private::Sealed + Clone + Copy
     fn pos_from_offset(&self, offset: usize) -> D::Pos;
 }
 
-pub trait DirectionTable<D: Dimensionality, T>: private::Sealed + Index<D::Dir> + IndexMut<D::Dir> {
+pub trait DirectionTable<D: Dimensionality, T>:
+    private::Sealed + Index<D::Dir> + IndexMut<D::Dir>
+{
     type Inner: AsRef<[T]> + AsMut<[T]>;
 
     fn new_array(values: Self::Inner) -> Self;
     fn inner(&self) -> &Self::Inner;
 }
-
 
 mod private {
     pub trait Sealed {}

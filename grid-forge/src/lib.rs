@@ -213,25 +213,21 @@
 //! `IdentifiableTileData` trait to synchronize the data between the two sources. For Rust-Godot communication it uses GDExtension [`godot-rust`](godot) crate.
 //! See `example_godot` crate for an example of simple Godot App using the `grid-forge` for loading the map from image file and procedural generation, rendering it in Godot's `TileMap` class.
 
+mod core;
 mod error;
 mod map;
+mod private;
 mod tile;
 mod utils;
-mod private;
 
-pub mod prelude {
+pub mod two_d {
+    pub use crate::core::two_d::*;
     pub use crate::error::*;
-    pub use crate::map::GridMap;
-    pub use crate::tile::{TileData, TileContainer};
-    pub use crate::map::dimensions::{Dimensionality, GridPositionTrait, GridSize};
 }
 
-pub mod two_dim {
-    pub use crate::map::two_dim::*;
-}
-
-pub mod three_dims {
-    pub use crate::map::three_dims::*;
+pub mod three_d {
+    pub use crate::core::three_d::*;
+    pub use crate::error::*;
 }
 
 pub use error::*;

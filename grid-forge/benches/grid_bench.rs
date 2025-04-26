@@ -2,9 +2,7 @@ use std::hint::black_box;
 use std::time::Duration;
 
 use criterion::*;
-use grid_forge::prelude::*;
-use grid_forge::two_dim::*;
-use grid_forge::three_dims::*;
+use grid_forge::two_d::*;
 
 pub struct DefaultTile {
     offset: usize,
@@ -22,49 +20,59 @@ impl DefaultTile {
     }
 }
 
-
 fn create_default_2d_grid(size: GridSize2D) -> GridMap2D<DefaultTile> {
     let mut grid = GridMap2D::new(size);
     let possible_positions = size.get_all_possible_positions();
-    let positions_with_offsets = possible_positions.iter().map(|pos| (pos, size.offset(pos))).collect::<Vec<_>>();
+    let positions_with_offsets = possible_positions
+        .iter()
+        .map(|pos| (pos, size.offset(pos)))
+        .collect::<Vec<_>>();
     for (pos, offset) in positions_with_offsets.iter() {
         grid.insert_data(pos, DefaultTile::new(*offset));
     }
     grid
 }
 
-fn create_default_3d_grid(size: GridSize3D) -> GridMap3D<DefaultTile> {
-    let mut grid = GridMap3D::new(size);
-    let possible_positions = size.get_all_possible_positions();
-    let positions_with_offsets = possible_positions.iter().map(|pos| (pos, size.offset(pos))).collect::<Vec<_>>();
-    for (pos, offset) in positions_with_offsets.iter() {
-        grid.insert_data(pos, DefaultTile::new(*offset));
-    }
-    grid
-}
+// fn create_default_3d_grid(size: GridSize3D) -> GridMap3D<DefaultTile> {
+//     let mut grid = GridMap3D::new(size);
+//     let possible_positions = size.get_all_possible_positions();
+//     let positions_with_offsets = possible_positions
+//         .iter()
+//         .map(|pos| (pos, size.offset(pos)))
+//         .collect::<Vec<_>>();
+//     for (pos, offset) in positions_with_offsets.iter() {
+//         grid.insert_data(pos, DefaultTile::new(*offset));
+//     }
+//     grid
+// }
 
 pub fn create_2d_grid_bench_100x100(c: &mut Criterion) {
     let size = GridSize2D::new(100, 100);
-    c.bench_function("create_2d_grid_100x100", |b| b.iter(|| create_default_2d_grid(size)));
+    c.bench_function("create_2d_grid_100x100", |b| {
+        b.iter(|| create_default_2d_grid(size))
+    });
 }
 
-pub fn create_3d_grid_bench_100x10x10(c: &mut Criterion) {
-    let size = GridSize3D::new(100, 10, 10);
-    c.bench_function("create_3d_grid_100x10x10", |b| b.iter(|| create_default_3d_grid(size)));
-}
-
+// pub fn create_3d_grid_bench_100x10x10(c: &mut Criterion) {
+//     let size = GridSize3D::new(100, 10, 10);
+//     c.bench_function("create_3d_grid_100x10x10", |b| {
+//         b.iter(|| create_default_3d_grid(size))
+//     });
+// }
 
 pub fn grid_access_2d_100x100(c: &mut Criterion) {
     let size = GridSize2D::new(100, 100);
     let grid = create_default_2d_grid(size.clone());
     let possible_positions = size.get_all_possible_positions();
 
-    c.bench_function("grid_access_2d_100x100", |b| b.iter(|| {
-        for pos in possible_positions.iter() {
-            let tile = grid.get_tile_at_position(pos).unwrap();
-            black_box(tile);
-        }
-    }));
+    c.bench_function("grid_access_2d_100x100", |b| {
+        b.iter(|| {
+            for pos in possible_positions.iter() {
+                let tile = grid.get_tile_at_position(pos).unwrap();
+                black_box(tile);
+            }
+        })
+    });
 }
 
 pub fn grid_access_2d_100x100_mut(c: &mut Criterion) {
@@ -72,47 +80,54 @@ pub fn grid_access_2d_100x100_mut(c: &mut Criterion) {
     let mut grid = create_default_2d_grid(size.clone());
     let possible_positions = size.get_all_possible_positions();
 
-    c.bench_function("grid_access_2d_100x100_mut", |b| b.iter(|| {
-        for pos in possible_positions.iter() {
-            let mut tile: PosDataMutRef2D<DefaultTile> = grid.get_mut_tile_at_position(pos).unwrap().into();
-            tile.as_mut().offset = 1;
-        }
-    }));
+    c.bench_function("grid_access_2d_100x100_mut", |b| {
+        b.iter(|| {
+            for pos in possible_positions.iter() {
+                let mut tile: PosDataMutRef2D<DefaultTile> =
+                    grid.get_mut_tile_at_position(pos).unwrap().into();
+                tile.as_mut().offset = 1;
+            }
+        })
+    });
 }
 
+// pub fn grid_access_3d_100x10x10(c: &mut Criterion) {
+//     let size = GridSize3D::new(100, 10, 10);
+//     let grid = create_default_3d_grid(size.clone());
+//     let possible_positions = size.get_all_possible_positions();
 
-pub fn grid_access_3d_100x10x10(c: &mut Criterion) {
-    let size = GridSize3D::new(100, 10, 10);
-    let grid = create_default_3d_grid(size.clone());
-    let possible_positions = size.get_all_possible_positions();
+//     c.bench_function("grid_access_3d_100x10x10", |b| {
+//         b.iter(|| {
+//             for pos in possible_positions.iter() {
+//                 let tile = grid.get_tile_at_position(pos).unwrap();
+//                 black_box(tile);
+//             }
+//         })
+//     });
+// }
 
-    c.bench_function("grid_access_3d_100x10x10", |b| b.iter(|| {
-        for pos in possible_positions.iter() {
-            let tile = grid.get_tile_at_position(pos).unwrap();
-            black_box(tile);
-        }
-    }));
-}
+// pub fn grid_access_3d_100x10x10_mut(c: &mut Criterion) {
+//     let size = GridSize3D::new(100, 10, 10);
+//     let mut grid = create_default_3d_grid(size.clone());
+//     let possible_positions = size.get_all_possible_positions();
 
-pub fn grid_access_3d_100x10x10_mut(c: &mut Criterion) {
-    let size = GridSize3D::new(100, 10, 10);
-    let mut grid = create_default_3d_grid(size.clone());
-    let possible_positions = size.get_all_possible_positions();
-
-    c.bench_function("grid_access_3d_100x10x10_mut", |b| b.iter(|| {
-        for pos in possible_positions.iter() {
-            let mut tile: PosDataMutRef3D<DefaultTile> = grid.get_mut_tile_at_position(pos).unwrap().into();
-            tile.as_mut().offset = 1;
-        }
-    }));
-}
+//     c.bench_function("grid_access_3d_100x10x10_mut", |b| {
+//         b.iter(|| {
+//             for pos in possible_positions.iter() {
+//                 let mut tile: PosDataMutRef3D<DefaultTile> =
+//                     grid.get_mut_tile_at_position(pos).unwrap().into();
+//                 tile.as_mut().offset = 1;
+//             }
+//         })
+//     });
+// }
 
 criterion_group!(
     name = grid_1000;
     config = Criterion::default().measurement_time(Duration::from_secs(10)).warm_up_time(Duration::from_secs(5));
-    targets =   create_2d_grid_bench_100x100, create_3d_grid_bench_100x10x10, 
-                grid_access_2d_100x100, grid_access_2d_100x100_mut, 
-                grid_access_3d_100x10x10
+    targets =   create_2d_grid_bench_100x100, // create_3d_grid_bench_100x10x10,
+                grid_access_2d_100x100, grid_access_2d_100x100_mut,
+                // grid_access_3d_100x10x10
 );
 
 criterion_main!(grid_1000);

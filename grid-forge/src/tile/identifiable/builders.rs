@@ -12,12 +12,12 @@ use std::error::Error;
 use std::fmt::Display;
 use std::marker::PhantomData;
 
-use crate::map::dimensions::Dimensionality;
-use crate::tile::identifiable::IdentifiableTileData;
-use crate::map::dimensions::GridPositionTrait;
-use crate::map::dimensions::two_dim::*;
 use crate::map::dimensions::three_dims::*;
+use crate::map::dimensions::two_dim::*;
+use crate::map::dimensions::Dimensionality;
+use crate::map::dimensions::GridPositionTrait;
 use crate::map::GridMap;
+use crate::tile::identifiable::IdentifiableTileData;
 // use crate::tile::{GridPosition, GridTile};
 
 /// [`IdentTileBuilder`] which creates new tiles of [`Clone`]-implementing tile struct. Prototype of tile with each `tile_id` need to be
@@ -97,8 +97,8 @@ impl<Data: IdentifiableTileData + Clone> IdentTileCloneBuilder<Data> {
     }
 }
 
-impl<Dim, Data> IdentTileBuilder<Dim, Data> for IdentTileCloneBuilder<Data> 
-where 
+impl<Dim, Data> IdentTileBuilder<Dim, Data> for IdentTileCloneBuilder<Data>
+where
     Data: Clone + IdentifiableTileData,
     Dim: Dimensionality,
 {
@@ -203,7 +203,9 @@ impl<Data: IdentifiableTileData> Default for IdentTileFunBuilder<Data> {
     }
 }
 
-impl<Dim: Dimensionality, Data: IdentifiableTileData> IdentTileBuilder<Dim, Data> for IdentTileFunBuilder<Data> {
+impl<Dim: Dimensionality, Data: IdentifiableTileData> IdentTileBuilder<Dim, Data>
+    for IdentTileFunBuilder<Data>
+{
     fn build_tile_unchecked(&self, position: Dim::Pos, tile_type_id: u64) -> (Dim::Pos, Data) {
         let fun = self.funs.get(&tile_type_id).unwrap_or_else(|| {
             panic!("can't get tile constructor function for `tile_type_id`: {tile_type_id}")
@@ -308,8 +310,8 @@ impl<Data: IdentifiableTileData + ConstructableViaIdentifierTile> Default
     }
 }
 
-impl<Dim: Dimensionality, Data: IdentifiableTileData + ConstructableViaIdentifierTile> IdentTileBuilder<Dim, Data>
-    for IdentTileTraitBuilder<Data>
+impl<Dim: Dimensionality, Data: IdentifiableTileData + ConstructableViaIdentifierTile>
+    IdentTileBuilder<Dim, Data> for IdentTileTraitBuilder<Data>
 {
     fn build_tile_unchecked(&self, position: Dim::Pos, tile_type_id: u64) -> (Dim::Pos, Data) {
         (position, Data::tile_new(tile_type_id))
@@ -320,7 +322,11 @@ impl<Dim: Dimensionality, Data: IdentifiableTileData + ConstructableViaIdentifie
         position: Dim::Pos,
         tile_type_id: u64,
     ) -> Result<(Dim::Pos, Data), TileBuilderError> {
-        Ok(<Self as IdentTileBuilder<Dim, Data>>::build_tile_unchecked(self, position, tile_type_id))
+        Ok(<Self as IdentTileBuilder<Dim, Data>>::build_tile_unchecked(
+            self,
+            position,
+            tile_type_id,
+        ))
     }
 
     fn check_missing_ids(&self, _tile_ids: &[u64]) -> Result<(), TileBuilderError> {
