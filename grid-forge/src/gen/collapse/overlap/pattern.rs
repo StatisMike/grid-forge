@@ -2,10 +2,8 @@ use std::collections::{HashMap, HashSet};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::marker::PhantomData;
 
-use crate::map::{GridDir, GridMap2D, GridSize};
-use crate::tile::identifiable::collection::IdentTileCollection;
-use crate::tile::identifiable::IdentifiableTileData;
-use crate::tile::{GridPosition, TileContainer, TileData};
+use crate::core::common::*;
+use crate::two_d::{GridPosition2D, TwoDim};
 
 /// Pattern used in Overlapping Collapse algorithm.
 ///
@@ -21,9 +19,9 @@ use crate::tile::{GridPosition, TileContainer, TileData};
 ///
 /// Algorithm selecting a pattern to be present in some place will result in the *main* tile to be placed there, while
 /// *secondary* tiles are there to check compatibility beetween two different `OverlappingPattern`s.
-pub trait OverlappingPattern
+pub trait OverlappingPattern<D: Dimensionality>
 where
-    Self: Clone + PartialEq + Eq + Hash + std::fmt::Debug + private::Sealed,
+    Self: Clone + PartialEq + Eq + Hash + std::fmt::Debug + private::Sealed<D>,
 {
     /// Size of the pattern on the `x` axis.
     const X_LEN: usize;
@@ -45,13 +43,48 @@ where
     ///
     /// # Panic
     /// This method will panic if the `pos` is located beyond boundaries of the pattern.
-    fn get_id_for_pos(&self, anchor_pos: &GridPosition, pos: &GridPosition) -> u64;
+    fn get_id_for_pos(&self, anchor_pos: &D::Pos, pos: &D::Pos) -> u64;
 
     /// Checks compatibility between two patterns is specified direction.
-    fn is_compatible_with(&self, other: &Self, direction: GridDir) -> bool;
+    fn is_compatible_with(&self, other: &Self, direction: D::Dir) -> bool;
 
     /// Retrieves positions of the secondary tiles of the pattern.
-    fn secondary_tile_positions(anchor_pos: &GridPosition) -> Vec<GridPosition>;
+    fn secondary_tile_positions(anchor_pos: &D::Pos) -> Vec<D::Pos>;
+}
+
+pub (crate) mod two_d {
+    pub struct OverlappingPattern2D<const X_LEN: usize, const Y_LEN: usize> {
+        pattern_id: u64,
+        tile_type_id: u64,
+        tile_type_ids: [[u64; X_LEN]; Y_LEN],
+    }
+}
+
+impl <const X_LEN: usize, const Y_LEN: usize> private::Sealed<TwoDim> for OverlappingPattern2D<X_LEN, Y_LEN> {
+    fn empty() -> Self {
+        Self {
+            pattern_id: 0,
+            tile_type_id: 0,
+            tile_type_ids: [[0; X_LEN]; Y_LEN],
+        }
+    }
+
+    fn set_id_for_pos(
+        &mut self,
+        anchor_pos: &GridPosition2D,
+        pos: &GridPosition2D,
+        tile_type_id: u64,
+    ) {
+        self.tile_type_ids[0][(pos.y() - anchor_pos.y()) as usize]
+        [(pos.x() - anchor_pos.x()) as usize] = tile_type_id;
+    }
+
+    fn finalize(&mut self) {
+            let mut hasher = DefaultHasher::default();
+            self.hash(&mut hasher);
+            self.pattern_id = hasher.finish();
+            self.tile_type_id = self.tile_type_ids[0][0][0];
+    }
 }
 
 /// [OverlappingPattern] for two-dimensional grids.
@@ -74,7 +107,7 @@ impl<const P_X: usize, const P_Y: usize, const P_Z: usize> Hash
     }
 }
 
-impl<const P_X: usize, const P_Y: usize, const P_Z: usize> OverlappingPattern
+impl<const P_X: usize, const P_Y: usize, const P_Z: usize, D: Dimensionality> OverlappingPattern<D>
     for OverlappingPattern3D<P_X, P_Y, P_Z>
 {
     const X_LEN: usize = P_X;
@@ -398,23 +431,25 @@ impl<P: OverlappingPattern> OverlappingPatternGrid<P> {
 
 mod private {
     use super::*;
+    use crate::core::common::*;
 
     /// Trait making the [`OverlappingPattern`] non-implementable outside of the crate and keeping the mutability
     /// methods private to the crate.
-    pub trait Sealed {
+    pub trait Sealed<D: Dimensionality> {
+
         fn empty() -> Self;
 
         fn set_id_for_pos(
             &mut self,
-            anchor_pos: &GridPosition,
-            pos: &GridPosition,
+            anchor_pos: &D::Pos,
+            pos: &D::Pos,
             tile_type_id: u64,
         );
 
         fn finalize(&mut self);
     }
 
-    impl<const P_X: usize, const P_Y: usize, const P_Z: usize> Sealed
+    impl<const P_X: usize, const P_Y: usize, const P_Z: usize, D: Dimensionality> Sealed<D>
         for OverlappingPattern3D<P_X, P_Y, P_Z>
     {
         fn empty() -> Self {

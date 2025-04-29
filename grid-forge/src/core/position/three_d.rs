@@ -50,7 +50,7 @@ impl GridPositionTrait<ThreeDim> for GridPosition3D {
 
 impl GridPosition3D {
     #[inline]
-    pub fn new(x: u32, y: u32, z: u32) -> Self {
+    pub const fn new(x: u32, y: u32, z: u32) -> Self {
         Self { x, y, z }
     }
 
@@ -116,6 +116,7 @@ impl AddAssign for GridPosition3D {
     fn add_assign(&mut self, rhs: Self) {
         self.x += rhs.x;
         self.y += rhs.y;
+        self.z += rhs.z;
     }
 }
 
@@ -131,3 +132,93 @@ impl PartialEq for GridPosition3D {
 }
 
 impl Eq for GridPosition3D {}
+
+#[cfg(test)]
+mod tests {
+    use std::cmp::Ordering;
+
+    use crate::core::position::tests::*;
+    use crate::core::three_d::*;
+
+    #[test]
+    fn test_3d_compare() {
+        const CASES: &[ComparisonTestCase<3>] = &[
+            ([0, 0, 0], [0, 0, 0], Ordering::Equal),
+            ([0, 0, 0], [1, 0, 0], Ordering::Less),
+            ([0, 0, 0], [0, 1, 0], Ordering::Less),
+            ([0, 0, 0], [0, 0, 1], Ordering::Less),
+            ([1, 0, 0], [0, 0, 0], Ordering::Greater),
+            ([0, 1, 0], [0, 0, 0], Ordering::Greater),
+            ([0, 0, 1], [0, 0, 0], Ordering::Greater),
+            ([1, 1, 1], [1, 1, 1], Ordering::Equal),
+        ];
+
+        compare_test::<3, ThreeDim>(CASES);
+    }
+
+    #[test]
+    fn test_3d_order() {
+        const CASES: &[OrderingTestCase<3>] = &[&[
+            [0, 0, 0],
+            [2, 0, 0],
+            [0, 2, 0],
+            [1, 1, 0],
+            [1, 2, 0],
+            [33, 33, 33],
+            [2, 2, 2],
+            [12, 12, 12],
+            [12, 2, 2],
+            [2, 12, 2],
+        ]];
+
+        order_test::<3, ThreeDim>(CASES);
+    }
+
+    #[test]
+    fn test_3d_add() {
+        const CASES: &[MathOpTestCase<3>] = &[
+            (&[[0, 0, 0], [1, 1, 1]], [1, 1, 1]),
+            (&[[1, 1, 1], [1, 1, 1]], [2, 2, 2]),
+            (&[[1, 0, 0], [1, 1, 1]], [2, 1, 1]),
+            (&[[0, 1, 0], [1, 1, 1]], [1, 2, 1]),
+        ];
+
+        add_test::<3, ThreeDim>(CASES);
+    }
+
+    #[test]
+    fn test_3d_add_assign() {
+        const CASES: &[MathOpTestCase<3>] = &[
+            (&[[0, 0, 0], [1, 1, 1]], [1, 1, 1]),
+            (&[[1, 1, 1], [1, 1, 1]], [2, 2, 2]),
+            (&[[1, 0, 0], [1, 1, 1]], [2, 1, 1]),
+            (&[[0, 1, 0], [1, 1, 1]], [1, 2, 1]),
+        ];
+
+        add_assign_test::<3, ThreeDim>(CASES);
+    }
+
+    #[test]
+    fn test_3d_sub() {
+        const CASES: &[MathOpTestCase<3>] = &[
+            (&[[0, 0, 0], [1, 1, 1]], [1, 1, 1]),
+            (&[[1, 1, 1], [1, 1, 1]], [0, 0, 0]),
+            (&[[1, 0, 0], [1, 1, 1]], [0, 1, 1]),
+            (&[[2, 2, 2], [1, 0, 0]], [1, 2, 2]),
+        ];
+
+        sub_test::<3, ThreeDim>(CASES);
+    }
+
+    #[test]
+    fn test_3d_generate_rect_area() {
+        const CASES: &[GenerateRectTestCase<3>] = &[
+            ([0, 0, 0], [1, 1, 1]),
+            ([1, 1, 1], [10, 15, 20]),
+            ([10, 15, 20], [1, 1, 1]),
+            ([0, 0, 0], [0, 0, 0]),
+        ];
+
+        generate_rect_area_test::<3, ThreeDim>(CASES);
+    }
+}

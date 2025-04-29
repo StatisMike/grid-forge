@@ -2,11 +2,13 @@ pub(crate) mod three_d;
 pub(crate) mod two_d;
 
 pub(crate) mod common {
+    use std::fmt::Debug;
+
     use crate::core::common::*;
 
     use super::private;
 
-    pub trait GridSize<D: Dimensionality + ?Sized>: private::Sealed + Clone + Copy {
+    pub trait GridSize<D: Dimensionality + ?Sized>: private::Sealed + Clone + Copy + Debug {
         fn from_slice(slice: &[u32]) -> Self;
 
         fn is_position_valid(&self, position: &D::Pos) -> bool;

@@ -215,10 +215,14 @@
 
 mod core;
 mod error;
-mod map;
-mod private;
-mod tile;
+// mod tile;
 mod utils;
+
+pub mod id;
+
+pub mod prelude {
+    pub use crate::core::common::*;
+}
 
 pub mod two_d {
     pub use crate::core::two_d::*;
@@ -248,4 +252,4 @@ pub use error::*;
 // pub mod vis;
 
 // #[cfg(feature = "gen")]
-// pub mod gen;
+pub mod gen;

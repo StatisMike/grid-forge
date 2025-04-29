@@ -8,18 +8,21 @@ use crate::core::two_d::*;
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone)]
-pub enum Directions2D {
+pub enum Direction2D {
     Up = 0,
     Down = 1,
     Left = 2,
     Right = 3,
 }
 
-impl Sealed for Directions2D {}
+impl SealedDir for Direction2D {
+    const FIRST: Self = Self::Up;
+}
 
-impl Directions<TwoDim> for Directions2D {
+impl Direction<TwoDim> for Direction2D {
     const N: usize = 4;
 
+    #[inline]
     fn all() -> &'static [Self] {
         &[Self::Up, Self::Down, Self::Left, Self::Right]
     }
@@ -72,11 +75,23 @@ impl Directions<TwoDim> for Directions2D {
     fn as_idx(&self) -> usize {
         *self as usize
     }
+    
+    #[inline]
+    fn primary() -> &'static [Self] {
+        &[Self::Left, Self::Up]
+    }
 }
 
 pub struct DirectionTable2D<T> {
     table: [T; 4],
 }
+
+impl <T>DirectionTable2D<T> {
+    pub const fn new(table: [T; 4]) -> Self {
+        Self { table }
+    }
+}
+
 impl<T> Sealed for DirectionTable2D<T> {}
 impl<T> DirectionTable<TwoDim, T> for DirectionTable2D<T> {
     type Inner = [T; 4];
@@ -88,6 +103,11 @@ impl<T> DirectionTable<TwoDim, T> for DirectionTable2D<T> {
     fn inner(&self) -> &[T; 4] {
         &self.table
     }
+
+    fn from_slice(slice: &[T]) -> Self where T: Copy {
+        let table = [slice[0], slice[1], slice[2], slice[3]];
+        Self { table }
+    }
 }
 
 impl<T: Default> Default for DirectionTable2D<T> {
@@ -98,16 +118,82 @@ impl<T: Default> Default for DirectionTable2D<T> {
     }
 }
 
-impl<T> Index<Directions2D> for DirectionTable2D<T> {
+impl<T> Index<Direction2D> for DirectionTable2D<T> {
     type Output = T;
 
-    fn index(&self, index: Directions2D) -> &Self::Output {
+    fn index(&self, index: Direction2D) -> &Self::Output {
         &self.table[index.as_idx()]
     }
 }
 
-impl<T> IndexMut<Directions2D> for DirectionTable2D<T> {
-    fn index_mut(&mut self, index: Directions2D) -> &mut Self::Output {
+impl<T> IndexMut<Direction2D> for DirectionTable2D<T> {
+    fn index_mut(&mut self, index: Direction2D) -> &mut Self::Output {
         &mut self.table[index.as_idx()]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::core::direction::tests::*;
+    use crate::core::two_d::*;
+
+    #[test]
+    fn test_2d_march_step() {
+        const CASES: &[MarchStepTestCase<2, TwoDim>] = &[
+            MarchStepTestCase {
+                grid_size: [10, 10],
+                from_coords: [5, 5],
+                dirs: &[
+                    Direction2D::Up,
+                    Direction2D::Down,
+                    Direction2D::Left,
+                    Direction2D::Right,
+                ],
+                expected_coords: [5, 5],
+                converged: true,
+            },
+            MarchStepTestCase {
+                grid_size: [10, 10],
+                from_coords: [5, 5],
+                dirs: &[
+                    Direction2D::Up,
+                    Direction2D::Up,
+                    Direction2D::Up,
+                    Direction2D::Up,
+                ],
+                expected_coords: [5, 1],
+                converged: true,
+            },
+            MarchStepTestCase {
+                grid_size: [2, 2],
+                from_coords: [1, 1],
+                dirs: &[Direction2D::Up, Direction2D::Left],
+                expected_coords: [0, 0],
+                converged: true,
+            },
+            MarchStepTestCase {
+                grid_size: [2, 2],
+                from_coords: [0, 0],
+                dirs: &[Direction2D::Up],
+                expected_coords: [0, 0],
+                converged: false,
+            },
+        ];
+        march_step_test::<2, TwoDim>(CASES);
+    }
+
+    #[test]
+    fn test_2d_direction_table() {
+        const CASES: &[DirectionTableTestCase<4, TwoDim>] = &[
+            DirectionTableTestCase(&[
+                (Direction2D::Up, 22),
+                (Direction2D::Down, 33),
+                (Direction2D::Left, 44),
+                (Direction2D::Right, 55),
+            ]),
+            DirectionTableTestCase(&[(Direction2D::Up, 66), (Direction2D::Down, 77)]),
+        ];
+
+        direction_table_test::<4, TwoDim, DirectionTable2D<u32>>(CASES);
     }
 }

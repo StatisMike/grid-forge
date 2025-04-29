@@ -1,4 +1,12 @@
-mod direction;
+//! Core structures and traits.
+//! 
+//! Every kind of [`Dimensionality`](crate::core::common::Dimensionality) has its own implementation
+//! of the core structures and traits in its own exported module.
+//! 
+//! It needs to define all the traits defined in the [`common`](crate::core::common) module, as well as
+//! the [`Dimensionality`](crate::core::common::Dimensionality) trait itself.
+
+pub (crate) mod direction;
 mod map;
 mod position;
 mod size;
@@ -17,7 +25,7 @@ pub(crate) mod common {
         const N: usize;
 
         /// Directions for neighboring cells
-        type Dir: Directions<Self>;
+        type Dir: Direction<Self>;
 
         /// Size of the grid
         type Size: GridSize<Self>;
@@ -43,7 +51,7 @@ pub(crate) mod two_d {
     impl Dimensionality for TwoDim {
         const N: usize = 2;
 
-        type Dir = Directions2D;
+        type Dir = Direction2D;
         type Size = GridSize2D;
         type Pos = GridPosition2D;
     }
@@ -66,7 +74,7 @@ pub(crate) mod three_d {
     impl Dimensionality for ThreeDim {
         const N: usize = 3;
 
-        type Dir = Directions3D;
+        type Dir = Direction3D;
         type Size = GridSize3D;
         type Pos = GridPosition3D;
     }

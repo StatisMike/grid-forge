@@ -1,6 +1,6 @@
 use std::{error::Error, fmt::Display};
 
-use crate::{map::GridSize, tile::GridPosition};
+use crate::core::common::Dimensionality;
 
 /// Error occuring during collapse process.
 ///
@@ -18,20 +18,20 @@ use crate::{map::GridSize, tile::GridPosition};
 ///   occurs at the sole beginning of the process, before first successful collapse it is deemed not probabilistic and is most likely caused
 ///   by placing some incompatible pre-collapsed tiles in *collapsible grid* provided to the *resolver*.
 #[derive(Debug)]
-pub struct CollapseError {
-    pos: GridPosition,
+pub struct CollapseError<D: Dimensionality> {
+    pos: D::Pos,
     kind: CollapseErrorKind,
     iter: u32,
 }
 
-impl CollapseError {
-    pub(crate) fn new(pos: GridPosition, kind: CollapseErrorKind, iter: u32) -> Self {
+impl <D: Dimensionality> CollapseError<D> {
+    pub(crate) fn new(pos: D::Pos, kind: CollapseErrorKind, iter: u32) -> Self {
         Self { pos, kind, iter }
     }
 
     #[inline(always)]
     pub(crate) fn from_result<T>(
-        result: Result<T, GridPosition>,
+        result: Result<T, D::Pos>,
         kind: CollapseErrorKind,
         iter: u32,
     ) -> Result<T, Self> {
@@ -42,7 +42,7 @@ impl CollapseError {
     }
 
     /// Returns [`GridPosition`] of tile which caused the error.
-    pub fn failed_pos(&self) -> GridPosition {
+    pub fn failed_pos(&self) -> D::Pos {
         self.pos
     }
 
@@ -57,7 +57,7 @@ impl CollapseError {
     }
 }
 
-impl Display for CollapseError {
+impl <D: Dimensionality> Display for CollapseError<D> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.kind {
             CollapseErrorKind::Collapse => write!(
@@ -79,7 +79,7 @@ impl Display for CollapseError {
     }
 }
 
-impl Error for CollapseError {}
+impl <D: Dimensionality> Error for CollapseError<D> {}
 
 #[derive(Debug)]
 pub(crate) enum CollapseErrorKind {
@@ -94,13 +94,13 @@ pub(crate) enum CollapseErrorKind {
 /// either because of the `tile_type_ids` being not consistent beetween collapsed tiles and provided rulesets, or
 /// because the grid size incompatibility.
 #[derive(Debug)]
-pub struct CollapsibleGridError {
+pub struct CollapsibleGridError<D: Dimensionality> {
     missing_type_ids: Option<Vec<u64>>,
-    sizes: Option<(GridSize, GridSize)>,
-    position: Option<GridPosition>,
+    sizes: Option<(D::Size, D::Size)>,
+    position: Option<D::Pos>,
 }
 
-impl CollapsibleGridError {
+impl <D: Dimensionality> CollapsibleGridError<D> {
     pub(crate) fn new_missing(missing_type_ids: Vec<u64>) -> Self {
         Self {
             missing_type_ids: Some(missing_type_ids),
@@ -108,14 +108,14 @@ impl CollapsibleGridError {
             position: None,
         }
     }
-    pub(crate) fn new_wrong_size(source_size: GridSize, target_size: GridSize) -> Self {
+    pub(crate) fn new_wrong_size(source_size: D::Size, target_size: D::Size) -> Self { 
         Self {
             missing_type_ids: None,
             sizes: Some((source_size, target_size)),
             position: None,
         }
     }
-    pub(crate) fn new_collapse(position: GridPosition) -> Self {
+    pub(crate) fn new_collapse(position: D::Pos) -> Self {
         Self {
             missing_type_ids: None,
             sizes: None,
@@ -132,18 +132,18 @@ impl CollapsibleGridError {
 
     /// If error originates from incompatible [`GridSize`] of source [`GridMap2D`](crate::map::GridMap2D) and target
     /// [`CollapsibleGrid`](crate::gen::collapse::grid::CollapsibleGrid), it will contain tuple of (`source_size`, `target_size`).
-    pub fn sizes(&self) -> &Option<(GridSize, GridSize)> {
+    pub fn sizes(&self) -> &Option<(D::Size, D::Size)> {
         &self.sizes
     }
 
     /// If error originates from incompatible prepopulated [`CollapsedTileData`](crate::gen::collapse::CollapsedTileData) during their transformation
     /// into [`CollapsiblePatternGrid`](crate::gen::collapse::overlap::CollapsiblePatternGrid), it will contain the position of problematic tile.
-    pub fn position(&self) -> &Option<GridPosition> {
+    pub fn position(&self) -> &Option<D::Pos> {
         &self.position
     }
 }
 
-impl Display for CollapsibleGridError {
+impl <D: Dimensionality> Display for CollapsibleGridError<D> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match (&self.missing_type_ids, &self.sizes, &self.position) {
             (Some(missing), None, None) => write!(f, "there are {} `tile_type_ids` missing from underlying CollapsibleGrid data. Make sure that the `CollapsibleGrid` have been provided correct rulesets", missing.len()),

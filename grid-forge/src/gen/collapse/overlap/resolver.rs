@@ -3,31 +3,32 @@ use std::marker::PhantomData;
 use rand::Rng;
 
 use crate::gen::collapse::error::{CollapseError, CollapseErrorKind};
-use crate::gen::collapse::grid::private::Sealed;
+use crate::gen::collapse::grid::private::CollapsibleGrid;
 use crate::gen::collapse::overlap::CollapsiblePattern;
 use crate::gen::collapse::queue::CollapseQueue;
 use crate::gen::collapse::tile::CollapsibleTileData;
 use crate::gen::collapse::{EntrophyQueue, PositionQueue, PropagateItem, Propagator};
 
-use crate::tile::identifiable::collection::IdentTileCollection;
-use crate::tile::identifiable::IdentifiableTileData;
-use crate::tile::GridPosition;
+use crate::id::*;
+use crate::two_d::Dimensionality;
 
 use super::pattern::OverlappingPattern;
 use super::CollapsiblePatternGrid;
 
-pub struct Resolver<P, Data>
+pub struct Resolver<P, D, Data>
 where
     P: OverlappingPattern,
+    D: Dimensionality,
     Data: IdentifiableTileData,
 {
-    subscriber: Option<Box<dyn Subscriber>>,
+    subscriber: Option<Box<dyn Subscriber<D>>>,
     tile_type: PhantomData<(P, Data)>,
 }
 
-impl<P, Data> Default for Resolver<P, Data>
+impl<P, D, Data> Default for Resolver<P, D, Data>
 where
     P: OverlappingPattern,
+    D: Dimensionality,
     Data: IdentifiableTileData,
 {
     fn default() -> Self {
@@ -38,18 +39,19 @@ where
     }
 }
 
-impl<P, Data> Resolver<P, Data>
+impl<P, D, Data> Resolver<P, D, Data>
 where
     P: OverlappingPattern,
+    D: Dimensionality,
     Data: IdentifiableTileData,
 {
-    pub fn with_subscriber(mut self, subscriber: Box<dyn Subscriber>) -> Self {
+    pub fn with_subscriber(mut self, subscriber: Box<dyn Subscriber<D>>) -> Self {
         self.subscriber = Some(subscriber);
         self
     }
 
     /// Retrieve the subscriber attached to the resolver.
-    pub fn retrieve_subscriber(&mut self) -> Option<Box<dyn Subscriber>> {
+    pub fn retrieve_subscriber(&mut self) -> Option<Box<dyn Subscriber<D>>> {
         self.subscriber.take()
     }
 
@@ -57,7 +59,7 @@ where
         &mut self,
         mut grid: CollapsiblePatternGrid<P, Data>,
         rng: &mut R,
-        positions: &[GridPosition],
+        positions: &[D::Pos],
     ) -> Result<CollapsiblePatternGrid<P, Data>, CollapseError>
     where
         R: Rng,
@@ -139,7 +141,7 @@ where
         &mut self,
         mut grid: CollapsiblePatternGrid<P, Data>,
         rng: &mut R,
-        position: &[GridPosition],
+        position: &[D::Pos],
         mut queue: PositionQueue,
     ) -> Result<CollapsiblePatternGrid<P, Data>, CollapseError>
     where
@@ -210,20 +212,20 @@ where
 }
 
 /// When applied to the struct allows injecting it into [`overlap::Resolver`](Resolver) to react on each tile being collapsed.
-pub trait Subscriber {
+pub trait Subscriber<D: Dimensionality> {
     /// Called when the generation process starts.
     fn on_generation_start(&mut self) {
         // no-op
     }
 
     /// Called when a tile is collapsed.
-    fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64, pattern_id: u64);
+    fn on_collapse(&mut self, position: &D::Pos, tile_type_id: u64, pattern_id: u64);
 }
 
 /// Event in the history of tile generation process.
 #[derive(Debug, Clone)]
-pub struct CollapseHistoryItem {
-    pub position: GridPosition,
+pub struct CollapseHistoryItem<D: Dimensionality> {
+    pub position: D::Pos,
     pub tile_type_id: u64,
     pub pattern_id: u64,
 }
@@ -232,23 +234,23 @@ pub struct CollapseHistoryItem {
 ///
 /// Every new generation began by resolver will clear the history.
 #[derive(Debug, Clone, Default)]
-pub struct CollapseHistorySubscriber {
-    history: Vec<CollapseHistoryItem>,
+pub struct CollapseHistorySubscriber<D: Dimensionality> {
+    history: Vec<CollapseHistoryItem<D>>,
 }
 
-impl CollapseHistorySubscriber {
+impl <D: Dimensionality> CollapseHistorySubscriber<D> {
     /// Returns history of tile generation process.
-    pub fn history(&self) -> &[CollapseHistoryItem] {
+    pub fn history(&self) -> &[CollapseHistoryItem<D>] {
         &self.history
     }
 }
 
-impl Subscriber for CollapseHistorySubscriber {
+impl <D: Dimensionality> Subscriber<D> for CollapseHistorySubscriber<D> {
     fn on_generation_start(&mut self) {
         self.history.clear();
     }
 
-    fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64, pattern_id: u64) {
+    fn on_collapse(&mut self, position: &D::Pos, tile_type_id: u64, pattern_id: u64) {
         self.history.push(CollapseHistoryItem {
             position: *position,
             tile_type_id,

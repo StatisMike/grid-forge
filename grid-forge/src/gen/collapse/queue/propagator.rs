@@ -1,21 +1,17 @@
 use std::collections::HashSet;
 
-use crate::{
-    gen::collapse::{option::PerOptionData, CollapsibleTileData},
-    map::{GridDir, GridMap2D},
-    tile::{GridPosition, TileContainer},
-};
+use crate::{core::common::*, r#gen::collapse::{option::private::PerOptionData, CollapsibleTileData}};
 
 use super::{entrophy::EntrophyQueue, CollapseQueue};
 
 #[derive(Debug)]
-pub struct PropagateItem {
-    pub position: GridPosition,
+pub struct PropagateItem<D: Dimensionality> {
+    pub position: D::Pos,
     pub to_remove: usize,
 }
 
-impl PropagateItem {
-    pub fn new(position: GridPosition, to_remove: usize) -> Self {
+impl <D: Dimensionality> PropagateItem<D> {
+    pub fn new(position: D::Pos, to_remove: usize) -> Self {
         Self {
             position,
             to_remove,
@@ -24,25 +20,25 @@ impl PropagateItem {
 }
 
 #[derive(Default)]
-pub struct Propagator {
-    inner: Vec<PropagateItem>,
+pub struct Propagator<D: Dimensionality> {
+    inner: Vec<PropagateItem<D>>,
 }
 
-impl Propagator {
-    pub fn push_propagate(&mut self, item: PropagateItem) {
+impl <D: Dimensionality> Propagator<D> {
+    pub fn push_propagate(&mut self, item: PropagateItem<D>) {
         self.inner.push(item);
     }
 
-    pub(crate) fn propagate<Tile: CollapsibleTileData>(
+    pub(crate) fn propagate<Tile: CollapsibleTileData<D>>(
         &mut self,
-        grid: &mut GridMap2D<Tile>,
-        option_data: &PerOptionData,
+        grid: &mut GridMap<D, Tile>,
+        option_data: &impl PerOptionData<D>,
         queue: &mut EntrophyQueue,
-    ) -> Result<(), GridPosition> {
+    ) -> Result<(), D::Pos> {
         let mut tiles_to_update = HashSet::new();
         let size = *grid.size();
         while let Some(item) = self.inner.pop() {
-            for direction in GridDir::ALL_2D {
+            for direction in D::Pos::all() {
                 let pos_to_update =
                     if let Some(pos) = direction.opposite().march_step(&item.position, &size) {
                         pos

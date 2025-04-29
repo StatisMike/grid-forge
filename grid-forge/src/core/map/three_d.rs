@@ -30,7 +30,7 @@ impl<Data: TileData> SealedGrid<Data, ThreeDim> for GridMap3D<Data> {
 }
 
 impl<Data: TileData> GridMap<ThreeDim, Data> for GridMap3D<Data> {
-    fn new(size: <ThreeDim as Dimensionality>::Size) -> Self {
+    fn new(size: GridSize3D) -> Self {
         let count = size.max_tile_count();
         let mut tiles = Vec::with_capacity(count);
         for _ in 0..count {
@@ -39,12 +39,13 @@ impl<Data: TileData> GridMap<ThreeDim, Data> for GridMap3D<Data> {
         Self { size, tiles }
     }
 
-    fn size(&self) -> &<ThreeDim as Dimensionality>::Size {
+    #[inline]
+    fn size(&self) -> &GridSize3D {
         &self.size
     }
 }
 
-impl <Data: TileData> GridMap3D<Data> {
+impl<Data: TileData> GridMap3D<Data> {
     pub fn insert_layer(&mut self, z: u32, layer: GridMap2D<Data>) {
         let layer_size = GridSize3D::from_2d(1, *layer.size());
         if !layer_size.is_contained_within(&self.size) {
@@ -53,15 +54,9 @@ impl <Data: TileData> GridMap3D<Data> {
         layer
             .drain()
             .into_iter()
-            .map(
-                |(pos, data)| 
-                (GridPosition3D::new(pos.x(), pos.y(), z), data),
-            )
-            .for_each(
-                |(pos, data)| 
-                {
-                    self.insert_tile((pos, data));
-                }
-            );
+            .map(|(pos, data)| (GridPosition3D::new(pos.x(), pos.y(), z), data))
+            .for_each(|(pos, data)| {
+                self.insert_tile((pos, data));
+            });
     }
 }

@@ -3,9 +3,11 @@ use std::{
     ops::{Add, Index, IndexMut, Sub, SubAssign},
 };
 
+use private::WaysToBeOption;
+
 use crate::{
-    map::{DirectionTable, GridDir},
-    tile::identifiable::collection::IdentTileCollection,
+    core::common::*,
+    id::*,
     utils::OrderedFloat,
 };
 
@@ -92,180 +94,349 @@ impl SubAssign for OptionWeights {
     }
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct PerOptionData {
-    option_map: HashMap<u64, usize>,
-    option_map_rev: HashMap<u64, u64>,
-    adjacencies: PerOptionTable<DirectionTable<Vec<usize>>>,
-    ways_to_be_option: WaysToBeOption,
-    opt_with_weight: PerOptionTable<OptionWeights>,
-    option_count: usize,
-    possible_options_count: usize,
-}
-
-impl IdentTileCollection for PerOptionData {
-    type DATA = usize;
-
-    fn inner(&self) -> &HashMap<u64, Self::DATA> {
-        &self.option_map
+pub mod two_d {
+    use super::*;
+    use crate::core::two_d::{TwoDim, DirectionTable2D};
+    pub struct WaysToBeOption2D {
+        table: PerOptionTable<DirectionTable2D<usize>>,
     }
 
-    fn inner_mut(&mut self) -> &mut HashMap<u64, Self::DATA> {
-        &mut self.option_map
+    impl WaysToBeOption<TwoDim> for WaysToBeOption2D {
+        type Inner = DirectionTable2D<usize>;
+
+        const EMPTY_DIR_TABLE: DirectionTable2D<usize> = DirectionTable2D::new([0; 4]);
+
+        fn inner(&self) -> &PerOptionTable<DirectionTable2D<usize>> {
+            &self.table
+        }
+        fn inner_mut(&mut self) -> &mut PerOptionTable<DirectionTable2D<usize>> {
+            &mut self.table
+        }
     }
 
-    fn rev(&self) -> &HashMap<u64, u64> {
-        &self.option_map_rev
+    #[derive(Clone, Debug, Default)]
+    pub struct PerOptionData2D {
+        option_map: HashMap<u64, usize>,
+        option_map_rev: HashMap<u64, u64>,
+        adjacencies: PerOptionTable<DirectionTable2D<Vec<usize>>>,
+        ways_to_be_option: WaysToBeOption2D,
+        opt_with_weight: PerOptionTable<OptionWeights>,
+        option_count: usize,
+        possible_options_count: usize,
     }
 
-    fn rev_mut(&mut self) -> &mut HashMap<u64, u64> {
-        &mut self.option_map_rev
-    }
-}
+    impl private::PerOptionData<TwoDim> for PerOptionData2D {
+        type OptionAdjacency = DirectionTable2D<Vec<usize>>;
+        type Ways = WaysToBeOption2D;
 
-impl PerOptionData {
-    pub(crate) fn populate(
-        &mut self,
-        options_with_weights: &BTreeMap<u64, u32>,
-        adjacencies: &AdjacencyTable,
-    ) {
-        for (n, (option_id, option_weight)) in options_with_weights.iter().enumerate() {
-            self.add_tile_data(*option_id, n);
-
-            self.opt_with_weight
-                .as_mut()
-                .push(OptionWeights::new(*option_weight));
+        fn option_map(&self) -> &HashMap<u64, usize> {
+            &self.option_map
         }
 
-        self.option_count = self.option_map.len();
-        self.possible_options_count = self.option_count;
-
-        for trans_id in 0..self.option_count {
-            let original_id = self.get_tile_type_id(&trans_id).unwrap();
-            self.adjacencies
-                .table
-                .push(self.translate_adjacency_table(original_id, adjacencies));
+        fn option_map_mut(&mut self) -> &mut HashMap<u64, usize> {
+            &mut self.option_map
         }
 
-        self.generate_ways_to_be_option();
+        fn option_map_rev(&self) -> &HashMap<u64, u64> {
+            &self.option_map_rev
+        }
+
+        fn option_map_rev_mut(&mut self) -> &mut HashMap<u64, u64> {
+            &mut self.option_map_rev
+        }
+
+        fn adjacencies(&self) -> &PerOptionTable<Self::OptionAdjacency> {
+            &self.adjacencies
+        }
+
+        fn adjacencies_mut(&mut self) -> &mut PerOptionTable<Self::OptionAdjacency> {
+            &mut self.adjacencies
+        }
+
+        fn ways_to_be_option(&self) -> &Self::Ways {
+            &self.ways_to_be_option
+        }
+
+        fn ways_to_be_option_mut(&mut self) -> &mut Self::Ways {
+            &mut self.ways_to_be_option
+        }
+
+        fn opt_with_weight(&self) -> &PerOptionTable<OptionWeights> {
+            &self.opt_with_weight
+        }
+
+        fn opt_with_weight_mut(&mut self) -> &mut PerOptionTable<OptionWeights> {
+            &mut self.opt_with_weight
+        }
+
+        fn option_count(&self) -> usize {
+            self.option_count
+        }
+
+        fn possible_options_count(&self) -> usize {
+            self.possible_options_count
+        }
     }
 
-    pub fn get_all_enabled_in_direction(&self, option_id: usize, direction: GridDir) -> &[usize] {
-        &self.adjacencies[option_id][direction]
+    impl IdentTileCollection for PerOptionData2D {
+        type DATA = usize;
+
+        fn inner(&self) -> &HashMap<u64, Self::DATA> {
+            &self.option_map
+        }
+
+        fn inner_mut(&mut self) -> &mut HashMap<u64, Self::DATA> {
+            &mut self.option_map
+        }
+
+        fn rev(&self) -> &HashMap<u64, u64> {
+            &self.option_map_rev
+        }
+
+        fn rev_mut(&mut self) -> &mut HashMap<u64, u64> {
+            &mut self.option_map_rev
+        }
+    }
+}
+
+pub mod three_d {
+    use super::*;
+    use crate::core::three_d::{ThreeDim, DirectionTable3D};
+    pub struct WaysToBeOption3D {
+        table: PerOptionTable<DirectionTable3D<usize>>,
     }
 
-    pub fn iter_weights(&self) -> impl Iterator<Item = (usize, &OptionWeights)> {
-        self.opt_with_weight.table.iter().enumerate()
+    impl WaysToBeOption<ThreeDim> for WaysToBeOption3D {
+        type Inner = DirectionTable3D<usize>;
+
+        const EMPTY_DIR_TABLE: DirectionTable3D<usize> = DirectionTable3D::new([0; 6]);
+
+        fn inner(&self) -> &PerOptionTable<DirectionTable3D<usize>> {
+            &self.table
+        }
+        fn inner_mut(&mut self) -> &mut PerOptionTable<DirectionTable3D<usize>> {
+            &mut self.table
+        }
     }
 
-    pub fn get_weights(&self, option_idx: usize) -> OptionWeights {
-        self.opt_with_weight.table[option_idx]
+    #[derive(Clone, Debug, Default)]
+    pub struct PerOptionData3D {
+        option_map: HashMap<u64, usize>,
+        option_map_rev: HashMap<u64, u64>,
+        adjacencies: PerOptionTable<DirectionTable3D<Vec<usize>>>,
+        ways_to_be_option: WaysToBeOption3D,
+        opt_with_weight: PerOptionTable<OptionWeights>,
+        option_count: usize,
+        possible_options_count: usize,
     }
 
-    pub fn num_options(&self) -> usize {
-        self.option_count
+    impl private::PerOptionData<ThreeDim> for PerOptionData3D {
+        type OptionAdjacency = DirectionTable3D<Vec<usize>>;
+        type Ways = WaysToBeOption3D;
+
+        fn option_map(&self) -> &HashMap<u64, usize> {
+            &self.option_map
+        }
+
+        fn option_map_mut(&mut self) -> &mut HashMap<u64, usize> {
+            &mut self.option_map
+        }
+
+        fn option_map_rev(&self) -> &HashMap<u64, u64> {
+            &self.option_map_rev
+        }
+
+        fn option_map_rev_mut(&mut self) -> &mut HashMap<u64, u64> {
+            &mut self.option_map_rev
+        }
+
+        fn adjacencies(&self) -> &PerOptionTable<Self::OptionAdjacency> {
+            &self.adjacencies
+        }
+
+        fn adjacencies_mut(&mut self) -> &mut PerOptionTable<Self::OptionAdjacency> {
+            &mut self.adjacencies
+        }
+
+        fn ways_to_be_option(&self) -> &Self::Ways {
+            &self.ways_to_be_option
+        }
+
+        fn ways_to_be_option_mut(&mut self) -> &mut Self::Ways {
+            &mut self.ways_to_be_option
+        }
+
+        fn opt_with_weight(&self) -> &PerOptionTable<OptionWeights> {
+            &self.opt_with_weight
+        }
+
+        fn opt_with_weight_mut(&mut self) -> &mut PerOptionTable<OptionWeights> {
+            &mut self.opt_with_weight
+        }
+
+        fn option_count(&self) -> usize {
+            self.option_count
+        }
+
+        fn possible_options_count(&self) -> usize {
+            self.possible_options_count
+        }
     }
 
-    pub fn num_possible_options(&self) -> usize {
-        self.possible_options_count
-    }
+    impl IdentTileCollection for PerOptionData3D {
+        type DATA = usize;
 
-    pub fn get_ways_to_become_option(&self) -> &WaysToBeOption {
-        &self.ways_to_be_option
-    }
+        fn inner(&self) -> &HashMap<u64, Self::DATA> {
+            &self.option_map
+        }
 
-    fn generate_ways_to_be_option(&mut self) {
-        let inner = self.ways_to_be_option.mut_inner().as_mut();
-        for adj in self.adjacencies.table.iter() {
-            let table = DirectionTable::new_array([
-                adj.index(GridDir::UP).len(),
-                adj.index(GridDir::DOWN).len(),
-                adj.index(GridDir::LEFT).len(),
-                adj.index(GridDir::RIGHT).len(),
-            ]);
-            if table.inner().contains(&0) {
-                self.possible_options_count -= 1;
-                inner.push(WaysToBeOption::EMPTY_DIR_TABLE)
-            } else {
-                inner.push(table);
+        fn inner_mut(&mut self) -> &mut HashMap<u64, Self::DATA> {
+            &mut self.option_map
+        }
+
+        fn rev(&self) -> &HashMap<u64, u64> {
+            &self.option_map_rev
+        }
+
+        fn rev_mut(&mut self) -> &mut HashMap<u64, u64> {
+            &mut self.option_map_rev
+        }
+    }
+}
+
+pub (crate) mod private {
+
+    use std::fmt::Debug;
+
+    use super::*;
+    use crate::core::direction::private::SealedDir;
+    
+    pub trait WaysToBeOption<D: Dimensionality> {
+        const EMPTY_DIR_TABLE: Self::Inner;
+
+        type Inner: DirectionTable<D, usize>;
+
+        fn inner(&self) -> &PerOptionTable<Self::Inner>;
+        fn inner_mut(&mut self) -> &mut PerOptionTable<Self::Inner>;
+
+        /// Decrements number of ways to become option from given direction. If reaches
+        /// 0, returns `true` and given option should be removed.
+        fn decrement(&mut self, option_idx: usize, direction: D::Dir) -> bool {
+            // let num_ways_by_dir = self.table.index_mut(option_idx);
+            // let num_ways = num_ways_by_dir[direction];
+            if self.inner()[option_idx][direction] == 0 {
+                return false;
+            }
+            self.inner_mut()[option_idx][direction] -= 1;
+            if self.inner()[option_idx][direction] > 0 {
+                return false;
+            }
+            self.inner_mut()[option_idx] = Self::EMPTY_DIR_TABLE;
+            true
+        }
+
+        fn iter_possible(&self) -> impl Iterator<Item = usize> + '_ {
+            self.inner()
+                .as_ref()
+                .iter()
+                .enumerate()
+                .filter_map(|(idx, t)| if t[D::Dir::FIRST] == 0 { None } else { Some(idx) })
+        }
+
+        fn purge_others(&mut self, options: &[usize]) {
+            for (option_id, ways) in self.inner_mut().as_mut().iter_mut().enumerate() {
+                if options.contains(&option_id) {
+                    continue;
+                }
+                *ways = Self::EMPTY_DIR_TABLE;
             }
         }
-    }
 
-    fn translate_adjacency_table(
-        &self,
-        original_id: u64,
-        adjacencies: &AdjacencyTable,
-    ) -> DirectionTable<Vec<usize>> {
-        let mut table = DirectionTable::default();
-        for direction in GridDir::ALL_2D {
-            table[*direction] = Vec::from_iter(
-                adjacencies
-                    .get_all_adjacencies_in_direction(&original_id, direction)
-                    .map(|original_id: &u64| {
-                        self.get_tile_data(original_id)
-                            .expect("cannot get mapped id")
-                    })
-                    .copied(),
-            );
-        }
-        table
-    }
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct WaysToBeOption {
-    table: PerOptionTable<DirectionTable<usize>>,
-}
-
-impl WaysToBeOption {
-    pub(crate) const EMPTY_DIR_TABLE: DirectionTable<usize> =
-        DirectionTable::new_array(Self::EMPTY_TABLE);
-
-    pub(crate) const EMPTY_TABLE: [usize; 4] = [0, 0, 0, 0];
-
-    /// Decrements number of ways to become option from given direction. If reaches
-    /// 0, returns `true` and given option should be removed.
-    pub(crate) fn decrement(&mut self, option_idx: usize, direction: GridDir) -> bool {
-        // let num_ways_by_dir = self.table.index_mut(option_idx);
-        // let num_ways = num_ways_by_dir[direction];
-        if self.table[option_idx][direction] == 0 {
-            return false;
-        }
-        self.table[option_idx][direction] -= 1;
-        if self.table[option_idx][direction] > 0 {
-            return false;
-        }
-        self.table[option_idx] = Self::EMPTY_DIR_TABLE;
-        true
-    }
-
-    pub(crate) fn mut_inner(&mut self) -> &mut PerOptionTable<DirectionTable<usize>> {
-        &mut self.table
-    }
-
-    pub(crate) fn iter_possible(&self) -> impl Iterator<Item = usize> + '_ {
-        self.table
-            .as_ref()
-            .iter()
-            .enumerate()
-            .filter_map(|(idx, t)| if t[GridDir::UP] == 0 { None } else { Some(idx) })
-    }
-
-    pub(crate) fn purge_others(&mut self, options: &[usize]) {
-        for (option_id, ways) in self.table.as_mut().iter_mut().enumerate() {
-            if options.contains(&option_id) {
-                continue;
+        fn purge_option(&mut self, option_idx: usize) -> bool {
+            if self.inner()[option_idx].inner().as_ref().iter().all(|i| i == &0) {
+                return false;
             }
-            *ways = Self::EMPTY_DIR_TABLE;
+            self.inner_mut()[option_idx] = Self::EMPTY_DIR_TABLE;
+            true
         }
     }
 
-    pub(crate) fn purge_option(&mut self, option_idx: usize) -> bool {
-        if self.table[option_idx].inner().iter().all(|i| i == &0) {
-            return false;
+    pub trait PerOptionData<D: Dimensionality>: IdentTileCollection<DATA = usize> + Debug + Default + Clone
+    {
+        type OptionAdjacency: DirectionTable<D, Vec<usize>>;
+        type Ways: WaysToBeOption<D>;
+
+        fn option_map(&self) -> &HashMap<u64, usize>;
+        fn option_map_mut(&mut self) -> &mut HashMap<u64, usize>;
+        fn option_map_rev(&self) -> &HashMap<u64, u64>;
+        fn option_map_rev_mut(&mut self) -> &mut HashMap<u64, u64>;
+        fn adjacencies(&self) -> &PerOptionTable<Self::OptionAdjacency>;
+        fn adjacencies_mut(&mut self) -> &mut PerOptionTable<Self::OptionAdjacency>;
+        fn ways_to_be_option(&self) -> &Self::Ways;
+        fn ways_to_be_option_mut(&mut self) -> &mut Self::Ways;
+        fn opt_with_weight(&self) -> &PerOptionTable<OptionWeights>;
+        fn opt_with_weight_mut(&mut self) -> &mut PerOptionTable<OptionWeights>;
+        fn option_count(&self) -> usize;
+        fn possible_options_count(&self) -> usize;
+
+        fn populate(
+            &mut self,
+            options_with_weights: &BTreeMap<u64, u32>,
+            adjacencies: &AdjacencyTable<D>,
+        ) {
+            for (n, (option_id, option_weight)) in options_with_weights.iter().enumerate() {
+                self.add_tile_data(*option_id, n);
+    
+                self.opt_with_weight
+                    .as_mut()
+                    .push(OptionWeights::new(*option_weight));
+            }
+    
+            self.option_count = self.option_map.len();
+            self.possible_options_count = self.option_count;
+    
+            for trans_id in 0..self.option_count {
+                let original_id = self.get_tile_type_id(&trans_id).unwrap();
+                self.adjacencies
+                    .table
+                    .push(self.translate_adjacency_table(original_id, adjacencies));
+            }
+    
+            self.generate_ways_to_be_option();
         }
-        self.table[option_idx] = Self::EMPTY_DIR_TABLE;
-        true
+
+        fn generate_ways_to_be_option(&mut self) {
+            let inner = self.ways_to_be_option_mut().mut_inner().as_mut();
+            for adj in self.adjacencies.table.iter() {
+                let inner_table = D::Dir::all().iter().map(|dir| adj[*dir].len()).collect::<Vec<usize>>();
+                let table = DirectionTable::from_slice(&inner_table);
+                if table.inner().contains(&0) {
+                    self.possible_options_count -= 1;
+                    inner.push(WaysToBeOption::EMPTY_DIR_TABLE)
+                } else {
+                    inner.push(table);
+                }
+            }
+        }
+    
+        fn translate_adjacency_table(
+            &self,
+            original_id: u64,
+            adjacencies: &AdjacencyTable<D>,
+        ) -> Self::OptionAdjacency {
+            let mut table = Self::OptionAdjacency::default();
+            for direction in D::Dir::all() {
+                table[*direction] = Vec::from_iter(
+                    adjacencies
+                        .get_all_adjacencies_in_direction(&original_id, direction)
+                        .map(|original_id: &u64| {
+                            self.get_tile_data(original_id)
+                                .expect("cannot get mapped id")
+                        })
+                        .copied(),
+                );
+            }
+            table
+        }
     }
 }

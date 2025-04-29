@@ -3,15 +3,13 @@ use std::marker::PhantomData;
 
 use rand::Rng;
 
+use crate::core::common::*;
+use crate::id::*;
+
 use crate::gen::collapse::error::CollapsibleGridError;
 use crate::gen::collapse::grid::CollapsibleGrid;
 use crate::gen::collapse::option::{OptionWeights, PerOptionData, WaysToBeOption};
 use crate::gen::collapse::{self, tile::*, CollapsedGrid, PropagateItem};
-use crate::map::{GridMap2D, GridSize};
-use crate::tile::identifiable::builders::IdentTileBuilder;
-use crate::tile::identifiable::collection::IdentTileCollection;
-use crate::tile::identifiable::IdentifiableTileData;
-use crate::tile::{GridPosition, GridTile, TileContainer, TileData};
 
 use super::{AdjacencyRules, FrequencyHints};
 
@@ -361,7 +359,7 @@ impl<Tile: IdentifiableTileData> CollapsibleGrid<Tile, CollapsibleTile>
     }
 }
 
-impl<Tile: IdentifiableTileData> collapse::grid::private::Sealed<CollapsibleTile>
+impl<Tile: IdentifiableTileData> collapse::grid::private::CollapsibleGrid<CollapsibleTile>
     for CollapsibleTileGrid<Tile>
 {
     fn _option_data(&self) -> &PerOptionData {

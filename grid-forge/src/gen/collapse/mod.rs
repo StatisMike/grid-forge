@@ -43,7 +43,7 @@ mod queue;
 pub mod singular;
 mod tile;
 
-use std::{collections::HashSet, fs::File, io::Write, ops::Index};
+use std::{collections::HashSet, fs::File, io::Write, marker::PhantomData, ops::Index};
 
 // Flattened reexports
 pub use error::CollapseError;
@@ -51,36 +51,37 @@ pub use grid::{CollapsedGrid, CollapsibleGrid};
 pub use queue::*;
 pub use tile::*;
 
-use crate::{map::GridDir, tile::GridPosition};
+use crate::core::common::*;
 
 #[derive(Clone, Debug, Default)]
-pub(crate) struct Adjacencies {
+pub(crate) struct Adjacencies<D: Dimensionality> {
     inner: Vec<HashSet<u64>>,
+    phantom: PhantomData<D>,
 }
 
-impl Adjacencies {
+impl <D: Dimensionality> Adjacencies<D> {
     pub fn new() -> Self {
         let mut inner = Vec::new();
 
-        for _ in 0..GridDir::ALL_2D.len() {
+        for _ in 0..D::Dir::N {
             inner.push(HashSet::default());
         }
 
-        Self { inner }
+        Self { inner, phantom: PhantomData }
     }
 
     #[inline(always)]
-    pub fn add_at_dir(&mut self, direction: GridDir, id: u64) {
-        let v = self.inner.get_mut(direction as usize).unwrap();
+    pub fn add_at_dir(&mut self, direction: D::Dir, id: u64) {
+        let v = self.inner.get_mut(direction.as_idx()).unwrap();
         v.insert(id);
     }
 }
 
-impl Index<GridDir> for Adjacencies {
+impl <D: Dimensionality> Index<D::Dir> for Adjacencies<D> {
     type Output = HashSet<u64>;
 
-    fn index(&self, index: GridDir) -> &Self::Output {
-        &self.inner[index as usize]
+    fn index(&self, index: D::Dir) -> &Self::Output {
+        &self.inner[index.as_idx()]
     }
 }
 
@@ -99,8 +100,8 @@ impl DebugSubscriber {
     }
 }
 
-impl singular::Subscriber for DebugSubscriber {
-    fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64) {
+impl <D: Dimensionality> singular::Subscriber<D> for DebugSubscriber {
+    fn on_collapse(&mut self, position: &D::Pos, tile_type_id: u64) {
         if let Some(file) = &mut self.file {
             writeln!(
                 file,
@@ -117,8 +118,8 @@ impl singular::Subscriber for DebugSubscriber {
     }
 }
 
-impl overlap::Subscriber for DebugSubscriber {
-    fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64, pattern_id: u64) {
+impl <D: Dimensionality> overlap::Subscriber<D> for DebugSubscriber {
+    fn on_collapse(&mut self, position: &D::Pos, tile_type_id: u64, pattern_id: u64) {
         if let Some(file) = &mut self.file {
             writeln!(
                 file,
@@ -136,23 +137,24 @@ impl overlap::Subscriber for DebugSubscriber {
 pub(crate) mod private {
     use std::collections::HashMap;
 
-    use crate::map::GridDir;
+    use crate::core::common::*;
+
 
     use super::Adjacencies;
 
     #[derive(Clone, Debug, Default)]
-    pub struct AdjacencyTable {
-        inner: HashMap<u64, Adjacencies>,
+    pub struct AdjacencyTable<D: Dimensionality> {
+        inner: HashMap<u64, Adjacencies<D>>,
     }
 
-    impl AsRef<HashMap<u64, Adjacencies>> for AdjacencyTable {
-        fn as_ref(&self) -> &HashMap<u64, Adjacencies> {
+    impl <D: Dimensionality> AsRef<HashMap<u64, Adjacencies<D>>> for AdjacencyTable<D> {
+        fn as_ref(&self) -> &HashMap<u64, Adjacencies<D>> {
             &self.inner
         }
     }
 
-    impl AdjacencyTable {
-        pub(crate) fn insert_adjacency(&mut self, el_id: u64, direction: GridDir, adj_id: u64) {
+    impl <D: Dimensionality> AdjacencyTable<D> {
+        pub(crate) fn insert_adjacency(&mut self, el_id: u64, direction: D::Dir, adj_id: u64) {
             match self.inner.entry(el_id) {
                 std::collections::hash_map::Entry::Occupied(mut e) => {
                     e.get_mut().add_at_dir(direction, adj_id)
@@ -168,7 +170,7 @@ pub(crate) mod private {
         pub(crate) fn get_all_adjacencies_in_direction(
             &self,
             el_id: &u64,
-            direction: &GridDir,
+            direction: &D::Dir,
         ) -> impl Iterator<Item = &u64> {
             self.inner
                 .get(el_id)

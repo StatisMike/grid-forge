@@ -1,83 +1,52 @@
 use std::collections::HashSet;
 
 use crate::{
-    map::{GridMap2D, GridSize},
-    tile::{
-        identifiable::{builders::IdentTileBuilder, IdentifiableTileData},
-        GridPosition, GridTile, GridTileRef, TileContainer,
-    },
+    core::common::*,
+    id::*,
 };
 
 use super::{error::CollapsibleGridError, CollapsedTileData, CollapsibleTileData};
 
-/// [`GridMap2D`] containing data of [`CollapsedTileData`].
-pub struct CollapsedGrid {
-    grid: GridMap2D<CollapsedTileData>,
-    tile_type_ids: HashSet<u64>,
-}
+pub trait CollapsedGrid<D: Dimensionality>: private::CollapsedGrid<D> {
 
-impl CollapsedGrid {
-    /// Creates new [`CollapsedGrid`] with the given size.
-    pub fn new(size: GridSize) -> Self {
-        Self {
-            grid: GridMap2D::new(size),
-            tile_type_ids: HashSet::new(),
-        }
-    }
+    fn new(size: &D::Size) -> Self;
+    fn grid(&self) -> &Self::Grid;
 
-    /// Inserts [`CollapsedTileData`] into the specified position in the internal grid.
-    pub fn insert_data(&mut self, position: &GridPosition, data: CollapsedTileData) -> bool {
+    fn insert_data(&mut self, position: &D::Pos, data: CollapsedTileData) -> bool {
         let tile_id = data.tile_type_id();
-        if self.grid.insert_data(position, data) {
-            self.tile_type_ids.insert(tile_id);
+        if self.grid().insert_data(position, data) {
+            self.tile_type_ids_mut().insert(tile_id);
             true
         } else {
             false
         }
     }
-
-    /// Inserts [`GridTile`] of [`CollapsedTileData`] into the internal grid.
-    pub fn insert_tile(&mut self, tile: GridTile<CollapsedTileData>) -> bool {
-        self.insert_data(&tile.grid_position(), tile.into_data())
-    }
-
-    /// Returns iterator over all `tile_type_id`s of the collapsed tiles in the grid.
-    pub fn tile_type_ids(&self) -> impl Iterator<Item = &u64> {
-        self.tile_type_ids.iter()
-    }
-}
-
-impl AsRef<GridMap2D<CollapsedTileData>> for CollapsedGrid {
-    fn as_ref(&self) -> &GridMap2D<CollapsedTileData> {
-        &self.grid
-    }
 }
 
 /// Trait shared by a structs holding a grid of [`CollapsibleTileData`], useable by dedicated resolvers to collapse
 /// the grid.
-pub trait CollapsibleGrid<IT: IdentifiableTileData, CT: CollapsibleTileData>:
-    Sized + private::Sealed<CT>
-{
-    /// Retrieves the collapsed tiles in internal grid as a [`CollapsedGrid`].
-    fn retrieve_collapsed(&self) -> CollapsedGrid;
+pub trait CollapsibleGrid<
+    D: Dimensionality,
+    IdT: IdentifiableTileData,
+>: private::CollapsibleGrid<D> {
 
-    /// Retrieves the collapsed tiles in internal grid as a [`GridMap2D`] of [`IdentifiableTileData`].
+    fn retrieve_collapsed(&self) -> Self::Grid;
     fn retrieve_ident<OT: IdentifiableTileData, B: IdentTileBuilder<OT>>(
         &self,
         builder: &B,
-    ) -> Result<GridMap2D<OT>, CollapsibleGridError>;
+    ) -> Result<dyn GridMap<D, OT>, CollapsibleGridError<D>>;
 
     /// Returns all empty positions in the internal grid.
-    fn empty_positions(&self) -> Vec<GridPosition> {
+    fn empty_positions(&self) -> Vec<D::Pos> {
         self._grid().get_all_empty_positions()
     }
 
     /// Returns all possitions in the internal grid holds collapsed or uncollapsed tiles are either collapsed.
-    fn retrieve_positions(&self, collapsed: bool) -> Vec<GridPosition> {
-        let func = if collapsed {
-            |t: &GridTileRef<CT>| t.as_ref().is_collapsed()
+    fn retrieve_positions(&self, collapsed: bool) -> Vec<D::Pos> {
+        let func: fn((D::Pos, Self::CollapsibleData)) -> bool = if collapsed {
+            |(_, d)| d.is_collapsed()
         } else {
-            |t: &GridTileRef<CT>| !t.as_ref().is_collapsed()
+            |(_, d)| !d.is_collapsed()
         };
         self._grid()
             .iter_tiles()
@@ -91,37 +60,39 @@ pub trait CollapsibleGrid<IT: IdentifiableTileData, CT: CollapsibleTileData>:
             .collect()
     }
 
-    /// Removes all uncollapsed tiles from the internal grid.
-    fn remove_uncollapsed(&mut self) {
-        for t in self._grid_mut().iter_mut() {
-            if let Some(d) = t {
-                if d.is_collapsed() {
-                    continue;
-                }
-                t.take();
-            }
-        }
-    }
+
 }
 
+
 pub(crate) mod private {
-    use crate::{
-        gen::collapse::{option::PerOptionData, CollapsibleTileData, PropagateItem},
-        map::GridMap2D,
-        tile::GridPosition,
-    };
+    use crate::{core::common::*, r#gen::collapse::{option::private::PerOptionData, PropagateItem}};
+    use super::*;
 
-    pub trait Sealed<Tile: CollapsibleTileData> {
-        #[doc(hidden)]
-        fn _grid(&self) -> &GridMap2D<Tile>;
+
+    pub trait CollapsibleGrid<D: Dimensionality> {
+        type CollapsibleData: CollapsibleTileData<D>;
+        type Grid: GridMap<D, Self::CollapsibleData>;
 
         #[doc(hidden)]
-        fn _grid_mut(&mut self) -> &mut GridMap2D<Tile>;
+        fn _grid(&self) -> &Self::Grid;
 
         #[doc(hidden)]
-        fn _option_data(&self) -> &PerOptionData;
+        fn _grid_mut(&mut self) -> &mut Self::Grid;
 
         #[doc(hidden)]
-        fn _get_initial_propagate_items(&self, to_collapse: &[GridPosition]) -> Vec<PropagateItem>;
+        fn _option_data(&self) -> &impl PerOptionData<D>;
+
+        #[doc(hidden)]
+        fn _get_initial_propagate_items(&self, to_collapse: &[D::Pos]) -> Vec<PropagateItem<D>>;
+    }
+
+    pub trait CollapsedGrid<D: Dimensionality> {
+        type Grid: GridMap<D, CollapsedTileData>;
+
+        fn new(size: &D::Size) -> Self;
+        fn grid(&self) -> &Self::Grid;
+        fn tile_type_ids(&self) -> &HashSet<u64>;
+        fn tile_type_ids_mut(&mut self) -> &mut HashSet<u64>;
+
     }
 }

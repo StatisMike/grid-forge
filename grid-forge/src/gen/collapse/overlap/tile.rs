@@ -6,13 +6,10 @@ use rand::Rng;
 
 use crate::gen::collapse::entrophy::EntrophyUniform;
 use crate::gen::collapse::error::CollapsibleGridError;
-use crate::gen::collapse::option::{OptionWeights, PerOptionData, WaysToBeOption};
+use crate::gen::collapse::option::{OptionWeights, private::{PerOptionData, WaysToBeOption}};
 use crate::gen::collapse::{tile::*, CollapsedGrid, CollapsibleGrid, PropagateItem};
-use crate::map::{GridMap2D, GridSize};
-use crate::tile::identifiable::builders::IdentTileBuilder;
-use crate::tile::identifiable::collection::IdentTileCollection;
-use crate::tile::identifiable::IdentifiableTileData;
-use crate::tile::{GridPosition, GridTile, GridTileRef, TileContainer, TileData};
+use crate::core::common::*;
+use crate::id::*;
 
 use super::pattern::OverlappingPattern;
 use super::{AdjacencyRules, FrequencyHints, PatternCollection};
@@ -343,7 +340,7 @@ impl<P: OverlappingPattern, Tile: IdentifiableTileData> CollapsibleGrid<Tile, Co
 }
 
 impl<P: OverlappingPattern, Tile: IdentifiableTileData>
-    crate::gen::collapse::grid::private::Sealed<CollapsiblePattern<P>>
+    crate::gen::collapse::grid::private::CollapsibleGrid<CollapsiblePattern<P>>
     for CollapsiblePatternGrid<P, Tile>
 {
     fn _grid(&self) -> &GridMap2D<CollapsiblePattern<P>> {

@@ -1,14 +1,14 @@
 use std::any::Any;
 use std::marker::PhantomData;
 
-use crate::gen::collapse::grid::private::Sealed;
+use crate::core::common::*;
+use crate::id::*;
+
+use crate::gen::collapse::grid::private::CollapsibleGrid;
 use crate::gen::collapse::grid::CollapsibleGrid;
 use crate::gen::collapse::{
     CollapsibleTileData, EntrophyQueue, PositionQueue, PropagateItem, Propagator,
 };
-use crate::tile::identifiable::collection::IdentTileCollection;
-use crate::tile::identifiable::IdentifiableTileData;
-use crate::tile::GridPosition;
 
 use crate::gen::collapse::error::{CollapseError, CollapseErrorKind};
 use crate::gen::collapse::queue::CollapseQueue;
@@ -21,16 +21,17 @@ use rand::Rng;
 ///
 /// It uses either [`EntrophyQueue`] or [`PositionQueue`] to process the option collapsing process of the [`CollapsibleTileGrid`],
 /// additionally providing an option to subscribe to the collapse process via [`singular::Subscriber`](Subscriber).
-pub struct Resolver<Data>
+pub struct Resolver<D: Dimensionality, Data>
 where
     Data: IdentifiableTileData,
 {
-    subscriber: Option<Box<dyn Subscriber>>,
+    subscriber: Option<Box<dyn Subscriber<D>>>,
     tile_type: PhantomData<Data>,
 }
 
-impl<Data> Default for Resolver<Data>
+impl<D, Data> Default for Resolver<D, Data>
 where
+    D: Dimensionality,
     Data: IdentifiableTileData,
 {
     fn default() -> Self {
@@ -41,18 +42,19 @@ where
     }
 }
 
-impl<Data> Resolver<Data>
+impl<D, Data> Resolver<D, Data>
 where
+    D: Dimensionality,
     Data: IdentifiableTileData,
 {
     /// Attach a subscriber to the resolver. The subscriber will be notified of each tile being collapsed.
-    pub fn with_subscriber(mut self, subscriber: Box<dyn Subscriber>) -> Self {
+    pub fn with_subscriber(mut self, subscriber: Box<dyn Subscriber<D>>) -> Self {
         self.subscriber = Some(subscriber);
         self
     }
 
     /// Retrieve the subscriber attached to the resolver.
-    pub fn retrieve_subscriber(&mut self) -> Option<Box<dyn Subscriber>> {
+    pub fn retrieve_subscriber(&mut self) -> Option<Box<dyn Subscriber<D>>> {
         self.subscriber.take()
     }
 
@@ -229,7 +231,7 @@ where
 }
 
 /// When applied to the struct allows injecting it into [`singular::Resolver`](Resolver) to react on each tile being collapsed.
-pub trait Subscriber: Any {
+pub trait Subscriber<D: Dimensionality>: Any { 
     /// Called when the generation process starts. No-op by default, should be overridden to clear the state of the subcscriber
     /// if it retains any state.
     fn on_generation_start(&mut self) {
@@ -237,7 +239,7 @@ pub trait Subscriber: Any {
     }
 
     /// Called when a tile is collapsed.
-    fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64);
+    fn on_collapse(&mut self, position: &D::Pos, tile_type_id: u64);
 
     /// To retrieve the concrete subscriber type from [`singular::Resolver`](Resolver).
     fn as_any(&self) -> &dyn Any;
@@ -275,12 +277,12 @@ impl CollapseHistorySubscriber {
     }
 }
 
-impl Subscriber for CollapseHistorySubscriber {
+impl <D: Dimensionality> Subscriber<D> for CollapseHistorySubscriber {
     fn on_generation_start(&mut self) {
         self.history.clear();
     }
 
-    fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64) {
+    fn on_collapse(&mut self, position: &D::Pos, tile_type_id: u64) {
         self.history.push(CollapseHistoryItem {
             position: *position,
             tile_type_id,
