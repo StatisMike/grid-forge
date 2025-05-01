@@ -238,14 +238,14 @@ pub struct CollapseHistorySubscriber<D: Dimensionality> {
     history: Vec<CollapseHistoryItem<D>>,
 }
 
-impl <D: Dimensionality> CollapseHistorySubscriber<D> {
+impl<D: Dimensionality> CollapseHistorySubscriber<D> {
     /// Returns history of tile generation process.
     pub fn history(&self) -> &[CollapseHistoryItem<D>] {
         &self.history
     }
 }
 
-impl <D: Dimensionality> Subscriber<D> for CollapseHistorySubscriber<D> {
+impl<D: Dimensionality> Subscriber<D> for CollapseHistorySubscriber<D> {
     fn on_generation_start(&mut self) {
         self.history.clear();
     }

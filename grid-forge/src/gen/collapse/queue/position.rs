@@ -1,6 +1,9 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, marker::PhantomData};
 
-use crate::{core::common::*, r#gen::collapse::{option::private::PerOptionData, CollapsibleTileData}};
+use crate::{
+    core::common::*,
+    r#gen::collapse::{option::private::PerOptionData, CollapsibleTileData},
+};
 
 use private::{PositionQueueDirection, PositionQueueProcession, PositionQueueStartingPoint};
 use rand::Rng;
@@ -8,17 +11,31 @@ use rand::Rng;
 use super::CollapseQueue;
 
 /// A queue that collapses tiles consecutively in a fixed direction, based solely on their position.
-#[derive(Default)]
-pub struct PositionQueue<D: Dimensionality> {
+pub struct PositionQueue<D: Dimensionality, P: PositionQueueProcession<D>> {
     cmp_fun: fn(&D::Pos, &D::Pos) -> Ordering,
     positions: Vec<D::Pos>,
     changed: bool,
+    phantom: PhantomData<P>,
 }
 
-impl <D: Dimensionality> PositionQueue<D> {
-    pub fn new(starting: impl PositionQueueStartingPoint<D>, direction: PositionQueueDirection<D>) -> Self { 
+impl <D: Dimensionality, P: PositionQueueProcession<D>> Default for PositionQueue<D, P> {
+    fn default() -> Self {
         Self {
-            cmp_fun: PositionQueueProcession::<D>::cmp_fun(starting, direction),
+            cmp_fun: P::cmp_fun_default(),
+            positions: Vec::new(),
+            changed: false,
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<D: Dimensionality, P: PositionQueueProcession<D>> PositionQueue<D, P> {
+    pub fn new(
+        starting: P::StartingPoint,
+        direction: P::Direction,
+    ) -> Self {
+        Self {
+            cmp_fun: P::cmp_fun(starting, direction),
             ..Default::default()
         }
     }
@@ -29,7 +46,7 @@ impl <D: Dimensionality> PositionQueue<D> {
     }
 }
 
-impl <D: Dimensionality> CollapseQueue<D> for PositionQueue<D> {
+impl<D: Dimensionality, P: PositionQueueProcession<D>> CollapseQueue<D> for PositionQueue<D, P> {
     fn get_next_position(&mut self) -> Option<D::Pos> {
         if self.changed {
             self.sort_elements()
@@ -63,7 +80,7 @@ impl <D: Dimensionality> CollapseQueue<D> for PositionQueue<D> {
     }
 }
 
-pub (crate) mod two_d {
+pub(crate) mod two_d {
 
     use std::cmp::Ordering;
 
@@ -103,46 +120,52 @@ pub (crate) mod two_d {
         type StartingPoint = PositionQueueStartingPoint2D;
         type Direction = PositionQueueDirection2D;
 
-        fn cmp_fun(point: PositionQueueStartingPoint2D, direction: PositionQueueDirection2D) -> fn(&GridPosition2D, &GridPosition2D) -> Ordering {
+        fn cmp_fun(
+            point: PositionQueueStartingPoint2D,
+            direction: PositionQueueDirection2D,
+        ) -> fn(&GridPosition2D, &GridPosition2D) -> Ordering {
             match (point, direction) {
                 (PositionQueueStartingPoint2D::UpLeft, PositionQueueDirection2D::Rowwise) => {
                     |a: &GridPosition2D, b: &GridPosition2D| -> Ordering {
-                        a.y().cmp(*b.y()).then_with(|| a.x().cmp(*b.x()))
+                        a.y().cmp(&b.y()).then_with(|| a.x().cmp(&b.x()))
                     }
                 }
                 (PositionQueueStartingPoint2D::UpLeft, PositionQueueDirection2D::Columnwise) => {
                     |a: &GridPosition2D, b: &GridPosition2D| -> Ordering {
-                        a.x().cmp(*b.x()).then_with(|| a.y().cmp(*b.y()))
+                        a.x().cmp(&b.x()).then_with(|| a.y().cmp(&b.y()))
                     }
                 }
                 (PositionQueueStartingPoint2D::UpRight, PositionQueueDirection2D::Columnwise) => {
                     |a: &GridPosition2D, b: &GridPosition2D| -> Ordering {
                         a.x().cmp(&b.x()).reverse().then_with(|| a.y().cmp(&b.y()))
                     }
-                },
+                }
                 (PositionQueueStartingPoint2D::UpRight, PositionQueueDirection2D::Rowwise) => {
                     |a: &GridPosition2D, b: &GridPosition2D| -> Ordering {
                         a.y().cmp(&b.y()).then_with(|| a.x().cmp(&b.x()))
                     }
-                },
+                }
                 (PositionQueueStartingPoint2D::DownLeft, PositionQueueDirection2D::Columnwise) => {
                     |a: &GridPosition2D, b: &GridPosition2D| -> Ordering {
                         a.x().cmp(&b.x()).then_with(|| b.y().cmp(&a.y()))
                     }
-                },
+                }
                 (PositionQueueStartingPoint2D::DownLeft, PositionQueueDirection2D::Rowwise) => {
                     |a: &GridPosition2D, b: &GridPosition2D| -> Ordering {
                         a.y().cmp(&b.y()).reverse().then_with(|| b.x().cmp(&a.x()))
                     }
-                },
+                }
                 (PositionQueueStartingPoint2D::DownRight, PositionQueueDirection2D::Columnwise) => {
                     |a: &GridPosition2D, b: &GridPosition2D| -> Ordering {
                         a.x().cmp(&b.x()).reverse().then_with(|| b.y().cmp(&a.y()))
                     }
-                },
+                }
                 (PositionQueueStartingPoint2D::DownRight, PositionQueueDirection2D::Rowwise) => {
                     |a: &GridPosition2D, b: &GridPosition2D| -> Ordering {
-                        a.y().cmp(&b.y()).reverse().then_with(|| a.x().cmp(&b.x()).reverse())
+                        a.y()
+                            .cmp(&b.y())
+                            .reverse()
+                            .then_with(|| a.x().cmp(&b.x()).reverse())
                     }
                 }
             }
@@ -150,9 +173,9 @@ pub (crate) mod two_d {
     }
 }
 
-pub (crate) mod three_d {
-    use std::cmp::Ordering;
+pub(crate) mod three_d {
     use crate::{core::three_d::ThreeDim, three_d::GridPosition3D};
+    use std::cmp::Ordering;
 
     /// Enum defining the starting point of the collapse wave in 3D space
     #[derive(Default, Eq, PartialEq)]
@@ -200,46 +223,63 @@ pub (crate) mod three_d {
 
         fn cmp_fun(
             point: PositionQueueStartingPoint3D,
-            direction: PositionQueueDirection3D
+            direction: PositionQueueDirection3D,
         ) -> fn(&GridPosition3D, &GridPosition3D) -> Ordering {
             match (point, direction) {
                 // Front layer comparisons
                 (PositionQueueStartingPoint3D::UpLeftFront, PositionQueueDirection3D::Rowwise) => {
-                    |a, b| a.z().cmp(&b.z())
-                        .then_with(|| a.y().cmp(&b.y()))
-                        .then_with(|| a.x().cmp(&b.x()))
+                    |a, b| {
+                        a.z()
+                            .cmp(&b.z())
+                            .then_with(|| a.y().cmp(&b.y()))
+                            .then_with(|| a.x().cmp(&b.x()))
+                    }
                 }
-                (PositionQueueStartingPoint3D::UpLeftFront, PositionQueueDirection3D::Columnwise) => {
-                    |a, b| a.z().cmp(&b.z())
+                (
+                    PositionQueueStartingPoint3D::UpLeftFront,
+                    PositionQueueDirection3D::Columnwise,
+                ) => |a, b| {
+                    a.z()
+                        .cmp(&b.z())
                         .then_with(|| a.x().cmp(&b.x()))
                         .then_with(|| a.y().cmp(&b.y()))
-                }
-                (PositionQueueStartingPoint3D::UpLeftFront, PositionQueueDirection3D::Heightwise) => {
-                    |a, b| a.x().cmp(&b.x())
+                },
+                (
+                    PositionQueueStartingPoint3D::UpLeftFront,
+                    PositionQueueDirection3D::Heightwise,
+                ) => |a, b| {
+                    a.x()
+                        .cmp(&b.x())
                         .then_with(|| a.y().cmp(&b.y()))
                         .then_with(|| a.z().cmp(&b.z()))
-                }
+                },
 
                 // Back layer comparisons
                 (PositionQueueStartingPoint3D::UpLeftBack, PositionQueueDirection3D::Rowwise) => {
-                    |a, b| b.z().cmp(&a.z())
-                        .then_with(|| a.y().cmp(&b.y()))
-                        .then_with(|| a.x().cmp(&b.x()))
+                    |a, b| {
+                        b.z()
+                            .cmp(&a.z())
+                            .then_with(|| a.y().cmp(&b.y()))
+                            .then_with(|| a.x().cmp(&b.x()))
+                    }
                 }
-                
+
                 // Add other combinations following this pattern...
                 // This would need 8 starting points × 3 directions = 24 match arms
-                
+
                 // Default case
-                _ => |a, b| a.z().cmp(&b.z())
-                    .then_with(|| a.y().cmp(&b.y()))
-                    .then_with(|| a.x().cmp(&b.x()))
+                _ => |a, b| {
+                    a.z()
+                        .cmp(&b.z())
+                        .then_with(|| a.y().cmp(&b.y()))
+                        .then_with(|| a.x().cmp(&b.x()))
+                },
             }
         }
     }
 }
 
-impl <D: Dimensionality> super::private::Sealed<D> for PositionQueue<D> {
+impl<D: Dimensionality> super::private::Sealed<D> for PositionQueue<D> {
     fn populate_inner_grid<R: Rng, Data: CollapsibleTileData<D>>(
         &mut self,
         _rng: &mut R,
@@ -255,7 +295,7 @@ impl <D: Dimensionality> super::private::Sealed<D> for PositionQueue<D> {
     }
 }
 
-pub (crate) mod private {
+pub(crate) mod private {
     use std::cmp::Ordering;
 
     use crate::core::common::Dimensionality;
@@ -264,7 +304,10 @@ pub (crate) mod private {
         type StartingPoint: PositionQueueStartingPoint<D>;
         type Direction: PositionQueueDirection<D>;
 
-        fn cmp_fun(point: Self::StartingPoint, direction: Self::Direction) -> fn(&D::Pos, &D::Pos) -> Ordering;
+        fn cmp_fun(
+            point: Self::StartingPoint,
+            direction: Self::Direction,
+        ) -> fn(&D::Pos, &D::Pos) -> Ordering;
 
         fn cmp_fun_default() -> fn(&D::Pos, &D::Pos) -> Ordering {
             Self::cmp_fun(Self::StartingPoint::default(), Self::Direction::default())
@@ -274,8 +317,6 @@ pub (crate) mod private {
     pub trait PositionQueueStartingPoint<D: Dimensionality>: Eq + PartialEq + Default {}
 
     pub trait PositionQueueDirection<D: Dimensionality>: Eq + PartialEq + Default {}
-
-
 }
 
 #[cfg(test)]
@@ -285,17 +326,19 @@ mod test {
     use super::private::{PositionQueueDirection, PositionQueueStartingPoint};
 
     // Test helper function
-    fn test_ordering<D: Dimensionality> (start: impl PositionQueueStartingPoint<D>, dir: impl PositionQueueDirection<D>, expected: [&[u32]]) {
+    fn test_ordering<D: Dimensionality>(
+        start: impl PositionQueueStartingPoint<D>,
+        dir: impl PositionQueueDirection<D>,
+        expected: [&[u32]],
+    ) {
         let comparator = PositionQueueProcession::<D>::cmp_fun(start, dir);
         let mut positions = D::Pos::generate_rect_area(
             &D::Pos::from_coords(&[0; D::N]),
             &D::Pos::from_coords(&[2; D::N]),
         );
-        
+
         positions.sort_by(comparator);
-        let actual: Vec<(u32, u32)> = positions.iter()
-            .map(|p| (p.x(), p.y()))
-            .collect();
+        let actual: Vec<(u32, u32)> = positions.iter().map(|p| (p.x(), p.y())).collect();
 
         assert_eq!(actual, expected);
     }

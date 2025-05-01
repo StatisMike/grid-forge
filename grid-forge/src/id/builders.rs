@@ -10,7 +10,6 @@
 use std::collections::BTreeMap;
 use std::error::Error;
 use std::fmt::Display;
-use std::marker::PhantomData;
 
 use super::*;
 use crate::core::common::*;
@@ -56,13 +55,13 @@ use crate::core::common::*;
 /// let tile_1st: Tile2D<MyTileData> = builder.build_tile_unchecked(GridPosition2D::new(2,3), 1).into();
 /// assert_eq!(
 ///     (
-///         GridPosition2D::new(2,3), 
-///         1, 
+///         GridPosition2D::new(2,3),
+///         1,
 ///         &"First".to_string()
 ///     ),
 ///     (
-///         tile_1st.grid_position(), 
-///         tile_1st.as_ref().tile_type_id, 
+///         tile_1st.grid_position(),
+///         tile_1st.as_ref().tile_type_id,
 ///         &tile_1st.as_ref().string
 ///     )
 /// );
@@ -70,13 +69,13 @@ use crate::core::common::*;
 /// let tile_2nd: Tile2D<MyTileData> = builder.build_tile_unchecked(GridPosition2D::new(3,4), 2).into();
 /// assert_eq!(
 ///     (
-///         GridPosition2D::new(3,4), 
-///         2, 
+///         GridPosition2D::new(3,4),
+///         2,
 ///         &"Second".to_string()
 ///     ),
 ///     (
-///         tile_2nd.grid_position(), 
-///         tile_2nd.as_ref().tile_type_id, 
+///         tile_2nd.grid_position(),
+///         tile_2nd.as_ref().tile_type_id,
 ///         &tile_2nd.as_ref().string
 ///     )
 /// );
@@ -122,10 +121,7 @@ where
         tile_data
     }
 
-    fn build_tile(
-        &self,
-        tile_type_id: u64,
-    ) -> Result<Data, TileBuilderError> {
+    fn build_tile(&self, tile_type_id: u64) -> Result<Data, TileBuilderError> {
         if let Some(tile) = self.tiles.get(&tile_type_id) {
             let data = tile.clone();
             Ok(data)
@@ -212,9 +208,7 @@ impl<Data: IdentifiableTileData> Default for IdentTileFunBuilder<Data> {
     }
 }
 
-impl<Data: IdentifiableTileData> IdentTileBuilder<Data>
-    for IdentTileFunBuilder<Data>
-{
+impl<Data: IdentifiableTileData> IdentTileBuilder<Data> for IdentTileFunBuilder<Data> {
     fn build_tile_unchecked(&self, tile_type_id: u64) -> Data {
         let fun = self.funs.get(&tile_type_id).unwrap_or_else(|| {
             panic!("can't get tile constructor function for `tile_type_id`: {tile_type_id}")
@@ -223,10 +217,7 @@ impl<Data: IdentifiableTileData> IdentTileBuilder<Data>
         fun()
     }
 
-    fn build_tile(
-        &self,
-        tile_id: u64,
-    ) -> Result<Data, TileBuilderError> {
+    fn build_tile(&self, tile_id: u64) -> Result<Data, TileBuilderError> {
         if let Some(fun) = self.funs.get(&tile_id) {
             Ok(fun())
         } else {
@@ -270,10 +261,7 @@ pub trait IdentTileBuilder<Data: IdentifiableTileData> {
     fn build_tile_unchecked(&self, tile_type_id: u64) -> Data;
 
     /// Creates tile with given tile identifier at given grid position. Returns error if cannot construct tile of given `tile_id`.
-    fn build_tile(
-        &self,
-        tile_type_id: u64,
-    ) -> Result<Data, TileBuilderError>;
+    fn build_tile(&self, tile_type_id: u64) -> Result<Data, TileBuilderError>;
 
     /// Checks for missing tile creators out of provided slice of `tile_id`.
     fn check_missing_ids(&self, tile_type_ids: &[u64]) -> Result<(), TileBuilderError>;

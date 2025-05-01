@@ -7,7 +7,7 @@ use super::private::*;
 use crate::core::two_d::*;
 
 #[repr(u8)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Direction2D {
     Up = 0,
     Down = 1,
@@ -75,18 +75,19 @@ impl Direction<TwoDim> for Direction2D {
     fn as_idx(&self) -> usize {
         *self as usize
     }
-    
+
     #[inline]
     fn primary() -> &'static [Self] {
         &[Self::Left, Self::Up]
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct DirectionTable2D<T> {
     table: [T; 4],
 }
 
-impl <T>DirectionTable2D<T> {
+impl<T> DirectionTable2D<T> {
     pub const fn new(table: [T; 4]) -> Self {
         Self { table }
     }
@@ -104,7 +105,10 @@ impl<T> DirectionTable<TwoDim, T> for DirectionTable2D<T> {
         &self.table
     }
 
-    fn from_slice(slice: &[T]) -> Self where T: Copy {
+    fn from_slice(slice: &[T]) -> Self
+    where
+        T: Copy,
+    {
         let table = [slice[0], slice[1], slice[2], slice[3]];
         Self { table }
     }
@@ -129,6 +133,18 @@ impl<T> Index<Direction2D> for DirectionTable2D<T> {
 impl<T> IndexMut<Direction2D> for DirectionTable2D<T> {
     fn index_mut(&mut self, index: Direction2D) -> &mut Self::Output {
         &mut self.table[index.as_idx()]
+    }
+}
+
+impl<T> AsRef<[T]> for DirectionTable2D<T> {
+    fn as_ref(&self) -> &[T] {
+        self.table.as_ref()
+    }
+}
+
+impl<T> AsMut<[T]> for DirectionTable2D<T> {
+    fn as_mut(&mut self) -> &mut [T] {
+        self.table.as_mut()
     }
 }
 

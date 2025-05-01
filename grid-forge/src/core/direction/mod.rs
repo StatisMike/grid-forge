@@ -1,17 +1,16 @@
 //! Contains the core direction traits and implementations.
-//! 
+//!
 //! Their purpose is to allow:
 //! - retrieving the neighbouring tiles in a map
 //! - iterating over the directions in dimensionality
 //! - fast lookup of some data bound to the specific direction.
-//! 
+//!
 //! The core direction traits are:
 //! - [Direction](crate::core::direction::common::Direction)
 //! - [DirectionTable](crate::core::direction::common::DirectionTable)
-//! 
+//!
 //! For a new dimensionality specification, new structs should be created
 //! for the new [Dimensionality](crate::core::common::Dimensionality) implementor.
-
 
 pub(crate) mod three_d;
 pub(crate) mod two_d;
@@ -28,68 +27,68 @@ pub(crate) mod common {
 
     /// Trait declaring the possible directions to move from tile to tile in specific [Dimensionality](crate::core::common::Dimensionality).
     pub trait Direction<D: Dimensionality + ?Sized>:
-        private::SealedDir + Sized + Copy + Clone + Debug
+        private::SealedDir + Sized + Copy + Clone + Debug + PartialEq
     {
         const N: usize;
 
         /// Returns all directions in the dimensionality.
-        /// 
+        ///
         /// Order is ascending based on their [as_idx()](Directions::as_idx()) return value.
         fn all() -> &'static [Self];
 
         /// Returns the primary directions in the dimensionality.
-        /// 
+        ///
         /// These are the directions that tend into the beginning of the grid (all 0 coordinates).
         fn primary() -> &'static [Self];
 
         /// Marches the step in the given direction.
-        /// 
+        ///
         /// Returns the next [GridPosition](crate::core::position::common::GridPositionTrait) in the given direction,
         /// taking into the account the confines of the specific [GridSize](crate::core::size::common::GridSize).
-        /// 
+        ///
         /// Returns `None` if the step is not possible.
-        /// 
+        ///
         /// # Examples
         /// ## 2D space
         /// ```
         /// use grid_forge::two_d::*;
-        /// 
+        ///
         /// let size = GridSize2D::new(10, 10);
         /// let mut pos = GridPosition2D::new(5, 5);
-        /// 
+        ///
         /// for dir in [Direction2D::Up, Direction2D::Left] {
         ///     pos = dir.march_step(&pos, &size).unwrap();
         /// }
         /// assert_eq!(pos, GridPosition2D::new(4, 4));
-        /// 
+        ///
         /// // Size is not enough to march in that direction.
         /// let not_valid = Direction2D::Right.march_step(
-        ///     &GridPosition2D::new(9,9), 
+        ///     &GridPosition2D::new(9,9),
         ///     &size
         /// );
         /// assert_eq!(not_valid, None);
         /// ```
-        /// 
+        ///
         /// ## 3D space
         /// ```
         /// use grid_forge::three_d::*;
-        /// 
+        ///
         /// let size = GridSize3D::new(10, 10, 10);
         /// let mut pos = GridPosition3D::new(5, 5, 5);
-        /// 
+        ///
         /// for dir in [Direction3D::Up, Direction3D::Left, Direction3D::Higher] {
         ///     pos = dir.march_step(&pos, &size).unwrap();
         /// }
         /// assert_eq!(pos, GridPosition3D::new(4, 4, 4));
-        /// 
+        ///
         /// // Size is not enough to march in that direction.
         /// let not_valid = Direction3D::Right.march_step(
-        ///     &GridPosition3D::new(9,9,9), 
+        ///     &GridPosition3D::new(9,9,9),
         ///     &size
         /// );
         /// assert_eq!(not_valid, None);
         /// ```
-        /// 
+        ///
         fn march_step(&self, from: &D::Pos, size: &D::Size) -> Option<D::Pos>;
 
         /// Returns the opposite direction.
@@ -101,13 +100,15 @@ pub(crate) mod common {
 
     /// Fast lookup table for the data bound to the specific direction.
     pub trait DirectionTable<D: Dimensionality, T>:
-        private::Sealed + Index<D::Dir, Output = T> + IndexMut<D::Dir>
+        private::Sealed + Index<D::Dir, Output = T> + IndexMut<D::Dir> + AsRef<[T]> + AsMut<[T]>
     {
         type Inner: AsRef<[T]> + AsMut<[T]>;
 
         fn new_array(values: Self::Inner) -> Self;
         fn inner(&self) -> &Self::Inner;
-        fn from_slice(slice: &[T]) -> Self where T: Copy;
+        fn from_slice(slice: &[T]) -> Self
+        where
+            T: Copy;
     }
 }
 

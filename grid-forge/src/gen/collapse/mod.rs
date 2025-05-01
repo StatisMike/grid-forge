@@ -38,7 +38,7 @@
 mod error;
 mod grid;
 mod option;
-pub mod overlap;
+// pub mod overlap;
 mod queue;
 pub mod singular;
 mod tile;
@@ -53,13 +53,41 @@ pub use tile::*;
 
 use crate::core::common::*;
 
+pub (crate) mod two_d {
+    use crate::core::two_d::*;
+
+    use super::grid::two_d::CollapsedGrid2D;
+
+    pub struct TwoDimCollapseBounds;
+    impl crate::gen::collapse::private::CollapseBounds<TwoDim> for TwoDimCollapseBounds {
+        type Ways = super::option::two_d::WaysToBeOption2D;
+        type PerOption = super::option::two_d::PerOptionData2D;
+        type OptionAdjacency = DirectionTable2D<Vec<usize>>;
+        type CollapsedGrid = CollapsedGrid2D;
+    }
+}
+
+pub (crate) mod three_d {
+    use crate::core::three_d::*;
+
+    use super::grid::three_d::CollapsedGrid3D;
+
+    pub struct ThreeDimCollapseBounds;
+    impl crate::gen::collapse::private::CollapseBounds<ThreeDim> for ThreeDimCollapseBounds {
+        type Ways = super::option::three_d::WaysToBeOption3D;
+        type PerOption = super::option::three_d::PerOptionData3D;
+        type OptionAdjacency = DirectionTable3D<Vec<usize>>;
+        type CollapsedGrid = CollapsedGrid3D;
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub(crate) struct Adjacencies<D: Dimensionality> {
     inner: Vec<HashSet<u64>>,
     phantom: PhantomData<D>,
 }
 
-impl <D: Dimensionality> Adjacencies<D> {
+impl<D: Dimensionality> Adjacencies<D> {
     pub fn new() -> Self {
         let mut inner = Vec::new();
 
@@ -67,7 +95,10 @@ impl <D: Dimensionality> Adjacencies<D> {
             inner.push(HashSet::default());
         }
 
-        Self { inner, phantom: PhantomData }
+        Self {
+            inner,
+            phantom: PhantomData,
+        }
     }
 
     #[inline(always)]
@@ -77,7 +108,7 @@ impl <D: Dimensionality> Adjacencies<D> {
     }
 }
 
-impl <D: Dimensionality> Index<D::Dir> for Adjacencies<D> {
+impl<D: Dimensionality> Index<D::Dir> for Adjacencies<D> {
     type Output = HashSet<u64>;
 
     fn index(&self, index: D::Dir) -> &Self::Output {
@@ -85,75 +116,48 @@ impl <D: Dimensionality> Index<D::Dir> for Adjacencies<D> {
     }
 }
 
-/// Basic Subscriber for debugging purposes.
-///
-/// Implements both [`overlap::Subscriber`] and [`singular::Subscriber`], making it usable with both resolvers.
-/// Upon collapsing a tile, it will print the collapsed `GridPosition`, `tile_type_id` and (if applicable) `pattern_id`.
-#[derive(Debug, Default)]
-pub struct DebugSubscriber {
-    file: Option<File>,
-}
-
-impl DebugSubscriber {
-    pub fn new(file: Option<File>) -> Self {
-        Self { file }
-    }
-}
-
-impl <D: Dimensionality> singular::Subscriber<D> for DebugSubscriber {
-    fn on_collapse(&mut self, position: &D::Pos, tile_type_id: u64) {
-        if let Some(file) = &mut self.file {
-            writeln!(
-                file,
-                "collapsed tile_type_id: {tile_type_id} on position: {position:?}"
-            )
-            .unwrap();
-        } else {
-            println!("collapsed tile_type_id: {tile_type_id} on position: {position:?}");
-        }
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-}
-
-impl <D: Dimensionality> overlap::Subscriber<D> for DebugSubscriber {
-    fn on_collapse(&mut self, position: &D::Pos, tile_type_id: u64, pattern_id: u64) {
-        if let Some(file) = &mut self.file {
-            writeln!(
-                file,
-                "collapsed tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}"
-            )
-            .unwrap();
-        } else {
-            println!(
-                "collapsed tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}"
-            );
-        }
-    }
-}
+// impl<D: Dimensionality> overlap::Subscriber<D> for DebugSubscriber {
+//     fn on_collapse(&mut self, position: &D::Pos, tile_type_id: u64, pattern_id: u64) {
+//         if let Some(file) = &mut self.file {
+//             writeln!(
+//                 file,
+//                 "collapsed tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}"
+//             )
+//             .unwrap();
+//         } else {
+//             println!(
+//                 "collapsed tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}"
+//             );
+//         }
+//     }
+// }
 
 pub(crate) mod private {
     use std::collections::HashMap;
 
     use crate::core::common::*;
 
+    use super::{option::private::{PerOptionData, WaysToBeOption}, Adjacencies, CollapsedGrid};
 
-    use super::Adjacencies;
+    pub trait CollapseBounds<D: Dimensionality> {
+        type Ways: WaysToBeOption<D>;
+        type PerOption: PerOptionData<D, Self>;
+        type OptionAdjacency: DirectionTable<D, Vec<usize>> + Default;
+        type CollapsedGrid: CollapsedGrid<D, Self>;
+    }
 
     #[derive(Clone, Debug, Default)]
     pub struct AdjacencyTable<D: Dimensionality> {
         inner: HashMap<u64, Adjacencies<D>>,
     }
 
-    impl <D: Dimensionality> AsRef<HashMap<u64, Adjacencies<D>>> for AdjacencyTable<D> {
+    impl<D: Dimensionality> AsRef<HashMap<u64, Adjacencies<D>>> for AdjacencyTable<D> {
         fn as_ref(&self) -> &HashMap<u64, Adjacencies<D>> {
             &self.inner
         }
     }
 
-    impl <D: Dimensionality> AdjacencyTable<D> {
+    impl<D: Dimensionality> AdjacencyTable<D> {
         pub(crate) fn insert_adjacency(&mut self, el_id: u64, direction: D::Dir, adj_id: u64) {
             match self.inner.entry(el_id) {
                 std::collections::hash_map::Entry::Occupied(mut e) => {

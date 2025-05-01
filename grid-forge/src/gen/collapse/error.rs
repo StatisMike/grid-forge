@@ -24,7 +24,7 @@ pub struct CollapseError<D: Dimensionality> {
     iter: u32,
 }
 
-impl <D: Dimensionality> CollapseError<D> {
+impl<D: Dimensionality> CollapseError<D> {
     pub(crate) fn new(pos: D::Pos, kind: CollapseErrorKind, iter: u32) -> Self {
         Self { pos, kind, iter }
     }
@@ -57,7 +57,7 @@ impl <D: Dimensionality> CollapseError<D> {
     }
 }
 
-impl <D: Dimensionality> Display for CollapseError<D> {
+impl<D: Dimensionality> Display for CollapseError<D> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.kind {
             CollapseErrorKind::Collapse => write!(
@@ -79,7 +79,7 @@ impl <D: Dimensionality> Display for CollapseError<D> {
     }
 }
 
-impl <D: Dimensionality> Error for CollapseError<D> {}
+impl<D: Dimensionality> Error for CollapseError<D> {}
 
 #[derive(Debug)]
 pub(crate) enum CollapseErrorKind {
@@ -100,7 +100,7 @@ pub struct CollapsibleGridError<D: Dimensionality> {
     position: Option<D::Pos>,
 }
 
-impl <D: Dimensionality> CollapsibleGridError<D> {
+impl<D: Dimensionality> CollapsibleGridError<D> {
     pub(crate) fn new_missing(missing_type_ids: Vec<u64>) -> Self {
         Self {
             missing_type_ids: Some(missing_type_ids),
@@ -108,7 +108,7 @@ impl <D: Dimensionality> CollapsibleGridError<D> {
             position: None,
         }
     }
-    pub(crate) fn new_wrong_size(source_size: D::Size, target_size: D::Size) -> Self { 
+    pub(crate) fn new_wrong_size(source_size: D::Size, target_size: D::Size) -> Self {
         Self {
             missing_type_ids: None,
             sizes: Some((source_size, target_size)),
@@ -143,7 +143,7 @@ impl <D: Dimensionality> CollapsibleGridError<D> {
     }
 }
 
-impl <D: Dimensionality> Display for CollapsibleGridError<D> {
+impl<D: Dimensionality> Display for CollapsibleGridError<D> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match (&self.missing_type_ids, &self.sizes, &self.position) {
             (Some(missing), None, None) => write!(f, "there are {} `tile_type_ids` missing from underlying CollapsibleGrid data. Make sure that the `CollapsibleGrid` have been provided correct rulesets", missing.len()),

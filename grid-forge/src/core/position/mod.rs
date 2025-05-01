@@ -3,8 +3,7 @@ pub(crate) mod two_d;
 
 pub(crate) mod common {
     use std::{
-        fmt::Debug,
-        ops::{Add, AddAssign, Index, Sub},
+        fmt::Debug, hash::Hash, ops::{Add, AddAssign, Index, Sub}
     };
 
     use crate::core::common::*;
@@ -25,7 +24,8 @@ pub(crate) mod common {
             + Debug
             + Sized
             + Send
-            + Sync,
+            + Sync
+            + Hash,
     {
         type Coords: AsRef<[u32]> + Index<usize, Output = u32>;
 
@@ -34,9 +34,8 @@ pub(crate) mod common {
         /// It is guranteed that the length of the returned slice is equal to the [Dimensionality::N] of the space.
         fn coords(&self) -> Self::Coords;
 
-
         /// Create the position from array of coordinates.
-        /// 
+        ///
         /// Array needs to e equal to the [Dimensionality::N] of the space.
         fn from_coords(coords: Self::Coords) -> Self;
 
@@ -47,27 +46,27 @@ pub(crate) mod common {
         fn from_slice(slice: &[u32]) -> Self;
 
         /// Checks if the position is in the range of the other position.
-        /// 
+        ///
         /// # Examples
-        /// 
+        ///
         /// ## 2D space
         /// ```
         /// use grid_forge::two_d::*;
-        /// 
+        ///
         /// assert!(GridPosition2D::new(0, 0)
         ///             .in_range(&GridPosition2D::new(3, 3), 6));
-        /// 
+        ///
         /// assert!(!GridPosition2D::new(0, 0)
         ///             .in_range(&GridPosition2D::new(3, 3), 5));
         /// ```
-        /// 
+        ///
         /// ## 3D space
         /// ```
         /// use grid_forge::three_d::*;
-        /// 
+        ///
         /// assert!(GridPosition3D::new(0, 0, 0)
         ///             .in_range(&GridPosition3D::new(3, 3, 3), 9));
-        /// 
+        ///
         /// assert!(!GridPosition3D::new(0, 0, 0)
         ///             .in_range(&GridPosition3D::new(3, 3, 3), 8));
         /// ```

@@ -1,22 +1,23 @@
 use std::collections::{BTreeMap, HashMap};
 use std::marker::PhantomData;
 
-use crate::gen::collapse::private::AdjacencyTable;
 use crate::core::common::*;
+use crate::gen::collapse::private::AdjacencyTable;
 use crate::id::*;
 
 /// Trait shared by analyzers producing [`AdjacencyRules`].
-pub trait Analyzer<D, Data>
+pub trait Analyzer<D, Data, Grid>
 where
     D: Dimensionality,
     Data: IdentifiableTileData,
+    Grid: GridMap<D, Data>,
 {
     /// Retrieves the adjacency rules.
     fn adjacency(&self) -> &AdjacencyRules<D, Data>;
     /// Retrieves the collection of all `tile_type_id` which have their rules generated.
     fn tiles(&self) -> &[u64];
     /// Analyzes provided grid map of [`IdentifiableTileData`]-implementing tiles.
-    fn analyze(&mut self, map: &impl GridMap<D, Data>);
+    fn analyze(&mut self, map: &Grid);
 }
 
 /// Adjacency rules for singular collapse algorithm.
@@ -50,7 +51,7 @@ where
 {
     fn default() -> Self {
         Self {
-            inner: AdjacencyTable::default(),
+            inner: AdjacencyTable::<D>::default(),
             id_type: PhantomData::<Data>,
         }
     }
@@ -65,15 +66,15 @@ where
     ///
     /// It is always symmetrical, so the if the `tile` can be adjacent to `adjacent_tile` in the given `direction`,
     /// the `adjacent_tile` can be adjacent to `tile` in the opposite one.
-    pub fn add_adjacency<Tile: AsRef<Data>>(
+    pub fn add_adjacency(
         &mut self,
-        tile: &Tile,
-        adjacent_tile: &Tile,
+        tile: &Data,
+        adjacent_tile: &Data,
         direction: D::Dir,
     ) {
         self.add_adjacency_raw(
-            tile.as_ref().tile_type_id(),
-            adjacent_tile.as_ref().tile_type_id(),
+            tile.tile_type_id(),
+            adjacent_tile.tile_type_id(),
             direction,
         )
     }
@@ -118,31 +119,32 @@ where
     D: Dimensionality,
     Data: IdentifiableTileData,
 {
-    fn analyze_tile_at_pos(&mut self, map: &GridMap<D, Data>, pos: D::Pos) {
-        if let Some(tile) = map.get_tile_at_position(&pos) {
-            if !self.tiles.contains(&tile.as_ref().tile_type_id()) {
-                self.tiles.push(tile.as_ref().tile_type_id());
+    fn analyze_tile_at_pos<G: GridMap<D, Data>>(&mut self, map: &G, pos: D::Pos) {
+        if let Some((pos, tile)) = map.get_tile_at_position(&pos) {
+            if !self.tiles.contains(&tile.tile_type_id()) {
+                self.tiles.push(tile.tile_type_id());
             }
 
             for dir in D::Dir::all() {
-                if let Some(neighbour) = map.get_neighbour_at(&pos, dir) {
+                if let Some((_, neighbour)) = map.get_neighbour_at(&pos, dir) {
                     self.adjacency_rules.add_adjacency(&tile, &neighbour, *dir)
                 }
             }
         }
     }
 
-    pub fn adjacency(&self) -> &AdjacencyRules<Data> {
+    pub fn adjacency(&self) -> &AdjacencyRules<D, Data> {
         &self.adjacency_rules
     }
 }
 
-impl<D, Data> Analyzer<D, Data> for IdentityAnalyzer<D, Data>
+impl<D, Data, Grid> Analyzer<D, Data, Grid> for IdentityAnalyzer<D, Data>
 where
     D: Dimensionality,
     Data: IdentifiableTileData,
+    Grid: GridMap<D, Data>,
 {
-    fn analyze(&mut self, map: &GridMap<D, Data>) {
+    fn analyze(&mut self, map: &Grid) {
         for position in map.get_all_positions() {
             self.analyze_tile_at_pos(map, position);
         }
@@ -164,23 +166,28 @@ where
 /// and the tile is a viable neighbour option if their borders in given direction have the same identifier.
 ///
 /// This analyzer additionally to analyzing the map, also provides method to add the tile adjacency manually.
-pub struct BorderAnalyzer<D, Data>
+pub struct BorderAnalyzer<D, Data, Grid, Ba>
 where
     D: Dimensionality,
     Data: IdentifiableTileData,
+    Grid: GridMap<D, Data>,
+    Ba: TileBordersAdjacency<D, Data, Grid>,
 {
     tiles: Vec<u64>,
     adjacency_rules: AdjacencyRules<D, Data>,
     /// TileId key
-    inner: HashMap<u64, TileBordersAdjacency<D, Data>>,
+    inner: HashMap<u64, Ba>,
     /// BorderId key; (TileId; GridDir)
     border_types: HashMap<u64, Vec<(u64, D::Dir)>>,
+    phantom: PhantomData<Grid>,
 }
 
-impl<D, Data> Default for BorderAnalyzer<D, Data>
+impl<D, Data, Grid, Ba> Default for BorderAnalyzer<D, Data, Grid, Ba>
 where
     D: Dimensionality,
     Data: IdentifiableTileData,
+    Grid: GridMap<D, Data>,
+    Ba: TileBordersAdjacency<D, Data, Grid>,
 {
     fn default() -> Self {
         Self {
@@ -188,16 +195,19 @@ where
             adjacency_rules: AdjacencyRules::default(),
             inner: HashMap::new(),
             border_types: HashMap::new(),
+            phantom: PhantomData,
         }
     }
 }
 
-impl<D, Data> Analyzer<D, Data> for BorderAnalyzer<D, Data>
+impl<D, Data, Grid, Ba> Analyzer<D, Data, Grid> for BorderAnalyzer<D, Data, Grid, Ba>
 where
     D: Dimensionality,
     Data: IdentifiableTileData,
+    Grid: GridMap<D, Data>,
+    Ba: TileBordersAdjacency<D, Data, Grid>,
 {
-    fn analyze(&mut self, map: &GridMap<D, Data>) {
+    fn analyze(&mut self, map: &Grid) {
         self.adjacency_rules = AdjacencyRules::default();
         for position in map.get_all_positions() {
             self.analyze_tile_at_pos(map, position);
@@ -205,7 +215,7 @@ where
         self.generate_adjacency_rules();
     }
 
-    fn adjacency(&self) -> &AdjacencyRules<Data> {
+    fn adjacency(&self) -> &AdjacencyRules<D, Data> {
         &self.adjacency_rules
     }
 
@@ -214,10 +224,12 @@ where
     }
 }
 
-impl<D, Data> BorderAnalyzer<D, Data>
+impl<D, Data, Grid, Ba> BorderAnalyzer<D, Data, Grid, Ba>
 where
     D: Dimensionality,
     Data: IdentifiableTileData,
+    Grid: GridMap<D, Data>,
+    Ba: TileBordersAdjacency<D, Data, Grid>,
 {
     /// Manually add adjacency between two tiles.
     ///
@@ -230,17 +242,17 @@ where
         self.generate_adjacency_rules()
     }
 
-    fn analyze_tile_at_pos(&mut self, map: &GridMap<D, Data>, pos: D::Pos) {
-        if let Some(tile) = map.get_tile_at_position(&pos) {
-            if !self.tiles.contains(&tile.as_ref().tile_type_id()) {
-                self.tiles.push(tile.as_ref().tile_type_id());
+    fn analyze_tile_at_pos(&mut self, map: &Grid, pos: D::Pos) {
+        if let Some(tile) = map.get_data_at_position(&pos) {
+            if !self.tiles.contains(&tile.tile_type_id()) {
+                self.tiles.push(tile.tile_type_id());
             }
 
             for dir in D::Dir::all() {
-                if let Some(neighbour) = map.get_neighbour_at(&pos, dir) {
+                if let Some((_, neighbour)) = map.get_neighbour_at(&pos, dir) {
                     self.add_adjacency_raw(
-                        tile.as_ref().tile_type_id(),
-                        neighbour.as_ref().tile_type_id(),
+                        tile.tile_type_id(),
+                        neighbour.tile_type_id(),
                         dir,
                     );
                 }
@@ -259,7 +271,7 @@ where
                     .iter()
                     .filter_map(
                         |(tile, dir)| {
-                            if *dir == half_dir {
+                            if dir == half_dir {
                                 Some(*tile)
                             } else {
                                 None
@@ -281,7 +293,7 @@ where
                 for tile_first in first_borders.iter() {
                     for tile_second in second_borders.iter() {
                         self.adjacency_rules
-                            .add_adjacency_raw(*tile_first, *tile_second, half_dir);
+                            .add_adjacency_raw(*tile_first, *tile_second, *half_dir);
                         self.adjacency_rules.add_adjacency_raw(
                             *tile_second,
                             *tile_first,
@@ -293,12 +305,7 @@ where
         }
     }
 
-    pub(crate) fn add_adjacency_raw(
-        &mut self,
-        tile_id: u64,
-        adjacent_id: u64,
-        direction: &D::Dir,
-    ) {
+    pub(crate) fn add_adjacency_raw(&mut self, tile_id: u64, adjacent_id: u64, direction: &D::Dir) {
         self.ensure_adjacencies_present_for_tiles(&[tile_id, adjacent_id]);
 
         match (
@@ -311,16 +318,16 @@ where
                 self.set_border_id(new_id, adjacent_id, &direction.opposite());
             }
             (None, Some(id_border)) => {
-                self.set_border_id(*id_border, tile_id, direction);
+                self.set_border_id(id_border, tile_id, direction);
             }
             (Some(id_border), None) => {
-                self.set_border_id(*id_border, adjacent_id, &direction.opposite());
+                self.set_border_id(id_border, adjacent_id, &direction.opposite());
             }
             (Some(id_left), Some(id_right)) => {
                 if id_left == id_right {
                     return;
                 }
-                self.unify_border_id(*id_left.max(id_right), *id_left.min(id_right));
+                self.unify_border_id(id_left.max(id_right), id_left.min(id_right));
             }
         }
     }
@@ -328,7 +335,7 @@ where
     fn ensure_adjacencies_present_for_tiles(&mut self, ids: &[u64]) {
         for id in ids {
             if !self.inner.contains_key(id) {
-                self.inner.insert(*id, TileBordersAdjacency::default());
+                self.inner.insert(*id, Ba::default());
             }
         }
     }
@@ -344,7 +351,7 @@ where
             .push((tile_id, *direction));
     }
 
-    fn get_border_id(&self, tile_id: &u64, direction: &D::Dir) -> &Option<u64> {
+    fn get_border_id(&self, tile_id: &u64, direction: &D::Dir) -> Option<u64> {
         self.inner.get(tile_id).unwrap().get_at_dir(direction)
     }
 
@@ -364,38 +371,94 @@ where
     }
 }
 
-struct TileBordersAdjacency<D, Data>
-where
-    D: Dimensionality,
-    Data: IdentifiableTileData,
-{
-    borders: DirectionTable<D, Option<u64>>,
-    phantom: PhantomData<Data>,
-}
+// Common trait definition
+pub trait TileBordersAdjacency<D: Dimensionality, Data: IdentifiableTileData, Grid: GridMap<D, Data>>: Default {
+    fn set_at_dir(&mut self, dir: &D::Dir, border_id: u64);
+    fn get_at_dir(&self, dir: &D::Dir) -> Option<u64>;
 
-impl<D, Data> TileBordersAdjacency<D, Data>
-where
-    D: Dimensionality,
-    Data: IdentifiableTileData,
-{
-    fn set_at_dir(&mut self, dir: &D::Dir, border_id: u64) {
-        self.borders[*dir] = Some(border_id);
-    }
-
-    fn get_at_dir(&self, dir: &D::Dir) -> &Option<u64> {
-        &self.borders[*dir]
+    // Common implementation can be provided here
+    fn has_border_in_direction(&self, dir: &D::Dir) -> bool {
+        self.get_at_dir(dir).is_some()
     }
 }
 
-impl<D, Data> Default for TileBordersAdjacency<D, Data>
-where
-    D: Dimensionality,
-    Data: IdentifiableTileData,
-{
-    fn default() -> Self {
-        Self {
-            borders: DirectionTable::new_array([None; 4]),
-            phantom: PhantomData::<Data>,
+// 2D Implementation
+
+pub(crate) mod two_d {
+    use super::*;
+    use crate::core::two_d::*;
+
+    #[derive(Debug, Clone)]
+    pub struct TileBordersAdjacency2D<Data>
+    where
+        Data: IdentifiableTileData,
+    {
+        borders: [Option<u64>; 4], // 4 directions in 2D
+        phantom: PhantomData<Data>,
+    }
+
+    impl<Data> TileBordersAdjacency<TwoDim, Data, GridMap2D<Data>> for TileBordersAdjacency2D<Data>
+    where
+        Data: IdentifiableTileData,
+    {
+        fn set_at_dir(&mut self, dir: &Direction2D, border_id: u64) {
+            self.borders[dir.as_idx()] = Some(border_id);
+        }
+
+        fn get_at_dir(&self, dir: &Direction2D) -> Option<u64> {
+            self.borders[dir.as_idx()]
+        }
+    }
+
+    impl<Data> Default for TileBordersAdjacency2D<Data>
+    where
+        Data: IdentifiableTileData,
+    {
+        fn default() -> Self {
+            Self {
+                borders: [None, None, None, None],
+                phantom: PhantomData,
+            }
+        }
+    }
+}
+
+pub(crate) mod three_d {
+    use super::*;
+    use crate::core::three_d::*;
+
+    // 3D Implementation
+    #[derive(Debug, Clone)]
+    pub struct TileBordersAdjacency3D<Data>
+    where
+        Data: IdentifiableTileData,
+    {
+        borders: [Option<u64>; 6], // 6 directions in 3D
+        phantom: PhantomData<Data>,
+    }
+
+    impl<Data> TileBordersAdjacency<ThreeDim, Data, GridMap3D<Data>> for TileBordersAdjacency3D<Data>
+    where
+        Data: IdentifiableTileData,
+    {
+        fn set_at_dir(&mut self, dir: &Direction3D, border_id: u64) {
+            self.borders[dir.as_idx()] = Some(border_id);
+        }
+
+        fn get_at_dir(&self, dir: &Direction3D) -> Option<u64> {
+            self.borders[dir.as_idx()]
+        }
+    }
+
+    impl<Data> Default for TileBordersAdjacency3D<Data>
+    where
+        Data: IdentifiableTileData,
+    {
+        fn default() -> Self {
+            Self {
+                borders: [None, None, None, None, None, None],
+                phantom: PhantomData,
+            }
         }
     }
 }
@@ -445,23 +508,17 @@ where
     D: Dimensionality,
     Data: IdentifiableTileData,
 {
-    pub fn set_weight_for_data<Tile>(&mut self, data: &Data, weight: u32)
-    {
-        let entry = self
-            .weights
-            .entry(data.tile_type_id())
-            .or_default();
+    pub fn set_weight_for_data<Tile>(&mut self, data: &Data, weight: u32) {
+        let entry = self.weights.entry(data.tile_type_id()).or_default();
         *entry = weight;
     }
 
-    pub fn count_tile<Tile>(&mut self, tile: &Tile)
-    where
-        Tile: TileContainer + AsRef<Data>,
+    pub fn count_data(&mut self, data: &Data)
     {
-        if let Some(count) = self.weights.get_mut(&tile.as_ref().tile_type_id()) {
+        if let Some(count) = self.weights.get_mut(&data.tile_type_id()) {
             *count += 1;
         } else {
-            self.weights.insert(tile.as_ref().tile_type_id(), 1);
+            self.weights.insert(data.tile_type_id(), 1);
         }
     }
 
@@ -469,10 +526,10 @@ where
         self.weights.clone()
     }
 
-    pub fn analyze(&mut self, map: &GridMap<D, Data>) {
+    pub fn analyze<Grid: GridMap<D, Data>>(&mut self, map: &Grid) {
         for position in map.get_all_positions() {
-            let reference = map.get_tile_at_position(&position).unwrap();
-            self.count_tile(&reference)
+            let data = map.get_data_at_position(&position).unwrap();
+            self.count_data(&data);
         }
     }
 }

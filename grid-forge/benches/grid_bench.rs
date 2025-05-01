@@ -207,11 +207,11 @@ criterion_group!(
 criterion_group!(
     name = grid_1000_neighbour;
     config = Criterion::default().measurement_time(Duration::from_secs(5)).warm_up_time(Duration::from_secs(3));
-    targets =   //grid_access_2d_100x100_neighbour, 
+    targets =   //grid_access_2d_100x100_neighbour,
                 grid_access_2d_100x100_all_neighbours
 );
 
 criterion_main!(
-    // grid_1000, 
+    // grid_1000,
     grid_1000_neighbour
 );

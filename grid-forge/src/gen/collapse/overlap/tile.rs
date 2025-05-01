@@ -4,11 +4,14 @@ use std::marker::PhantomData;
 use private::Sealed;
 use rand::Rng;
 
+use crate::core::common::*;
 use crate::gen::collapse::entrophy::EntrophyUniform;
 use crate::gen::collapse::error::CollapsibleGridError;
-use crate::gen::collapse::option::{OptionWeights, private::{PerOptionData, WaysToBeOption}};
+use crate::gen::collapse::option::{
+    private::{PerOptionData, WaysToBeOption},
+    OptionWeights,
+};
 use crate::gen::collapse::{tile::*, CollapsedGrid, CollapsibleGrid, PropagateItem};
-use crate::core::common::*;
 use crate::id::*;
 
 use super::pattern::OverlappingPattern;

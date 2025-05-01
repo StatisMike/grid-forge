@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::hash::Hash;
 use std::ops::Add;
 use std::ops::AddAssign;
 use std::ops::Sub;
@@ -132,6 +133,12 @@ impl PartialEq for GridPosition3D {
 }
 
 impl Eq for GridPosition3D {}
+
+impl Hash for GridPosition3D {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.coords().hash(state);
+    }
+}
 
 #[cfg(test)]
 mod tests {

@@ -52,7 +52,7 @@ where
     fn secondary_tile_positions(anchor_pos: &D::Pos) -> Vec<D::Pos>;
 }
 
-pub (crate) mod two_d {
+pub(crate) mod two_d {
     pub struct OverlappingPattern2D<const X_LEN: usize, const Y_LEN: usize> {
         pattern_id: u64,
         tile_type_id: u64,
@@ -60,7 +60,9 @@ pub (crate) mod two_d {
     }
 }
 
-impl <const X_LEN: usize, const Y_LEN: usize> private::Sealed<TwoDim> for OverlappingPattern2D<X_LEN, Y_LEN> {
+impl<const X_LEN: usize, const Y_LEN: usize> private::Sealed<TwoDim>
+    for OverlappingPattern2D<X_LEN, Y_LEN>
+{
     fn empty() -> Self {
         Self {
             pattern_id: 0,
@@ -76,14 +78,14 @@ impl <const X_LEN: usize, const Y_LEN: usize> private::Sealed<TwoDim> for Overla
         tile_type_id: u64,
     ) {
         self.tile_type_ids[0][(pos.y() - anchor_pos.y()) as usize]
-        [(pos.x() - anchor_pos.x()) as usize] = tile_type_id;
+            [(pos.x() - anchor_pos.x()) as usize] = tile_type_id;
     }
 
     fn finalize(&mut self) {
-            let mut hasher = DefaultHasher::default();
-            self.hash(&mut hasher);
-            self.pattern_id = hasher.finish();
-            self.tile_type_id = self.tile_type_ids[0][0][0];
+        let mut hasher = DefaultHasher::default();
+        self.hash(&mut hasher);
+        self.pattern_id = hasher.finish();
+        self.tile_type_id = self.tile_type_ids[0][0][0];
     }
 }
 
@@ -436,15 +438,9 @@ mod private {
     /// Trait making the [`OverlappingPattern`] non-implementable outside of the crate and keeping the mutability
     /// methods private to the crate.
     pub trait Sealed<D: Dimensionality> {
-
         fn empty() -> Self;
 
-        fn set_id_for_pos(
-            &mut self,
-            anchor_pos: &D::Pos,
-            pos: &D::Pos,
-            tile_type_id: u64,
-        );
+        fn set_id_for_pos(&mut self, anchor_pos: &D::Pos, pos: &D::Pos, tile_type_id: u64);
 
         fn finalize(&mut self);
     }

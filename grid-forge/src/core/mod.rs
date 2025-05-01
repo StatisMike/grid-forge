@@ -1,18 +1,20 @@
 //! Core structures and traits.
-//! 
+//!
 //! Every kind of [`Dimensionality`](crate::core::common::Dimensionality) has its own implementation
 //! of the core structures and traits in its own exported module.
-//! 
+//!
 //! It needs to define all the traits defined in the [`common`](crate::core::common) module, as well as
 //! the [`Dimensionality`](crate::core::common::Dimensionality) trait itself.
 
-pub (crate) mod direction;
+pub(crate) mod direction;
 mod map;
 mod position;
 mod size;
 mod tile;
 
 pub(crate) mod common {
+    use std::fmt::Debug;
+
     pub use crate::core::direction::common::*;
     pub use crate::core::map::common::*;
     pub use crate::core::position::common::*;
@@ -20,7 +22,7 @@ pub(crate) mod common {
     pub use crate::core::tile::common::*;
 
     /// Trait declaring the number of dimensions in the space of the grid.
-    pub trait Dimensionality: super::private::Sealed + 'static {
+    pub trait Dimensionality: super::private::Sealed + 'static + Debug + Clone + Copy + Default {
         /// Number of dimensions
         const N: usize;
 
@@ -44,7 +46,7 @@ pub(crate) mod two_d {
     pub use crate::core::size::two_d::*;
     pub use crate::core::tile::two_d::*;
 
-    #[derive(Debug, Copy, Clone)]
+    #[derive(Debug, Copy, Clone, Default)]
     pub struct TwoDim {}
     impl super::private::Sealed for TwoDim {}
 
@@ -67,7 +69,7 @@ pub(crate) mod three_d {
     pub use crate::core::tile::three_d::*;
 
     /// Three-dimensional space.
-    #[derive(Debug, Copy, Clone)]
+    #[derive(Debug, Copy, Clone, Default)]
     pub struct ThreeDim {}
     impl super::private::Sealed for ThreeDim {}
 

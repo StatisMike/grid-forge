@@ -7,7 +7,7 @@ use super::private::*;
 use crate::core::three_d::*;
 
 #[repr(u8)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Direction3D {
     Up = 0,
     Down = 1,
@@ -97,18 +97,19 @@ impl Direction<ThreeDim> for Direction3D {
     fn as_idx(&self) -> usize {
         *self as usize
     }
-    
+
     #[inline]
     fn primary() -> &'static [Self] {
         &[Self::Left, Self::Up, Self::Higher]
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct DirectionTable3D<T> {
     table: [T; 6],
 }
 
-impl <T>DirectionTable3D<T> {
+impl<T> DirectionTable3D<T> {
     pub const fn new(table: [T; 6]) -> Self {
         Self { table }
     }
@@ -126,9 +127,12 @@ impl<T> DirectionTable<ThreeDim, T> for DirectionTable3D<T> {
         &self.table
     }
 
-    fn from_slice(slice: &[T]) -> Self where T: Copy {
+    fn from_slice(slice: &[T]) -> Self
+    where
+        T: Copy,
+    {
         let table = [slice[0], slice[1], slice[2], slice[3], slice[4], slice[5]];
-        Self { table }  
+        Self { table }
     }
 }
 
@@ -158,6 +162,18 @@ impl<T> Index<Direction3D> for DirectionTable3D<T> {
 impl<T> IndexMut<Direction3D> for DirectionTable3D<T> {
     fn index_mut(&mut self, index: Direction3D) -> &mut Self::Output {
         &mut self.table[index.as_idx()]
+    }
+}
+
+impl<T> AsRef<[T]> for DirectionTable3D<T> {
+    fn as_ref(&self) -> &[T] {
+        self.table.as_ref()
+    }
+}
+
+impl<T> AsMut<[T]> for DirectionTable3D<T> {
+    fn as_mut(&mut self) -> &mut [T] {
+        self.table.as_mut()
     }
 }
 
@@ -198,11 +214,7 @@ mod tests {
             MarchStepTestCase {
                 grid_size: [3, 3, 3],
                 from_coords: [1, 1, 1],
-                dirs: &[
-                    Direction3D::Up, 
-                    Direction3D::Left, 
-                    Direction3D::Higher
-                ],
+                dirs: &[Direction3D::Up, Direction3D::Left, Direction3D::Higher],
                 expected_coords: [0, 0, 0],
                 converged: true,
             },
