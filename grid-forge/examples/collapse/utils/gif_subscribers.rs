@@ -1,11 +1,10 @@
 use std::fs::File;
 
-use grid_forge::{
-    gen::collapse::{overlap, singular, CollapsedTileData},
-    identifiable::builders::ConstructableViaIdentifierTile,
-    vis::collection::VisCollection,
-    GridPosition, GridSize, GridTile,
-};
+use grid_forge::r#gen::collapse::CollapsedTileData;
+use grid_forge::three_d::GridPosition3D;
+use grid_forge::two_d::{GridPosition2D, Tile2D, TwoDim};
+use grid_forge::{two_d::GridSize2D, vis::collection::VisCollection};
+use grid_forge::gen::collapse;
 use image::{ImageBuffer, Rgb};
 
 pub struct GifSingleSubscriber {
@@ -15,11 +14,11 @@ pub struct GifSingleSubscriber {
     collection: VisCollection<Rgb<u8>, 4, 4>,
     frame_size: (u16, u16),
     resize: bool,
-    map_size: GridSize,
+    map_size: GridSize2D,
 }
 
 impl GifSingleSubscriber {
-    pub fn new(file: File, size: &GridSize, collection: VisCollection<Rgb<u8>, 4, 4>) -> Self {
+    pub fn new(file: File, size: &GridSize2D, collection: VisCollection<Rgb<u8>, 4, 4>) -> Self {
         let frame = collection.init_map_image_buffer(size);
         let frame_size = (frame.width() as u16, frame.height() as u16);
 
@@ -79,15 +78,15 @@ impl GifSingleSubscriber {
     }
 }
 
-impl singular::Subscriber for GifSingleSubscriber {
-    fn on_collapse(&mut self, position: &grid_forge::GridPosition, tile_type_id: u64) {
+impl collapse::singular::subscriber::Subscriber<TwoDim> for GifSingleSubscriber {
+    fn on_collapse(&mut self, position: &GridPosition2D, tile_type_id: u64) {
         if self.encoder.is_none() {
             self.begin()
         }
 
         self.collection
             .draw_tile(
-                &GridTile::new(*position, CollapsedTileData::tile_new(tile_type_id)),
+                &Tile2D::new(*position, CollapsedTileData::new(tile_type_id)),
                 &mut self.frame,
             )
             .unwrap();
@@ -99,20 +98,20 @@ impl singular::Subscriber for GifSingleSubscriber {
     }
 }
 
-impl overlap::Subscriber for GifSingleSubscriber {
-    fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64, _pattern_id: u64) {
-        if self.encoder.is_none() {
-            self.begin()
-        }
-        self.collection
-            .draw_tile(
-                &GridTile::new(*position, CollapsedTileData::tile_new(tile_type_id)),
-                &mut self.frame,
-            )
-            .unwrap();
-        self.write_frame();
-    }
-}
+// impl overlap::Subscriber for GifSingleSubscriber {
+//     fn on_collapse(&mut self, position: &GridPosition, tile_type_id: u64, _pattern_id: u64) {
+//         if self.encoder.is_none() {
+//             self.begin()
+//         }
+//         self.collection
+//             .draw_tile(
+//                 &GridTile::new(*position, CollapsedTileData::tile_new(tile_type_id)),
+//                 &mut self.frame,
+//             )
+//             .unwrap();
+//         self.write_frame();
+//     }
+// }
 
 // pub struct GifOverlapSubscriber<P: overlap::OverlappingPattern> {
 //   frame: ImageBuffer<Rgb<u8>, Vec<u8>>,

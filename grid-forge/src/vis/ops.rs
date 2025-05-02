@@ -4,9 +4,8 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 
 use image::{ImageBuffer, Pixel};
 
-use crate::map::{GridMap2D, GridSize};
-use crate::tile::identifiable::builders::IdentTileBuilder;
-use crate::tile::identifiable::IdentifiableTileData;
+use crate::two_d::*;
+use crate::id::*;
 
 use super::collection::VisCollection;
 use super::error::VisError;
@@ -43,7 +42,7 @@ where
             image_buffer,
             &position,
         )?;
-        let tile = builder.build_tile_unchecked(position, create_tile_id_from_pixels(&pixels));
+        let tile = Tile2D::new(position, builder.build_tile_unchecked(create_tile_id_from_pixels(&pixels))); 
         match collection.add_tile_pixels(&tile, image_buffer)? {
             super::collection::VisCollectionOutcome::Empty => {
                 continue;
@@ -83,7 +82,7 @@ where
             &position,
         )?;
         if let Some(tile_id) = collection.get_tile_id_by_pixels(&pixels) {
-            grid.insert_tile(builder.build_tile_unchecked(position, *tile_id));
+            grid.insert_data(&position, builder.build_tile_unchecked(*tile_id));
         } else if !collection.is_empty(&pixels) {
             return Err(VisError::new_nonexist(position));
         }
@@ -94,7 +93,7 @@ where
 /// Utility function to generate [`ImageBuffer`] of correct size for specific size of [`GridMap2D`] to write into
 /// with [`write_gridmap_identifiable`] and [`write_gridmap_vis`].
 pub fn init_map_image_buffer<P, const WIDTH: usize, const HEIGHT: usize>(
-    grid_size: &GridSize,
+    grid_size: &GridSize2D,
 ) -> ImageBuffer<P, Vec<P::Subpixel>>
 where
     P: PixelWithDefault,
@@ -135,9 +134,10 @@ where
     P: PixelWithDefault + 'static,
 {
     for position in grid_map.get_all_positions() {
-        grid_map
-            .get_tile_at_position(&position)
-            .expect("cannot get tile")
+        let data = grid_map
+            .get_data_at_position(&position)
+            .expect("cannot get tile");
+        TileRef2D::new(position, data)
             .vis_to_buffer(image_buffer)?;
     }
 
@@ -149,11 +149,11 @@ where
 /// with provided tile size in pixels.
 pub fn check_grid_vis_size<P: Pixel + 'static, const WIDTH: usize, const HEIGHT: usize>(
     image: &ImageBuffer<P, Vec<P::Subpixel>>,
-) -> Result<GridSize, VisError<WIDTH, HEIGHT>> {
+) -> Result<GridSize2D, VisError<WIDTH, HEIGHT>> {
     if image.height() as usize % HEIGHT != 0 || image.width() as usize % WIDTH != 0 {
         Err(VisError::new_grid_load(image.width(), image.height()))
     } else {
-        Ok(GridSize::new_xy(
+        Ok(GridSize2D::new(
             image.width() / WIDTH as u32,
             image.height() / HEIGHT as u32,
         ))
@@ -164,7 +164,7 @@ pub fn check_grid_vis_size<P: Pixel + 'static, const WIDTH: usize, const HEIGHT:
 /// [`VisError`] if the image buffer size and [`GridSize`] does not match.
 pub fn check_grid_image_size<P: Pixel + 'static, const WIDTH: usize, const HEIGHT: usize>(
     image: &ImageBuffer<P, Vec<P::Subpixel>>,
-    size: &GridSize,
+    size: &GridSize2D,
 ) -> Result<(), VisError<WIDTH, HEIGHT>> {
     let expected = (size.x() * WIDTH as u32, size.y() * HEIGHT as u32);
 

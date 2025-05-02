@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::{core::common::*, id::*};
 
-use super::{error::CollapsibleGridError, private::CollapseBounds, CollapsedTileData, CollapsibleTileData};
+use super::{error::CollapsibleGridError, private::CollapseBounds, singular::{AdjacencyRules, FrequencyHints}, CollapsedTileData, CollapsibleTileData};
 
 pub mod two_d {
     use std::collections::HashSet;
@@ -23,6 +23,11 @@ pub mod two_d {
                 tile_type_ids: HashSet::new(),
             }
         }
+
+        #[allow(refining_impl_trait)]
+        fn grid(&self) -> &GridMap2D<CollapsedTileData> {
+            &self.grid
+        }
         
         fn tile_type_ids(&self) -> &HashSet<u64> {
             &self.tile_type_ids
@@ -30,12 +35,6 @@ pub mod two_d {
     }
 
     impl CommonCollapsedGrid<TwoDim, TwoDimCollapseBounds> for CollapsedGrid2D {
-
-        #[allow(refining_impl_trait)]
-        fn grid(&self) -> &GridMap2D<CollapsedTileData> {
-            &self.grid
-        }
-
         #[allow(refining_impl_trait)]
         fn grid_mut(&mut self) -> &mut GridMap2D<CollapsedTileData> {
             &mut self.grid
@@ -66,6 +65,11 @@ pub mod three_d {
                 tile_type_ids: HashSet::new(),
             }
         }
+
+        #[allow(refining_impl_trait)]
+        fn grid(&self) -> &GridMap3D<CollapsedTileData> {
+            &self.grid
+        }
         
         fn tile_type_ids(&self) -> &HashSet<u64> {
             &self.tile_type_ids
@@ -73,11 +77,6 @@ pub mod three_d {
     }
 
     impl CommonCollapsedGrid<ThreeDim, ThreeDimCollapseBounds> for CollapsedGrid3D {
-        #[allow(refining_impl_trait)]
-        fn grid(&self) -> &GridMap3D<CollapsedTileData> {
-            &self.grid
-        }
-
         #[allow(refining_impl_trait)]
         fn grid_mut(&mut self) -> &mut GridMap3D<CollapsedTileData> {
             &mut self.grid
@@ -110,20 +109,24 @@ pub trait CollapsedGrid<D: Dimensionality, CD: CollapseBounds<D> + ?Sized>: priv
         }
     }
 
+    fn grid(&self) -> &impl GridMap<D, CollapsedTileData>;
+
     fn tile_type_ids(&self) -> &HashSet<u64>;
 }
 
 /// Trait shared by a structs holding a grid of [`CollapsibleTileData`], useable by dedicated resolvers to collapse
 /// the grid.
-pub trait CollapsibleGrid<D, CD, IT>
+pub trait CollapsibleGrid<D, CB, IT>
 where 
     D: Dimensionality,
-    CD: CollapseBounds<D>,
+    CB: CollapseBounds<D>,
     IT: IdentifiableTileData,
-    Self: private::CommonCollapsibleGrid<D, CD>,
+    Self: private::CommonCollapsibleGrid<D, CB>,
 {
-    fn retrieve_collapsed(&self) -> CD::CollapsedGrid {
-        let mut out = CD::CollapsedGrid::new(self._grid().size());
+    fn new_empty(size: D::Size, frequencies: &FrequencyHints<D, IT>, adjacencies: &AdjacencyRules<D, IT>) -> Self;
+
+    fn retrieve_collapsed(&self) -> CB::CollapsedGrid {
+        let mut out = CB::CollapsedGrid::new(self._grid().size());
 
         for (pos, data) in self._grid().iter_tiles() {
             if !data.is_collapsed() {
@@ -371,7 +374,7 @@ pub(crate) mod private {
     }
 
     pub trait CommonCollapsedGrid<D: Dimensionality, CD: CollapseBounds<D> + ?Sized> {
-        fn grid(&self) -> &impl GridMap<D, CollapsedTileData>;
+
         fn grid_mut(&mut self) -> &mut impl GridMap<D, CollapsedTileData>;
         fn tile_type_ids_mut(&mut self) -> &mut HashSet<u64>;
     }

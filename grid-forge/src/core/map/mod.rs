@@ -63,13 +63,13 @@ pub(crate) mod common {
                 .collect::<Vec<_>>()
         }
 
-        fn insert_tile(&mut self, tile: (D::Pos, Data)) -> bool {
-            if !self.size().is_position_valid(&tile.0) {
+        fn insert_tile<T: Tile<D, Data>>(&mut self, tile: T) -> bool {
+            if !self.size().is_position_valid(&tile.grid_position()) {
                 return false;
             }
-            let offset = self.size().offset(&tile.0);
+            let offset = self.size().offset(&tile.grid_position());
             unsafe {
-                self.get_unchecked_mut(offset).replace(tile.1);
+                self.get_unchecked_mut(offset).replace(tile.into_data());
             }
             true
         }

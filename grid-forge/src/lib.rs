@@ -249,7 +249,7 @@ pub use error::*;
 // }
 
 // #[cfg(feature = "vis")]
-// pub mod vis;
+pub mod vis;
 
 // #[cfg(feature = "gen")]
 pub mod gen;

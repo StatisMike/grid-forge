@@ -2,6 +2,18 @@ use crate::core::three_d::*;
 
 pub struct Tile3D<Data: TileData>(pub GridPosition3D, pub Data);
 
+impl <Data: TileData> Tile3D<Data> {
+    pub fn new(grid_position: GridPosition3D, data: Data) -> Self {
+        Self(grid_position, data)
+    }
+}
+
+impl <Data: TileData> Tile<ThreeDim, Data> for Tile3D<Data> {
+    fn into_data(self) -> Data {
+        self.1
+    }
+}
+
 impl<Data: TileData> From<(GridPosition3D, Data)> for Tile3D<Data> {
     fn from(tuple: (GridPosition3D, Data)) -> Self {
         Self(tuple.0, tuple.1)

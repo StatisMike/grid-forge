@@ -56,7 +56,7 @@ impl<Data: TileData> GridMap3D<Data> {
             .into_iter()
             .map(|(pos, data)| (GridPosition3D::new(pos.x(), pos.y(), z), data))
             .for_each(|(pos, data)| {
-                self.insert_tile((pos, data));
+                self.insert_tile(Tile3D::new(pos, data));
             });
     }
 }

@@ -10,6 +10,7 @@
 use std::collections::BTreeMap;
 use std::error::Error;
 use std::fmt::Display;
+use std::marker::PhantomData;
 
 use super::*;
 use crate::core::common::*;
@@ -237,6 +238,35 @@ impl<Data: IdentifiableTileData> IdentTileBuilder<Data> for IdentTileFunBuilder<
         } else {
             Ok(())
         }
+    }
+}
+
+pub struct IdentTileDefaultBuilder<Data: IdDefault> {
+    phantom: PhantomData<Data>,
+}
+
+impl<Data: IdDefault> Default for IdentTileDefaultBuilder<Data> {
+    fn default() -> Self {
+        Self {
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<Data: IdDefault> IdentTileBuilder<Data> for IdentTileDefaultBuilder<Data> {
+    fn build_tile_unchecked(&self, tile_type_id: u64) -> Data {
+        Data::tile_type_default(tile_type_id)
+    }
+
+    fn build_tile(
+        &self,
+        tile_type_id: u64,
+    ) -> Result<Data, TileBuilderError> {
+        Ok(Data::tile_type_default(tile_type_id))
+    }
+
+    fn check_missing_ids(&self, _tile_ids: &[u64]) -> Result<(), TileBuilderError> {
+        Ok(())
     }
 }
 

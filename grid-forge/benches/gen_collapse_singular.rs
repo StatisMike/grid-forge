@@ -1,38 +1,39 @@
-// mod utils;
+mod utils;
 
-// use std::time::Duration;
+use std::time::Duration;
 
-// use utils::RngHelper;
+use grid_forge::r#gen::collapse::singular::{Analyzer, FrequencyHints, IdentityAnalyzer, Resolver};
+use grid_forge::vis::ops::load_gridmap_identifiable_auto;
+use grid_forge::vis::DefaultVisPixel;
+use utils::RngHelper;
 
-// use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 
-// use grid_forge::{
-//     gen::collapse::singular::*,
-//     gen::collapse::*,
-//     identifiable::{builders::IdentTileTraitBuilder, BasicIdentTileData},
-//     vis::{collection::VisCollection, ops::load_gridmap_identifiable_auto, DefaultVisPixel},
-//     GridSize,
-// };
-// use rand_chacha::{ChaCha20Rng, ChaChaRng};
+use grid_forge::{two_d::*, vis::collection::VisCollection};
+use grid_forge::gen::collapse::two_d::*;
+use grid_forge::gen::collapse::*;
+use grid_forge::id::*;
 
-// const MAP_10X10: &str = "../assets/samples/seas.png";
-// const MAP_20X20: &str = "../assets/samples/roads.png";
+use rand_chacha::ChaCha20Rng;
 
-// fn analyze_adjacency_identity_10x10(c: &mut Criterion) {
-//     let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
-//     let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
+const MAP_10X10: &str = "../assets/samples/seas.png";
+const MAP_20X20: &str = "../assets/samples/roads.png";
 
-//     let seas_img = image::open(MAP_10X10).unwrap().into_rgb8();
+fn analyze_adjacency_identity_10x10(c: &mut Criterion) {
+    let builder = IdentTileDefaultBuilder::<BasicIdentTileData>::default();
+    let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
 
-//     let seas_grid = load_gridmap_identifiable_auto(&seas_img, &mut collection, &builder).unwrap();
+    let seas_img = image::open(MAP_10X10).unwrap().into_rgb8();
 
-//     c.bench_function("analyze_adjacency_identity_10x10", |b| {
-//         b.iter(|| {
-//             let mut analyzer = IdentityAnalyzer::default();
-//             analyzer.analyze(&seas_grid);
-//         });
-//     });
-// }
+    let seas_grid = load_gridmap_identifiable_auto(&seas_img, &mut collection, &builder).unwrap();
+
+    c.bench_function("analyze_adjacency_identity_10x10", |b| {
+        b.iter(|| {
+            let mut analyzer = IdentityAnalyzer::default();
+            analyzer.analyze(&seas_grid);
+        });
+    });
+}
 
 // fn analyze_adjacency_border_10x10(c: &mut Criterion) {
 //     let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
@@ -50,24 +51,24 @@
 //     });
 // }
 
-// fn analyze_frequency_10x10(c: &mut Criterion) {
-//     let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
-//     let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
+fn analyze_frequency_10x10(c: &mut Criterion) {
+    let builder = IdentTileDefaultBuilder::<BasicIdentTileData>::default();
+    let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
 
-//     let seas_img = image::open(MAP_10X10).unwrap().into_rgb8();
+    let seas_img = image::open(MAP_10X10).unwrap().into_rgb8();
 
-//     let seas_grid = load_gridmap_identifiable_auto(&seas_img, &mut collection, &builder).unwrap();
+    let seas_grid = load_gridmap_identifiable_auto(&seas_img, &mut collection, &builder).unwrap();
 
-//     c.bench_function("analyze_frequency_10x10", |b| {
-//         b.iter(|| {
-//             let mut freq_hints = FrequencyHints::default();
-//             freq_hints.analyze(&seas_grid);
-//         });
-//     });
-// }
+    c.bench_function("analyze_frequency_10x10", |b| {
+        b.iter(|| {
+            let mut freq_hints = FrequencyHints::default();
+            freq_hints.analyze(&seas_grid);
+        });
+    });
+}
 
 // fn analyze_build_collapsible_grid(c: &mut Criterion) {
-//     let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
+//     let builder = IdentTileDefaultBuilder::<BasicIdentTileData>::default();
 //     let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
 
 //     let seas_img = image::open(MAP_10X10).unwrap().into_rgb8();
@@ -89,7 +90,7 @@
 // }
 
 // fn gen_identity_position_10x10(c: &mut Criterion) {
-//     let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
+//     let builder = IdentTileDefaultBuilder::<BasicIdentTileData>::default();
 //     let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
 
 //     let mut analyzer = IdentityAnalyzer::default();
@@ -104,8 +105,8 @@
 //         frequency_hints.analyze(&grid);
 //     }
 
-//     let size = GridSize::new_xy(10, 10);
-//     let mut grid = CollapsibleTileGrid::new_empty(size, &frequency_hints, analyzer.adjacency());
+//     let size = GridSize2D::new(10, 10);
+//     let mut grid = CollapsibleTileGrid2D::new_empty(size, &frequency_hints, analyzer.adjacency());
 
 //     c.bench_function("gen_identity_position_10x10", |b| {
 //         b.iter(|| {
@@ -127,37 +128,37 @@
 //     });
 // }
 
-// fn gen_identity_entrophy_10x10(c: &mut Criterion) {
-//     let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
-//     let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
+fn gen_identity_entrophy_10x10(c: &mut Criterion) {
+    let builder = IdentTileDefaultBuilder::<BasicIdentTileData>::default();
+    let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
 
-//     let mut analyzer = IdentityAnalyzer::default();
-//     let mut frequency_hints = FrequencyHints::default();
+    let mut analyzer = IdentityAnalyzer::default();
+    let mut frequency_hints = FrequencyHints::default();
 
-//     for path in &[MAP_10X10, MAP_20X20] {
-//         let img = image::open(path).unwrap().into_rgb8();
+    for path in &[MAP_10X10, MAP_20X20] {
+        let img = image::open(path).unwrap().into_rgb8();
 
-//         let grid = load_gridmap_identifiable_auto(&img, &mut collection, &builder).unwrap();
+        let grid = load_gridmap_identifiable_auto(&img, &mut collection, &builder).unwrap();
 
-//         analyzer.analyze(&grid);
-//         frequency_hints.analyze(&grid);
-//     }
+        analyzer.analyze(&grid);
+        frequency_hints.analyze(&grid);
+    }
 
-//     let size = GridSize::new_xy(10, 10);
-//     let mut grid = CollapsibleTileGrid::new_empty(size, &frequency_hints, analyzer.adjacency());
+    let size = GridSize2D::new(10, 10);
+    let mut grid = CollapsibleTileGrid2D::new_empty(size, &frequency_hints, analyzer.adjacency());
 
-//     c.bench_function("gen_identity_entrophy_10x10", |b| {
-//         b.iter(|| {
-//             // Seed for reproductability
-//             let mut rng: ChaCha20Rng = RngHelper::init_str("i am benchmarking", 0).into();
+    c.bench_function("gen_identity_entrophy_10x10", |b| {
+        b.iter(|| {
+            // Seed for reproductability
+            let mut rng: ChaCha20Rng = RngHelper::init_str("i am benchmarking", 0).into();
 
-//             let mut resolver = Resolver::default();
-//             resolver
-//                 .generate_entrophy(&mut grid, &mut rng, &size.get_all_possible_positions())
-//                 .unwrap();
-//         });
-//     });
-// }
+            let mut resolver = Resolver::default();
+            resolver
+                .generate_entrophy(&mut grid, &mut rng, &size.get_all_possible_positions())
+                .unwrap();
+        });
+    });
+}
 
 // fn gen_border_position_10x10(c: &mut Criterion) {
 //     let builder = IdentTileTraitBuilder::<BasicIdentTileData>::default();
@@ -228,16 +229,20 @@
 //     });
 // }
 
-// criterion_group!(
-//     analyze,
-//     analyze_adjacency_identity_10x10,
-//     analyze_adjacency_border_10x10,
-//     analyze_frequency_10x10,
-//     analyze_build_collapsible_grid
-// );
-// criterion_group! {
-//   name = generate;
-//   config = Criterion::default().measurement_time(Duration::from_secs(10));
-//   targets = gen_identity_position_10x10, gen_border_position_10x10, gen_identity_entrophy_10x10, gen_border_entrophy_10x10
-// }
-// criterion_main!(analyze, generate);
+criterion_group!(
+    analyze,
+    analyze_adjacency_identity_10x10,
+    // analyze_adjacency_border_10x10,
+    analyze_frequency_10x10,
+    // analyze_build_collapsible_grid
+);
+criterion_group! {
+  name = generate;
+  config = Criterion::default().measurement_time(Duration::from_secs(10));
+  targets = 
+    // gen_identity_position_10x10, 
+    // gen_border_position_10x10, 
+    gen_identity_entrophy_10x10, 
+    // gen_border_entrophy_10x10
+}
+criterion_main!(analyze, generate);

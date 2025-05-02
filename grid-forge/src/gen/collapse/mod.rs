@@ -53,10 +53,11 @@ pub use tile::*;
 
 use crate::core::common::*;
 
-pub (crate) mod two_d {
+pub mod two_d {
     use crate::core::two_d::*;
 
-    use super::grid::two_d::CollapsedGrid2D;
+    use super::grid::two_d::*;
+    pub use crate::gen::collapse::singular::tile::two_d::*;
 
     pub struct TwoDimCollapseBounds;
     impl crate::gen::collapse::private::CollapseBounds<TwoDim> for TwoDimCollapseBounds {
@@ -67,10 +68,10 @@ pub (crate) mod two_d {
     }
 }
 
-pub (crate) mod three_d {
+pub mod three_d {
     use crate::core::three_d::*;
 
-    use super::grid::three_d::CollapsedGrid3D;
+    use super::grid::three_d::*;
 
     pub struct ThreeDimCollapseBounds;
     impl crate::gen::collapse::private::CollapseBounds<ThreeDim> for ThreeDimCollapseBounds {

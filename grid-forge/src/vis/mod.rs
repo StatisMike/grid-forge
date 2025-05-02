@@ -4,7 +4,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 
 use image::{ImageBuffer, Luma, LumaA, Pixel, Rgb, Rgba};
 
-use crate::tile::{GridPosition, GridTile, GridTileRef, GridTileRefMut, TileContainer, TileData};
+use crate::two_d::{GridPosition2D, GridPositionTrait, TileContainer, TileData, TwoDim};
 
 use self::error::VisError;
 
@@ -40,13 +40,13 @@ where
 /// Writes pixels array into image buffer at provided [GridPosition].
 pub fn write_tile<P, const WIDTH: usize, const HEIGHT: usize>(
     image_buffer: &mut ImageBuffer<P, Vec<P::Subpixel>>,
-    pos: GridPosition,
+    pos: GridPosition2D,
     pixels: &[[P; WIDTH]; HEIGHT],
 ) -> Result<(), VisError<WIDTH, HEIGHT>>
 where
     P: Pixel,
 {
-    let (mut x_pos, mut y_pos) = pos.xy();
+    let [mut x_pos, mut y_pos] = pos.coords();
     x_pos *= WIDTH as u32;
     y_pos *= HEIGHT as u32;
 
@@ -72,12 +72,12 @@ where
 pub fn read_tile<P, const WIDTH: usize, const HEIGHT: usize>(
     pixels: &mut [[P; WIDTH]; HEIGHT],
     image_buffer: &ImageBuffer<P, Vec<P::Subpixel>>,
-    pos: &GridPosition,
+    pos: &GridPosition2D,
 ) -> Result<(), VisError<WIDTH, HEIGHT>>
 where
     P: Pixel,
 {
-    let (mut x_pos, mut y_pos) = pos.xy();
+    let [mut x_pos, mut y_pos] = pos.coords(); 
     x_pos *= WIDTH as u32;
     y_pos *= HEIGHT as u32;
 
@@ -166,9 +166,9 @@ where
     fn vis_pixels(&self) -> [[P; WIDTH]; HEIGHT];
 }
 
-pub trait VisTile2D<Data, P, const WIDTH: usize, const HEIGHT: usize>
+pub trait VisTile<Data, P, const WIDTH: usize, const HEIGHT: usize>
 where
-    Self: TileContainer + AsRef<Data>,
+    Self: TileContainer<TwoDim> + AsRef<Data>,
     Data: VisTileData<P, WIDTH, HEIGHT>,
     P: Pixel,
 {
@@ -179,47 +179,12 @@ where
     ) -> Result<(), VisError<WIDTH, HEIGHT>>;
 }
 
-impl<Data, P, const WIDTH: usize, const HEIGHT: usize> VisTile2D<Data, P, WIDTH, HEIGHT>
-    for GridTile<Data>
+impl<Data, P, const WIDTH: usize, const HEIGHT: usize, Tile> VisTile<Data, P, WIDTH, HEIGHT>
+    for Tile
 where
     Data: VisTileData<P, WIDTH, HEIGHT>,
     P: Pixel,
-{
-    fn vis_to_buffer(
-        &self,
-        image_buffer: &mut ImageBuffer<P, Vec<<P as Pixel>::Subpixel>>,
-    ) -> Result<(), VisError<WIDTH, HEIGHT>> {
-        vis_to_buffer(
-            self.grid_position(),
-            &self.as_ref().vis_pixels(),
-            image_buffer,
-        )
-    }
-}
-
-impl<Data, P, const WIDTH: usize, const HEIGHT: usize> VisTile2D<Data, P, WIDTH, HEIGHT>
-    for GridTileRef<'_, Data>
-where
-    Data: VisTileData<P, WIDTH, HEIGHT>,
-    P: Pixel,
-{
-    fn vis_to_buffer(
-        &self,
-        image_buffer: &mut ImageBuffer<P, Vec<<P as Pixel>::Subpixel>>,
-    ) -> Result<(), VisError<WIDTH, HEIGHT>> {
-        vis_to_buffer(
-            self.grid_position(),
-            &self.as_ref().vis_pixels(),
-            image_buffer,
-        )
-    }
-}
-
-impl<Data, P, const WIDTH: usize, const HEIGHT: usize> VisTile2D<Data, P, WIDTH, HEIGHT>
-    for GridTileRefMut<'_, Data>
-where
-    Data: VisTileData<P, WIDTH, HEIGHT>,
-    P: Pixel,
+    Tile: TileContainer<TwoDim> + AsRef<Data>,
 {
     fn vis_to_buffer(
         &self,
@@ -235,14 +200,14 @@ where
 
 #[inline]
 fn vis_to_buffer<P, const WIDTH: usize, const HEIGHT: usize>(
-    position: GridPosition,
+    position: GridPosition2D,
     pixels: &[[P; WIDTH]; HEIGHT],
     image_buffer: &mut ImageBuffer<P, Vec<<P as Pixel>::Subpixel>>,
 ) -> Result<(), VisError<WIDTH, HEIGHT>>
 where
     P: Pixel,
 {
-    let (mut x_pos, mut y_pos) = (*position.x(), *position.y());
+    let [mut x_pos, mut y_pos] = position.coords();
     x_pos *= WIDTH as u32;
     y_pos *= HEIGHT as u32;
 
@@ -269,11 +234,11 @@ mod test {
     use image::{ImageBuffer, Pixel, Rgb};
 
     use crate::{
-        tile::{GridPosition, GridTile, TileData},
+        core::two_d::*,
         vis::PixelWithDefault,
     };
 
-    use super::{read_tile, write_tile, DefaultVisPixel, VisTile2D, VisTileData};
+    use super::{read_tile, write_tile, DefaultVisPixel, VisTile, VisTileData};
 
     struct TestTileData {
         pixels: [[DefaultVisPixel; 3]; 3],
@@ -330,10 +295,10 @@ mod test {
         let mut image = ImageBuffer::new(4, 4);
 
         let positions = [
-            GridPosition::new_xy(0, 0),
-            GridPosition::new_xy(0, 1),
-            GridPosition::new_xy(1, 0),
-            GridPosition::new_xy(1, 1),
+            GridPosition2D::new(0, 0),
+            GridPosition2D::new(0, 1),
+            GridPosition2D::new(1, 0),
+            GridPosition2D::new(1, 1),
         ];
 
         for i_arr in 0..PIX_ARRAYS.len() {
@@ -348,10 +313,10 @@ mod test {
         let mut image = ImageBuffer::new(4, 4);
 
         let positions = [
-            GridPosition::new_xy(0, 0),
-            GridPosition::new_xy(0, 1),
-            GridPosition::new_xy(1, 0),
-            GridPosition::new_xy(1, 1),
+            GridPosition2D::new(0, 0),
+            GridPosition2D::new(0, 1),
+            GridPosition2D::new(1, 0),
+            GridPosition2D::new(1, 1),
         ];
 
         for i_arr in 0..PIX_ARRAYS.len() {
@@ -368,7 +333,7 @@ mod test {
 
     #[test]
     fn buffer_same_as_pix() {
-        let tile = GridTile::new(GridPosition::new_xy(0, 0), TestTileData::get_test());
+        let tile: Tile2D<TestTileData> = (GridPosition2D::new(0, 0), TestTileData::get_test()).into();
 
         let mut buffer = ImageBuffer::new(3, 3);
         tile.vis_to_buffer(&mut buffer).unwrap();

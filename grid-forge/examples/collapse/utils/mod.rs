@@ -2,12 +2,7 @@
 
 mod gif_subscribers;
 
-use grid_forge::{
-    gen::collapse::CollapsedTileData,
-    identifiable::builders::IdentTileTraitBuilder,
-    vis::{collection::VisCollection, ops::load_gridmap_identifiable_auto, DefaultVisPixel},
-    GridMap2D,
-};
+use grid_forge::{r#gen::collapse::CollapsedTileData, id::IdentTileDefaultBuilder, two_d::GridMap2D, vis::{collection::VisCollection, ops::load_gridmap_identifiable_auto, DefaultVisPixel}};
 use image::{ImageBuffer, Rgb};
 use rand::SeedableRng;
 use rand_chacha::ChaChaRng;
@@ -146,7 +141,7 @@ impl<'a> VisGridLoaderHelper<'a> {
         rotations: &[VisRotate],
     ) -> Vec<GridMap2D<CollapsedTileData>> {
         let mut out = Vec::new();
-        let builder = IdentTileTraitBuilder::default();
+        let builder = IdentTileDefaultBuilder::default();
         for path in paths {
             let image = self.load_image_grid(path);
 

@@ -357,7 +357,14 @@ pub (crate) mod two_d {
         }
     }
 
-    impl <Tile: IdentifiableTileData> CollapsibleGrid<TwoDim, TwoDimCollapseBounds, Tile> for CollapsibleTileGrid2D<Tile> {}
+    impl <Tile: IdentifiableTileData> CollapsibleGrid<TwoDim, TwoDimCollapseBounds, Tile> for CollapsibleTileGrid2D<Tile> {
+        fn new_empty(size: GridSize2D, frequencies: &FrequencyHints<TwoDim, Tile>, adjacencies: &AdjacencyRules<TwoDim, Tile>) -> Self { 
+            let mut option_data = PerOptionData2D::default();
+            option_data.populate(&frequencies.get_all_weights_cloned(), adjacencies.inner());
+            
+            Self { grid: GridMap2D::new(size), option_data, tile_type: PhantomData }
+        }
+    }
 }
 
 pub (crate) mod three_d {
@@ -497,5 +504,12 @@ pub (crate) mod three_d {
         }
     }
 
-    impl <Tile: IdentifiableTileData> CollapsibleGrid<ThreeDim, ThreeDimCollapseBounds, Tile> for CollapsibleTileGrid3D<Tile> {}
+    impl <Tile: IdentifiableTileData> CollapsibleGrid<ThreeDim, ThreeDimCollapseBounds, Tile> for CollapsibleTileGrid3D<Tile> {
+        fn new_empty(size: GridSize3D, frequencies: &FrequencyHints<ThreeDim, Tile>, adjacencies: &AdjacencyRules<ThreeDim, Tile>) -> Self {
+            let mut option_data = PerOptionData3D::default();
+            option_data.populate(&frequencies.get_all_weights_cloned(), adjacencies.inner());
+            
+            Self { grid: GridMap3D::new(size), option_data, tile_type: PhantomData }
+        }
+    }
 }

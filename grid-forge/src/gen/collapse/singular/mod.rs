@@ -21,7 +21,7 @@
 
 mod analyzer;
 mod resolver;
-mod tile;
+pub(crate) mod tile;
 pub mod subscriber;
 
 pub use {analyzer::*, resolver::*, tile::*};

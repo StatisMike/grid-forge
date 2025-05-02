@@ -142,7 +142,7 @@ impl<D: Dimensionality, CB: CollapseBounds<D>, Data: CollapsibleTileData<D, CB>>
         self.initialize_queue(&tiles);
 
         for tile in tiles {
-            grid.insert_tile(tile);
+            grid.insert_data(&tile.0, tile.1);
         }
     }
 
