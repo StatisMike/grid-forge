@@ -77,7 +77,7 @@ pub fn read_tile<P, const WIDTH: usize, const HEIGHT: usize>(
 where
     P: Pixel,
 {
-    let [mut x_pos, mut y_pos] = pos.coords(); 
+    let [mut x_pos, mut y_pos] = pos.coords();
     x_pos *= WIDTH as u32;
     y_pos *= HEIGHT as u32;
 
@@ -233,10 +233,7 @@ where
 mod test {
     use image::{ImageBuffer, Pixel, Rgb};
 
-    use crate::{
-        core::two_d::*,
-        vis::PixelWithDefault,
-    };
+    use crate::{core::two_d::*, vis::PixelWithDefault};
 
     use super::{read_tile, write_tile, DefaultVisPixel, VisTile, VisTileData};
 
@@ -333,7 +330,8 @@ mod test {
 
     #[test]
     fn buffer_same_as_pix() {
-        let tile: Tile2D<TestTileData> = (GridPosition2D::new(0, 0), TestTileData::get_test()).into();
+        let tile: Tile2D<TestTileData> =
+            (GridPosition2D::new(0, 0), TestTileData::get_test()).into();
 
         let mut buffer = ImageBuffer::new(3, 3);
         tile.vis_to_buffer(&mut buffer).unwrap();

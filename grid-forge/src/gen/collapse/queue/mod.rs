@@ -1,13 +1,13 @@
 pub(crate) mod entrophy;
-// pub(crate) mod position;
+pub mod position;
 mod propagator;
 
 pub use entrophy::EntrophyQueue;
-// pub use position::*;
+pub use position::*;
 pub(crate) use propagator::*;
 
 use super::{private::CollapseBounds, tile::CollapsibleTileData};
-use crate::core::common::*;
+use crate::{core::common::*, id::IdentifiableTileData};
 
 /// Trait shared by objects that handle the selecting algorithm for next tile to collapse within collapse resolvers.
 pub trait CollapseQueue<D, CB, Data: CollapsibleTileData<D, CB>>
@@ -36,6 +36,7 @@ pub(crate) mod private {
 
     use crate::{
         core::common::*,
+        id::IdentifiableTileData,
         r#gen::collapse::{private::CollapseBounds, CollapsibleTileData},
     };
 

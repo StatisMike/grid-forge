@@ -22,7 +22,9 @@ pub(crate) mod common {
     pub use crate::core::tile::common::*;
 
     /// Trait declaring the number of dimensions in the space of the grid.
-    pub trait Dimensionality: super::private::Sealed + 'static + Debug + Clone + Copy + Default {
+    pub trait Dimensionality:
+        super::private::Sealed + 'static + Debug + Clone + Copy + Default
+    {
         /// Number of dimensions
         const N: usize;
 

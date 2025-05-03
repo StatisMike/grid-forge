@@ -2,13 +2,16 @@
 
 mod gif_subscribers;
 
-use grid_forge::{r#gen::collapse::CollapsedTileData, id::IdentTileDefaultBuilder, two_d::GridMap2D, vis::{collection::VisCollection, ops::load_gridmap_identifiable_auto, DefaultVisPixel}};
+use grid_forge::{
+    r#gen::collapse::{grid::two_d::CollapsedGrid2D, two_d::CollapsibleTileGrid2D, CollapseError, CollapsedTileData, CollapsibleGrid}, id::{IdentTileDefaultBuilder, IdentifiableTileData}, two_d::{GridMap2D, TwoDim}, vis::{collection::VisCollection, ops::load_gridmap_identifiable_auto, DefaultVisPixel}
+};
 use image::{ImageBuffer, Rgb};
 use rand::SeedableRng;
 use rand_chacha::ChaChaRng;
 
 pub use gif_subscribers::GifSingleSubscriber;
 
+#[derive(Debug)]
 pub struct ArgHelper {
     gif: bool,
     debug: bool,
@@ -158,5 +161,23 @@ impl<'a> VisGridLoaderHelper<'a> {
 
     fn load_image_grid(&self, path: &str) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
         image::open(path).unwrap().into_rgb8()
+    }
+}
+
+pub fn try_n_times_2d<Tile: IdentifiableTileData>(
+    n: u32,
+    mut f: impl FnMut() -> Result<CollapsibleTileGrid2D<Tile>, CollapseError<TwoDim>>,
+) -> Result<CollapsedGrid2D, CollapseError<TwoDim>> {
+    let mut current_iter = 0;
+    loop {
+        match f() {
+            Ok(grid) => return Ok(grid.retrieve_collapsed()),
+            Err(err) => {
+                if current_iter == n {
+                    return Err(err);
+                }
+                current_iter += 1;
+            },
+        }
     }
 }

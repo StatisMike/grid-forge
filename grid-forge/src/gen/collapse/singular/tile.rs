@@ -1,11 +1,10 @@
 use std::collections::{HashMap, HashSet};
 use std::marker::PhantomData;
 
-
 use crate::core::common::*;
+use crate::id::*;
 use crate::r#gen::collapse::option::private::PerOptionData;
 use crate::r#gen::collapse::private::CollapseBounds;
-use crate::id::*;
 
 use crate::gen::collapse::error::CollapsibleGridError;
 use crate::gen::collapse::grid::CollapsibleGrid;
@@ -30,7 +29,6 @@ use super::{AdjacencyRules, FrequencyHints};
 // //     type Ways = WaysToBeOption<D>;
 // //     type PerOption = PerOptionData<D>;
 // //     type Grid = GridMap<D, Self>;
-
 
 // //     fn remove_option(&mut self, weights: OptionWeights) {
 // //         self.num_possible_options -= 1;
@@ -184,11 +182,11 @@ use super::{AdjacencyRules, FrequencyHints};
 // /// ```
 
 // pub trait CollapsibleTileGrid<
-//     D: Dimensionality, 
-//     CB: CollapseBounds<D>, 
+//     D: Dimensionality,
+//     CB: CollapseBounds<D>,
 //     Tile: IdentifiableTileData
 //     >: CollapsibleGrid<D, CB> + Sized {
-    
+
 //     fn new_empty(
 //         size: D::Size,
 //         frequencies: &FrequencyHints<D, Tile>,
@@ -220,11 +218,11 @@ use super::{AdjacencyRules, FrequencyHints};
 
 // }
 
-pub (crate) mod two_d {
+pub(crate) mod two_d {
     use super::*;
-    use crate::gen::collapse::two_d::TwoDimCollapseBounds;
     use crate::core::two_d::*;
     use crate::gen::collapse::option::two_d::*;
+    use crate::gen::collapse::two_d::TwoDimCollapseBounds;
 
     #[derive(Clone, Debug)]
     pub struct CollapsibleTile2D {
@@ -249,7 +247,7 @@ pub (crate) mod two_d {
         fn num_compatible_options(&self) -> usize {
             self.num_options
         }
-        
+
         fn new_collapsed_data(option_idx: usize) -> Self {
             Self {
                 collapsed_option: Some(option_idx),
@@ -261,8 +259,10 @@ pub (crate) mod two_d {
         }
     }
 
-    impl crate::gen::collapse::tile::private::CommonCollapsibleTileData<TwoDim, TwoDimCollapseBounds> for CollapsibleTile2D {
-    
+    impl
+        crate::gen::collapse::tile::private::CommonCollapsibleTileData<TwoDim, TwoDimCollapseBounds>
+        for CollapsibleTile2D
+    {
         fn new_uncollapsed_tile(
             num_options: usize,
             ways_to_be_option: WaysToBeOption2D,
@@ -277,30 +277,30 @@ pub (crate) mod two_d {
                 entrophy_noise,
             }
         }
-    
+
         fn num_possible_options(&self) -> usize {
             self.num_options
         }
-    
+
         fn ways_to_be_option(&self) -> &WaysToBeOption2D {
             &self.ways_to_be_option
         }
-    
+
         fn mut_ways_to_be_option(&mut self) -> &mut WaysToBeOption2D {
             &mut self.ways_to_be_option
         }
-    
+
         fn remove_option(&mut self, weights: OptionWeights) {
             self.num_options -= 1;
             self.weight -= weights;
         }
-    
+
         fn mark_collapsed(&mut self, collapsed_idx: usize) {
             self.collapsed_option = Some(collapsed_idx);
             self.num_options = 0;
             self.weight = OptionWeights::default();
         }
-    
+
         fn weight_sum(&self) -> u32 {
             self.weight.0
         }
@@ -312,23 +312,29 @@ pub (crate) mod two_d {
         tile_type: PhantomData<Tile>,
     }
 
-    impl <Tile: IdentifiableTileData> crate::gen::collapse::grid::private::CommonCollapsibleGrid<TwoDim, TwoDimCollapseBounds> for CollapsibleTileGrid2D<Tile> {
+    impl<Tile: IdentifiableTileData>
+        crate::gen::collapse::grid::private::CommonCollapsibleGrid<TwoDim, TwoDimCollapseBounds>
+        for CollapsibleTileGrid2D<Tile>
+    {
         type CollapsibleData = CollapsibleTile2D;
         type CollapsibleGrid = GridMap2D<CollapsibleTile2D>;
-    
+
         fn _grid(&self) -> &GridMap2D<CollapsibleTile2D> {
             &self.grid
         }
-    
+
         fn _grid_mut(&mut self) -> &mut GridMap2D<CollapsibleTile2D> {
             &mut self.grid
         }
-    
+
         fn _option_data(&self) -> &PerOptionData2D {
             &self.option_data
         }
-    
-        fn _get_initial_propagate_items(&self, to_collapse: &[GridPosition2D]) -> Vec<PropagateItem<TwoDim>> {
+
+        fn _get_initial_propagate_items(
+            &self,
+            to_collapse: &[GridPosition2D],
+        ) -> Vec<PropagateItem<TwoDim>> {
             let mut out = Vec::new();
             let mut cache = HashMap::new();
             let mut check_generated = HashSet::new();
@@ -357,21 +363,31 @@ pub (crate) mod two_d {
         }
     }
 
-    impl <Tile: IdentifiableTileData> CollapsibleGrid<TwoDim, TwoDimCollapseBounds, Tile> for CollapsibleTileGrid2D<Tile> {
-        fn new_empty(size: GridSize2D, frequencies: &FrequencyHints<TwoDim, Tile>, adjacencies: &AdjacencyRules<TwoDim, Tile>) -> Self { 
+    impl<Tile: IdentifiableTileData> CollapsibleGrid<TwoDim, TwoDimCollapseBounds, Tile>
+        for CollapsibleTileGrid2D<Tile>
+    {
+        fn new_empty(
+            size: GridSize2D,
+            frequencies: &FrequencyHints<TwoDim, Tile>,
+            adjacencies: &AdjacencyRules<TwoDim, Tile>,
+        ) -> Self {
             let mut option_data = PerOptionData2D::default();
             option_data.populate(&frequencies.get_all_weights_cloned(), adjacencies.inner());
-            
-            Self { grid: GridMap2D::new(size), option_data, tile_type: PhantomData }
+
+            Self {
+                grid: GridMap2D::new(size),
+                option_data,
+                tile_type: PhantomData,
+            }
         }
     }
 }
 
-pub (crate) mod three_d {
+pub(crate) mod three_d {
     use super::*;
-    use crate::gen::collapse::three_d::ThreeDimCollapseBounds;
     use crate::core::three_d::*;
     use crate::gen::collapse::option::three_d::*;
+    use crate::gen::collapse::three_d::ThreeDimCollapseBounds;
 
     #[derive(Clone, Debug)]
     pub struct CollapsibleTile3D {
@@ -396,7 +412,7 @@ pub (crate) mod three_d {
         fn num_compatible_options(&self) -> usize {
             self.num_options
         }
-        
+
         fn new_collapsed_data(option_idx: usize) -> Self {
             Self {
                 collapsed_option: Some(option_idx),
@@ -408,8 +424,12 @@ pub (crate) mod three_d {
         }
     }
 
-    impl crate::gen::collapse::tile::private::CommonCollapsibleTileData<ThreeDim, ThreeDimCollapseBounds> for CollapsibleTile3D {
-    
+    impl
+        crate::gen::collapse::tile::private::CommonCollapsibleTileData<
+            ThreeDim,
+            ThreeDimCollapseBounds,
+        > for CollapsibleTile3D
+    {
         fn new_uncollapsed_tile(
             num_options: usize,
             ways_to_be_option: WaysToBeOption3D,
@@ -424,30 +444,30 @@ pub (crate) mod three_d {
                 entrophy_noise,
             }
         }
-    
+
         fn num_possible_options(&self) -> usize {
             self.num_options
         }
-    
+
         fn ways_to_be_option(&self) -> &WaysToBeOption3D {
             &self.ways_to_be_option
         }
-    
+
         fn mut_ways_to_be_option(&mut self) -> &mut WaysToBeOption3D {
             &mut self.ways_to_be_option
         }
-    
+
         fn remove_option(&mut self, weights: OptionWeights) {
             self.num_options -= 1;
             self.weight -= weights;
         }
-    
+
         fn mark_collapsed(&mut self, collapsed_idx: usize) {
             self.collapsed_option = Some(collapsed_idx);
             self.num_options = 0;
             self.weight = OptionWeights::default();
         }
-    
+
         fn weight_sum(&self) -> u32 {
             self.weight.0
         }
@@ -459,23 +479,29 @@ pub (crate) mod three_d {
         tile_type: PhantomData<Tile>,
     }
 
-    impl <Tile: IdentifiableTileData> crate::gen::collapse::grid::private::CommonCollapsibleGrid<ThreeDim, ThreeDimCollapseBounds> for CollapsibleTileGrid3D<Tile> {
+    impl<Tile: IdentifiableTileData>
+        crate::gen::collapse::grid::private::CommonCollapsibleGrid<ThreeDim, ThreeDimCollapseBounds>
+        for CollapsibleTileGrid3D<Tile>
+    {
         type CollapsibleData = CollapsibleTile3D;
         type CollapsibleGrid = GridMap3D<CollapsibleTile3D>;
-    
+
         fn _grid(&self) -> &GridMap3D<CollapsibleTile3D> {
             &self.grid
         }
-    
+
         fn _grid_mut(&mut self) -> &mut GridMap3D<CollapsibleTile3D> {
             &mut self.grid
         }
-    
+
         fn _option_data(&self) -> &PerOptionData3D {
             &self.option_data
         }
-    
-        fn _get_initial_propagate_items(&self, to_collapse: &[GridPosition3D]) -> Vec<PropagateItem<ThreeDim>> {
+
+        fn _get_initial_propagate_items(
+            &self,
+            to_collapse: &[GridPosition3D],
+        ) -> Vec<PropagateItem<ThreeDim>> {
             let mut out = Vec::new();
             let mut cache = HashMap::new();
             let mut check_generated = HashSet::new();
@@ -504,12 +530,22 @@ pub (crate) mod three_d {
         }
     }
 
-    impl <Tile: IdentifiableTileData> CollapsibleGrid<ThreeDim, ThreeDimCollapseBounds, Tile> for CollapsibleTileGrid3D<Tile> {
-        fn new_empty(size: GridSize3D, frequencies: &FrequencyHints<ThreeDim, Tile>, adjacencies: &AdjacencyRules<ThreeDim, Tile>) -> Self {
+    impl<Tile: IdentifiableTileData> CollapsibleGrid<ThreeDim, ThreeDimCollapseBounds, Tile>
+        for CollapsibleTileGrid3D<Tile>
+    {
+        fn new_empty(
+            size: GridSize3D,
+            frequencies: &FrequencyHints<ThreeDim, Tile>,
+            adjacencies: &AdjacencyRules<ThreeDim, Tile>,
+        ) -> Self {
             let mut option_data = PerOptionData3D::default();
             option_data.populate(&frequencies.get_all_weights_cloned(), adjacencies.inner());
-            
-            Self { grid: GridMap3D::new(size), option_data, tile_type: PhantomData }
+
+            Self {
+                grid: GridMap3D::new(size),
+                option_data,
+                tile_type: PhantomData,
+            }
         }
     }
 }

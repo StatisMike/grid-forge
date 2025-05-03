@@ -1,10 +1,10 @@
 use std::fs::File;
 
+use grid_forge::gen::collapse;
 use grid_forge::r#gen::collapse::CollapsedTileData;
 use grid_forge::three_d::GridPosition3D;
 use grid_forge::two_d::{GridPosition2D, Tile2D, TwoDim};
 use grid_forge::{two_d::GridSize2D, vis::collection::VisCollection};
-use grid_forge::gen::collapse;
 use image::{ImageBuffer, Rgb};
 
 pub struct GifSingleSubscriber {

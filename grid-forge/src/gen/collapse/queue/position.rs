@@ -2,7 +2,10 @@ use std::{cmp::Ordering, marker::PhantomData};
 
 use crate::{
     core::common::*,
-    r#gen::collapse::{option::private::PerOptionData, CollapsibleTileData},
+    id::IdentifiableTileData,
+    r#gen::collapse::{
+        option::private::PerOptionData, private::CollapseBounds, CollapsibleTileData,
+    },
 };
 
 use private::{PositionQueueDirection, PositionQueueProcession, PositionQueueStartingPoint};
@@ -11,17 +14,20 @@ use rand::Rng;
 use super::CollapseQueue;
 
 /// A queue that collapses tiles consecutively in a fixed direction, based solely on their position.
-pub struct PositionQueue<D: Dimensionality, P: PositionQueueProcession<D>> {
+pub struct PositionQueue<D: Dimensionality, CB: CollapseBounds<D>, Data: CollapsibleTileData<D, CB>>
+{
     cmp_fun: fn(&D::Pos, &D::Pos) -> Ordering,
     positions: Vec<D::Pos>,
     changed: bool,
-    phantom: PhantomData<P>,
+    phantom: PhantomData<(CB, Data)>,
 }
 
-impl <D: Dimensionality, P: PositionQueueProcession<D>> Default for PositionQueue<D, P> {
+impl<D: Dimensionality, CB: CollapseBounds<D>, Data: CollapsibleTileData<D, CB>> Default
+    for PositionQueue<D, CB, Data>
+{
     fn default() -> Self {
         Self {
-            cmp_fun: P::cmp_fun_default(),
+            cmp_fun: CB::PositionQueueProcession::cmp_fun_default(),
             positions: Vec::new(),
             changed: false,
             phantom: PhantomData,
@@ -29,13 +35,17 @@ impl <D: Dimensionality, P: PositionQueueProcession<D>> Default for PositionQueu
     }
 }
 
-impl<D: Dimensionality, P: PositionQueueProcession<D>> PositionQueue<D, P> {
+impl<D: Dimensionality, CB: CollapseBounds<D>, Data: CollapsibleTileData<D, CB>>
+    PositionQueue<D, CB, Data>
+{
     pub fn new(
-        starting: P::StartingPoint,
-        direction: P::Direction,
+        starting: <<CB as CollapseBounds<D>>::PositionQueueProcession as PositionQueueProcession<
+            D,
+        >>::StartingPoint,
+        direction: <<CB as CollapseBounds<D>>::PositionQueueProcession as PositionQueueProcession<D>>::Direction,
     ) -> Self {
         Self {
-            cmp_fun: P::cmp_fun(starting, direction),
+            cmp_fun: CB::PositionQueueProcession::cmp_fun(starting, direction),
             ..Default::default()
         }
     }
@@ -46,7 +56,9 @@ impl<D: Dimensionality, P: PositionQueueProcession<D>> PositionQueue<D, P> {
     }
 }
 
-impl<D: Dimensionality, P: PositionQueueProcession<D>> CollapseQueue<D> for PositionQueue<D, P> {
+impl<D: Dimensionality, CB: CollapseBounds<D>, Data: CollapsibleTileData<D, CB>>
+    CollapseQueue<D, CB, Data> for PositionQueue<D, CB, Data>
+{
     fn get_next_position(&mut self) -> Option<D::Pos> {
         if self.changed {
             self.sort_elements()
@@ -54,19 +66,15 @@ impl<D: Dimensionality, P: PositionQueueProcession<D>> CollapseQueue<D> for Posi
         self.positions.pop()
     }
 
-    fn initialize_queue<Data: CollapsibleTileData<D>>(&mut self, tiles: &[(D::Pos, Data)]) {
-        for tile in tiles {
-            self.update_queue(tile)
+    fn initialize_queue(&mut self, tiles: &[(D::Pos, Data)]) {
+        for element in tiles {
+            self.update_queue((element.0, &element.1))
         }
     }
 
-    fn update_queue<Tile, Data>(&mut self, tile: &Tile)
-    where
-        Tile: TileContainer + AsRef<Data>,
-        Data: CollapsibleTileData,
-    {
-        if !self.positions.contains(&tile.grid_position()) {
-            self.positions.push(tile.grid_position());
+    fn update_queue(&mut self, tile: (D::Pos, &Data)) {
+        if !self.positions.contains(&tile.0) {
+            self.positions.push(tile.0);
         }
         self.changed = true;
     }
@@ -80,7 +88,7 @@ impl<D: Dimensionality, P: PositionQueueProcession<D>> CollapseQueue<D> for Posi
     }
 }
 
-pub(crate) mod two_d {
+pub mod two_d {
 
     use std::cmp::Ordering;
 
@@ -173,7 +181,7 @@ pub(crate) mod two_d {
     }
 }
 
-pub(crate) mod three_d {
+pub mod three_d {
     use crate::{core::three_d::ThreeDim, three_d::GridPosition3D};
     use std::cmp::Ordering;
 
@@ -279,18 +287,20 @@ pub(crate) mod three_d {
     }
 }
 
-impl<D: Dimensionality> super::private::Sealed<D> for PositionQueue<D> {
-    fn populate_inner_grid<R: Rng, Data: CollapsibleTileData<D>>(
+impl<D: Dimensionality, CB: CollapseBounds<D>, Data: CollapsibleTileData<D, CB>>
+    super::private::Sealed<D, CB, Data> for PositionQueue<D, CB, Data>
+{
+    fn populate_inner_grid<R: Rng>(
         &mut self,
         _rng: &mut R,
         grid: &mut impl GridMap<D, Data>,
         positions: &[D::Pos],
-        options_data: &PerOptionData<D>,
+        options_data: &CB::PerOption,
     ) {
         let tiles = Data::new_from_frequency(positions, options_data);
         self.initialize_queue(&tiles);
         for tile in tiles {
-            grid.insert_tile(tile);
+            grid.insert_data(&tile.0, tile.1);
         }
     }
 }
@@ -321,25 +331,38 @@ pub(crate) mod private {
 
 #[cfg(test)]
 mod test {
-    use crate::{core::common::*, r#gen::collapse::position::private::PositionQueueProcession};
+    use crate::{
+        core::common::*,
+        r#gen::collapse::{position::private::PositionQueueProcession, private::CollapseBounds},
+    };
 
     use super::private::{PositionQueueDirection, PositionQueueStartingPoint};
 
     // Test helper function
-    fn test_ordering<D: Dimensionality>(
-        start: impl PositionQueueStartingPoint<D>,
-        dir: impl PositionQueueDirection<D>,
-        expected: [&[u32]],
+    fn test_ordering<D: Dimensionality, CB: CollapseBounds<D>>(
+        start: <<CB as CollapseBounds<D>>::PositionQueueProcession as PositionQueueProcession<D>>::StartingPoint,
+        dir: <<CB as CollapseBounds<D>>::PositionQueueProcession as PositionQueueProcession<D>>::Direction,
+        expected: &[&[u32]],
     ) {
-        let comparator = PositionQueueProcession::<D>::cmp_fun(start, dir);
+        let comparator = CB::PositionQueueProcession::cmp_fun(start, dir);
+        let mut ul_coords = Vec::new();
+        let mut ld_coords = Vec::new();
+        for _ in 0..D::N {
+            ul_coords.push(0u32);
+            ld_coords.push(2u32);
+        }
         let mut positions = D::Pos::generate_rect_area(
-            &D::Pos::from_coords(&[0; D::N]),
-            &D::Pos::from_coords(&[2; D::N]),
+            &D::Pos::from_slice(&ul_coords),
+            &D::Pos::from_slice(&ld_coords),
         );
 
         positions.sort_by(comparator);
-        let actual: Vec<(u32, u32)> = positions.iter().map(|p| (p.x(), p.y())).collect();
 
-        assert_eq!(actual, expected);
+        let mut expected_pos = Vec::new();
+        for pos in expected {
+            expected_pos.push(D::Pos::from_slice(pos));
+        }
+
+        assert_eq!(positions, expected_pos);
     }
 }

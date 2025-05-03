@@ -53,8 +53,12 @@ impl SubAssign for OptionWeights {
 
 pub mod two_d {
     use super::*;
-    use crate::{core::two_d::{DirectionTable2D, TwoDim}, r#gen::collapse::two_d::TwoDimCollapseBounds, two_d::Direction2D};
-    
+    use crate::{
+        core::two_d::{DirectionTable2D, TwoDim},
+        r#gen::collapse::two_d::TwoDimCollapseBounds,
+        two_d::Direction2D,
+    };
+
     #[derive(Debug, Clone, Default)]
     pub struct WaysToBeOption2D {
         table: Vec<DirectionTable2D<usize>>,
@@ -85,7 +89,6 @@ pub mod two_d {
     }
 
     impl private::PerOptionData<TwoDim, TwoDimCollapseBounds> for PerOptionData2D {
-
         fn option_map(&self) -> &HashMap<u64, usize> {
             &self.option_map
         }
@@ -137,11 +140,11 @@ pub mod two_d {
         fn set_option_count(&mut self, count: usize) {
             self.option_count = count;
         }
-        
+
         fn possible_options_count_mut(&mut self) -> &mut usize {
             &mut self.possible_options_count
         }
-        
+
         fn generate_ways_to_be_option(&mut self) {
             for adj in self.adjacencies.iter() {
                 let table = Direction2D::all()
@@ -156,8 +159,12 @@ pub mod two_d {
                 }
             }
         }
-        
-        fn get_all_enabled_in_direction(&self, option_id: usize, direction: Direction2D) -> &[usize] {
+
+        fn get_all_enabled_in_direction(
+            &self,
+            option_id: usize,
+            direction: Direction2D,
+        ) -> &[usize] {
             &self.adjacencies[option_id][direction]
         }
     }
@@ -185,7 +192,11 @@ pub mod two_d {
 
 pub mod three_d {
     use super::*;
-    use crate::{core::three_d::{DirectionTable3D, ThreeDim}, r#gen::collapse::three_d::ThreeDimCollapseBounds, three_d::Direction3D};
+    use crate::{
+        core::three_d::{DirectionTable3D, ThreeDim},
+        r#gen::collapse::three_d::ThreeDimCollapseBounds,
+        three_d::Direction3D,
+    };
 
     #[derive(Clone, Default, Debug)]
     pub struct WaysToBeOption3D {
@@ -217,7 +228,6 @@ pub mod three_d {
     }
 
     impl private::PerOptionData<ThreeDim, ThreeDimCollapseBounds> for PerOptionData3D {
-
         fn option_map(&self) -> &HashMap<u64, usize> {
             &self.option_map
         }
@@ -269,7 +279,7 @@ pub mod three_d {
         fn possible_options_count(&self) -> usize {
             self.possible_options_count
         }
-        
+
         fn possible_options_count_mut(&mut self) -> &mut usize {
             &mut self.possible_options_count
         }
@@ -288,8 +298,12 @@ pub mod three_d {
                 }
             }
         }
-        
-        fn get_all_enabled_in_direction(&self, option_id: usize, direction: Direction3D) -> &[usize] {
+
+        fn get_all_enabled_in_direction(
+            &self,
+            option_id: usize,
+            direction: Direction3D,
+        ) -> &[usize] {
             &self.adjacencies[option_id][direction]
         }
     }
@@ -347,16 +361,13 @@ pub(crate) mod private {
         }
 
         fn iter_possible(&self) -> impl Iterator<Item = usize> + '_ {
-            self.inner()
-                .iter()
-                .enumerate()
-                .filter_map(|(idx, t)| {
-                    if t[D::Dir::FIRST] == 0 {
-                        None
-                    } else {
-                        Some(idx)
-                    }
-                })
+            self.inner().iter().enumerate().filter_map(|(idx, t)| {
+                if t[D::Dir::FIRST] == 0 {
+                    None
+                } else {
+                    Some(idx)
+                }
+            })
         }
 
         fn purge_others(&mut self, options: &[usize]) {
@@ -393,7 +404,6 @@ pub(crate) mod private {
     pub trait PerOptionData<D: Dimensionality, CB: CollapseBounds<D> + ?Sized>:
         IdentTileCollection<DATA = usize> + Debug + Default + Clone
     {
-
         fn option_map(&self) -> &HashMap<u64, usize>;
         fn option_map_mut(&mut self) -> &mut HashMap<u64, usize>;
         fn option_map_rev(&self) -> &HashMap<u64, u64>;
@@ -422,13 +432,12 @@ pub(crate) mod private {
             }
 
             self.set_option_count(self.option_map().len());
-            *self.possible_options_count_mut() = self.option_count(); 
+            *self.possible_options_count_mut() = self.option_count();
 
             for trans_id in 0..self.option_count() {
                 let original_id = self.get_tile_type_id(&trans_id).unwrap();
                 let translated_table = self.translate_adjacency_table(original_id, adjacencies);
-                self.adjacencies_mut()
-                    .push(translated_table);
+                self.adjacencies_mut().push(translated_table);
             }
 
             self.generate_ways_to_be_option();

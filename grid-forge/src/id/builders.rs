@@ -258,10 +258,7 @@ impl<Data: IdDefault> IdentTileBuilder<Data> for IdentTileDefaultBuilder<Data> {
         Data::tile_type_default(tile_type_id)
     }
 
-    fn build_tile(
-        &self,
-        tile_type_id: u64,
-    ) -> Result<Data, TileBuilderError> {
+    fn build_tile(&self, tile_type_id: u64) -> Result<Data, TileBuilderError> {
         Ok(Data::tile_type_default(tile_type_id))
     }
 

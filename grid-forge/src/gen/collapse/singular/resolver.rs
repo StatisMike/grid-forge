@@ -1,21 +1,18 @@
-use std::any::Any;
 use std::marker::PhantomData;
 
 use crate::core::common::*;
-use crate::r#gen::collapse::private::CollapseBounds;
-use crate::r#gen::collapse::CollapsibleGrid;
 use crate::id::*;
+use crate::r#gen::collapse::private::CollapseBounds;
+use crate::r#gen::collapse::{CollapsibleGrid, PositionQueue};
 
-use crate::gen::collapse::grid::private::CommonCollapsibleGrid;
-use crate::gen::collapse::{
-    CollapsibleTileData, EntrophyQueue, PropagateItem, Propagator,
-};
+use crate::gen::collapse::{CollapsibleTileData, EntrophyQueue, PropagateItem, Propagator};
 
 use crate::gen::collapse::error::{CollapseError, CollapseErrorKind};
 use crate::gen::collapse::queue::CollapseQueue;
 
 use rand::Rng;
 
+use super::private::BorderAdjacencySelector;
 use super::subscriber::Subscriber;
 
 /// Resolver of the singular collapsible procedural algorithm.
@@ -152,81 +149,84 @@ where
         Ok(())
     }
 
-    // pub fn generate_position<CG: CollapsibleGrid<D, CB, Data>, R, P: PositionQueueProcession<D>>(
-    //     &mut self,
-    //     grid: &mut CG,
-    //     rng: &mut R,
-    //     positions: &[D::Pos],
-    //     mut queue: PositionQueue<D, P>,
-    // ) -> Result<(), CollapseError<D>>
-    // where
-    //     R: Rng,
-    // {
-    //     use crate::gen::collapse::queue::private::Sealed as _;
-    //     use crate::gen::collapse::tile::private::CommonCollapsibleTileData as _;
-    //     let mut iter = 0;
+    pub fn generate_position<CG: CollapsibleGrid<D, CB, Data>, R, SG>(
+        &mut self,
+        grid: &mut CG,
+        rng: &mut R,
+        positions: &[D::Pos],
+        mut queue: PositionQueue<D, CB, CG::CollapsibleData>,
+    ) -> Result<(), CollapseError<D>>
+    where
+        R: Rng,
+        SG: GridMap<D, Data>,
+        D: Dimensionality + BorderAdjacencySelector<D, Data, SG>,
+    {
+        use crate::gen::collapse::queue::private::Sealed as _;
+        use crate::gen::collapse::tile::private::CommonCollapsibleTileData as _;
+        let mut iter = 0;
 
-    //     if let Some(subscriber) = self.subscriber.as_mut() {
-    //         subscriber.on_generation_start();
-    //     }
+        if let Some(subscriber) = self.subscriber.as_mut() {
+            subscriber.on_generation_start();
+        }
 
-    //     grid.remove_uncollapsed();
+        grid.remove_uncollapsed();
 
-    //     queue.populate_inner_grid(rng, grid._grid_mut(), positions, &grid._option_data());
+        let option_data = grid._option_data().clone();
 
-    //     // Progress with collapse.
-    //     while let Some(collapse_position) = queue.get_next_position() {
-    //         let (_,to_collapse) = grid._grid().get_tile_at_position(&collapse_position).unwrap();
-    //         // skip collapsed;
-    //         if to_collapse.is_collapsed() {
-    //             continue;
-    //         }
-    //         // Make sure that the tile has at leas option, and purge them based on the direct neighbours.
-    //         if !to_collapse.has_compatible_options()
-    //             || !CG::purge_incompatible_options(
-    //                 grid._grid_mut(),
-    //                 &collapse_position,
-    //                 grid._option_data(),
-    //             )
-    //         {
-    //             return Err(CollapseError::new(
-    //                 collapse_position,
-    //                 CollapseErrorKind::Collapse,
-    //                 iter,
-    //             ));
-    //         };
+        queue.populate_inner_grid(rng, grid._grid_mut(), positions, &option_data);
 
-    //         let mut to_collapse = grid
-    //             ._grid_mut()
-    //             .get_mut_data_at_position(&collapse_position)
-    //             .unwrap();
-    //         to_collapse.collapse_basic(rng, grid._option_data());
+        // Progress with collapse.
+        while let Some(collapse_position) = queue.get_next_position() {
+            let (_, to_collapse) = grid
+                ._grid()
+                .get_tile_at_position(&collapse_position)
+                .unwrap();
+            // skip collapsed;
+            if to_collapse.is_collapsed() {
+                continue;
+            }
+            // Make sure that the tile has at leas option, and purge them based on the direct neighbours.
+            if !to_collapse.has_compatible_options()
+                || !CG::purge_incompatible_options(
+                    grid._grid_mut(),
+                    &collapse_position,
+                    &option_data,
+                )
+            {
+                return Err(CollapseError::new(
+                    collapse_position,
+                    CollapseErrorKind::Collapse,
+                    iter,
+                ));
+            };
 
-    //         let collapsed_idx = to_collapse.collapse_idx().unwrap();
-    //         // Purge options for the neighbours. This step is not required for the generation to be sound at the end,
-    //         // but it increases the success rate of the process greatly at the relatively small performance cost.
-    //         CG::purge_options_for_neighbours(
-    //             grid._grid_mut(),
-    //             collapsed_idx,
-    //             &collapse_position,
-    //             grid._option_data(),
-    //         );
+            let to_collapse = grid
+                ._grid_mut()
+                .get_mut_data_at_position(&collapse_position)
+                .unwrap();
+            to_collapse.collapse_basic(rng, &option_data);
 
-    //         if let Some(subscriber) = self.subscriber.as_mut() {
-    //             let collapsed_id = grid
-    //                 ._option_data()
-    //                 .get_tile_type_id(&collapsed_idx)
-    //                 .unwrap();
-    //             subscriber
-    //                 .as_mut()
-    //                 .on_collapse(&collapse_position, collapsed_id);
-    //         }
-    //         iter += 1;
-    //     }
-    //     Ok(())
-    // }
+            let collapsed_idx = to_collapse.collapse_idx().unwrap();
+            // Purge options for the neighbours. This step is not required for the generation to be sound at the end,
+            // but it increases the success rate of the process greatly at the relatively small performance cost.
+            CG::purge_options_for_neighbours(
+                grid._grid_mut(),
+                collapsed_idx,
+                &collapse_position,
+                &option_data,
+            );
+
+            if let Some(subscriber) = self.subscriber.as_mut() {
+                let collapsed_id = grid
+                    ._option_data()
+                    .get_tile_type_id(&collapsed_idx)
+                    .unwrap();
+                subscriber
+                    .as_mut()
+                    .on_collapse(&collapse_position, collapsed_id);
+            }
+            iter += 1;
+        }
+        Ok(())
+    }
 }
-
-
-
-

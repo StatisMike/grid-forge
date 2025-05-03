@@ -2,7 +2,11 @@ use std::collections::HashSet;
 
 use crate::{
     core::common::*,
-    r#gen::collapse::{option::private::{PerOptionData, WaysToBeOption}, private::CollapseBounds, CollapsibleTileData},
+    r#gen::collapse::{
+        option::private::{PerOptionData, WaysToBeOption},
+        private::CollapseBounds,
+        CollapsibleTileData,
+    },
 };
 
 use super::{entrophy::EntrophyQueue, CollapseQueue};
@@ -32,14 +36,13 @@ impl<D: Dimensionality> Propagator<D> {
         self.inner.push(item);
     }
 
-    pub(crate) fn propagate<CB, Tile, Grid>
-    (
+    pub(crate) fn propagate<CB, Tile, Grid>(
         &mut self,
         grid: &mut Grid,
         option_data: &CB::PerOption,
         queue: &mut EntrophyQueue<D, CB, Tile>,
-    ) -> Result<(), D::Pos> 
-    where 
+    ) -> Result<(), D::Pos>
+    where
         CB: CollapseBounds<D>,
         Tile: CollapsibleTileData<D, CB>,
         Grid: GridMap<D, Tile>,
@@ -83,8 +86,8 @@ impl<D: Dimensionality> Propagator<D> {
         }
 
         for pos in tiles_to_update {
-            let tile = grid.get_tile_at_position(&pos).unwrap();
-            queue.update_queue((tile.0, tile.1));
+            let tile = grid.get_data_at_position(&pos).unwrap();
+            queue.update_queue((pos, tile));
         }
 
         Ok(())

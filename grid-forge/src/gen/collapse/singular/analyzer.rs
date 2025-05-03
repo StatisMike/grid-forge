@@ -1,6 +1,8 @@
 use std::collections::{BTreeMap, HashMap};
 use std::marker::PhantomData;
 
+use private::BorderAdjacencySelector;
+
 use crate::core::common::*;
 use crate::gen::collapse::private::AdjacencyTable;
 use crate::id::*;
@@ -66,17 +68,8 @@ where
     ///
     /// It is always symmetrical, so the if the `tile` can be adjacent to `adjacent_tile` in the given `direction`,
     /// the `adjacent_tile` can be adjacent to `tile` in the opposite one.
-    pub fn add_adjacency(
-        &mut self,
-        tile: &Data,
-        adjacent_tile: &Data,
-        direction: D::Dir,
-    ) {
-        self.add_adjacency_raw(
-            tile.tile_type_id(),
-            adjacent_tile.tile_type_id(),
-            direction,
-        )
+    pub fn add_adjacency(&mut self, tile: &Data, adjacent_tile: &Data, direction: D::Dir) {
+        self.add_adjacency_raw(tile.tile_type_id(), adjacent_tile.tile_type_id(), direction)
     }
 
     fn add_adjacency_raw(&mut self, tile_id: u64, adjacent_id: u64, direction: D::Dir) {
@@ -166,28 +159,26 @@ where
 /// and the tile is a viable neighbour option if their borders in given direction have the same identifier.
 ///
 /// This analyzer additionally to analyzing the map, also provides method to add the tile adjacency manually.
-pub struct BorderAnalyzer<D, Data, Grid, Ba>
+pub struct BorderAnalyzer<D, Data, Grid>
 where
-    D: Dimensionality,
+    D: Dimensionality + BorderAdjacencySelector<D, Data, Grid>,
     Data: IdentifiableTileData,
     Grid: GridMap<D, Data>,
-    Ba: TileBordersAdjacency<D, Data, Grid>,
 {
     tiles: Vec<u64>,
     adjacency_rules: AdjacencyRules<D, Data>,
     /// TileId key
-    inner: HashMap<u64, Ba>,
+    inner: HashMap<u64, <D as BorderAdjacencySelector<D, Data, Grid>>::Adjacency>,
     /// BorderId key; (TileId; GridDir)
     border_types: HashMap<u64, Vec<(u64, D::Dir)>>,
     phantom: PhantomData<Grid>,
 }
 
-impl<D, Data, Grid, Ba> Default for BorderAnalyzer<D, Data, Grid, Ba>
+impl<D, Data, Grid> Default for BorderAnalyzer<D, Data, Grid>
 where
-    D: Dimensionality,
+    D: Dimensionality + BorderAdjacencySelector<D, Data, Grid>,
     Data: IdentifiableTileData,
     Grid: GridMap<D, Data>,
-    Ba: TileBordersAdjacency<D, Data, Grid>,
 {
     fn default() -> Self {
         Self {
@@ -200,12 +191,11 @@ where
     }
 }
 
-impl<D, Data, Grid, Ba> Analyzer<D, Data, Grid> for BorderAnalyzer<D, Data, Grid, Ba>
+impl<D, Data, Grid> Analyzer<D, Data, Grid> for BorderAnalyzer<D, Data, Grid>
 where
-    D: Dimensionality,
+    D: Dimensionality + BorderAdjacencySelector<D, Data, Grid>,
     Data: IdentifiableTileData,
     Grid: GridMap<D, Data>,
-    Ba: TileBordersAdjacency<D, Data, Grid>,
 {
     fn analyze(&mut self, map: &Grid) {
         self.adjacency_rules = AdjacencyRules::default();
@@ -224,12 +214,11 @@ where
     }
 }
 
-impl<D, Data, Grid, Ba> BorderAnalyzer<D, Data, Grid, Ba>
+impl<D, Data, Grid> BorderAnalyzer<D, Data, Grid>
 where
-    D: Dimensionality,
+    D: Dimensionality + BorderAdjacencySelector<D, Data, Grid>,
     Data: IdentifiableTileData,
     Grid: GridMap<D, Data>,
-    Ba: TileBordersAdjacency<D, Data, Grid>,
 {
     /// Manually add adjacency between two tiles.
     ///
@@ -250,11 +239,7 @@ where
 
             for dir in D::Dir::all() {
                 if let Some((_, neighbour)) = map.get_neighbour_at(&pos, dir) {
-                    self.add_adjacency_raw(
-                        tile.tile_type_id(),
-                        neighbour.tile_type_id(),
-                        dir,
-                    );
+                    self.add_adjacency_raw(tile.tile_type_id(), neighbour.tile_type_id(), dir);
                 }
             }
         }
@@ -292,8 +277,11 @@ where
 
                 for tile_first in first_borders.iter() {
                     for tile_second in second_borders.iter() {
-                        self.adjacency_rules
-                            .add_adjacency_raw(*tile_first, *tile_second, *half_dir);
+                        self.adjacency_rules.add_adjacency_raw(
+                            *tile_first,
+                            *tile_second,
+                            *half_dir,
+                        );
                         self.adjacency_rules.add_adjacency_raw(
                             *tile_second,
                             *tile_first,
@@ -335,7 +323,7 @@ where
     fn ensure_adjacencies_present_for_tiles(&mut self, ids: &[u64]) {
         for id in ids {
             if !self.inner.contains_key(id) {
-                self.inner.insert(*id, Ba::default());
+                self.inner.insert(*id, D::Adjacency::default());
             }
         }
     }
@@ -372,7 +360,12 @@ where
 }
 
 // Common trait definition
-pub trait TileBordersAdjacency<D: Dimensionality, Data: IdentifiableTileData, Grid: GridMap<D, Data>>: Default {
+pub trait TileBordersAdjacency<
+    D: Dimensionality,
+    Data: IdentifiableTileData,
+    Grid: GridMap<D, Data>,
+>: Default
+{
     fn set_at_dir(&mut self, dir: &D::Dir, border_id: u64);
     fn get_at_dir(&self, dir: &D::Dir) -> Option<u64>;
 
@@ -421,6 +414,13 @@ pub(crate) mod two_d {
             }
         }
     }
+
+    impl<Data> super::private::BorderAdjacencySelector<TwoDim, Data, GridMap2D<Data>> for TwoDim
+    where
+        Data: IdentifiableTileData,
+    {
+        type Adjacency = TileBordersAdjacency2D<Data>;
+    }
 }
 
 pub(crate) mod three_d {
@@ -460,6 +460,13 @@ pub(crate) mod three_d {
                 phantom: PhantomData,
             }
         }
+    }
+
+    impl<Data> super::private::BorderAdjacencySelector<ThreeDim, Data, GridMap3D<Data>> for ThreeDim
+    where
+        Data: IdentifiableTileData,
+    {
+        type Adjacency = TileBordersAdjacency3D<Data>;
     }
 }
 
@@ -513,8 +520,7 @@ where
         *entry = weight;
     }
 
-    pub fn count_data(&mut self, data: &Data)
-    {
+    pub fn count_data(&mut self, data: &Data) {
         if let Some(count) = self.weights.get_mut(&data.tile_type_id()) {
             *count += 1;
         } else {
@@ -531,5 +537,22 @@ where
             let data = map.get_data_at_position(&position).unwrap();
             self.count_data(&data);
         }
+    }
+}
+
+pub(crate) mod private {
+    use super::TileBordersAdjacency;
+    use crate::{
+        core::common::{Dimensionality, GridMap},
+        id::IdentifiableTileData,
+    };
+
+    pub trait BorderAdjacencySelector<D, Data, Grid>
+    where
+        D: Dimensionality,
+        Data: IdentifiableTileData,
+        Grid: GridMap<D, Data>,
+    {
+        type Adjacency: TileBordersAdjacency<D, Data, Grid>;
     }
 }

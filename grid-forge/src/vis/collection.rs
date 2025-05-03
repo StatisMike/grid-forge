@@ -3,8 +3,8 @@ use std::collections::HashMap;
 
 use image::{ImageBuffer, Pixel};
 
-use crate::two_d::*;
 use crate::id::*;
+use crate::two_d::*;
 
 use super::error::VisError;
 use super::ops::create_tile_id_from_pixels;
@@ -288,7 +288,10 @@ where
         Err(VisError::new_nopix(tile.as_ref().tile_type_id()))
     }
 
-    pub fn init_map_image_buffer(&self, grid_size: &GridSize2D) -> ImageBuffer<P, Vec<P::Subpixel>> {
+    pub fn init_map_image_buffer(
+        &self,
+        grid_size: &GridSize2D,
+    ) -> ImageBuffer<P, Vec<P::Subpixel>> {
         ImageBuffer::new(grid_size.x() * WIDTH as u32, grid_size.y() * HEIGHT as u32)
     }
 

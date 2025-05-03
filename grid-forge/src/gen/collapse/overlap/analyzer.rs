@@ -9,7 +9,7 @@ use super::pattern::{
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 
-use crate::gen::collapse::private::AdjacencyTable;
+use crate::r#gen::collapse::private::AdjacencyTable;
 
 /// GridMap analyzer for overlapping pattern data.
 ///

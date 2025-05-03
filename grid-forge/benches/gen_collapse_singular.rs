@@ -9,10 +9,10 @@ use utils::RngHelper;
 
 use criterion::{criterion_group, criterion_main, Criterion};
 
-use grid_forge::{two_d::*, vis::collection::VisCollection};
 use grid_forge::gen::collapse::two_d::*;
 use grid_forge::gen::collapse::*;
 use grid_forge::id::*;
+use grid_forge::{two_d::*, vis::collection::VisCollection};
 
 use rand_chacha::ChaCha20Rng;
 
@@ -239,10 +239,10 @@ criterion_group!(
 criterion_group! {
   name = generate;
   config = Criterion::default().measurement_time(Duration::from_secs(10));
-  targets = 
-    // gen_identity_position_10x10, 
-    // gen_border_position_10x10, 
-    gen_identity_entrophy_10x10, 
+  targets =
+    // gen_identity_position_10x10,
+    // gen_border_position_10x10,
+    gen_identity_entrophy_10x10,
     // gen_border_entrophy_10x10
 }
 criterion_main!(analyze, generate);

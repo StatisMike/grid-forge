@@ -36,7 +36,7 @@
 //!   order, while [`EntrophyQueue`] fetch the next position to collapse with the lowest entrophy.
 
 mod error;
-mod grid;
+pub mod grid;
 mod option;
 // pub mod overlap;
 mod queue;
@@ -56,7 +56,7 @@ use crate::core::common::*;
 pub mod two_d {
     use crate::core::two_d::*;
 
-    use super::grid::two_d::*;
+    use super::{grid::two_d::*, queue::two_d::PositionQueueProcession2D};
     pub use crate::gen::collapse::singular::tile::two_d::*;
 
     pub struct TwoDimCollapseBounds;
@@ -65,13 +65,14 @@ pub mod two_d {
         type PerOption = super::option::two_d::PerOptionData2D;
         type OptionAdjacency = DirectionTable2D<Vec<usize>>;
         type CollapsedGrid = CollapsedGrid2D;
+        type PositionQueueProcession = PositionQueueProcession2D;
     }
 }
 
 pub mod three_d {
     use crate::core::three_d::*;
 
-    use super::grid::three_d::*;
+    use super::{grid::three_d::*, queue::three_d::PositionQueueProcession3D};
 
     pub struct ThreeDimCollapseBounds;
     impl crate::gen::collapse::private::CollapseBounds<ThreeDim> for ThreeDimCollapseBounds {
@@ -79,6 +80,7 @@ pub mod three_d {
         type PerOption = super::option::three_d::PerOptionData3D;
         type OptionAdjacency = DirectionTable3D<Vec<usize>>;
         type CollapsedGrid = CollapsedGrid3D;
+        type PositionQueueProcession = PositionQueueProcession3D;
     }
 }
 
@@ -138,13 +140,19 @@ pub(crate) mod private {
 
     use crate::core::common::*;
 
-    use super::{option::private::{PerOptionData, WaysToBeOption}, Adjacencies, CollapsedGrid};
+    use super::{
+        option::private::{PerOptionData, WaysToBeOption},
+        position::private::PositionQueueProcession,
+        singular::TileBordersAdjacency,
+        Adjacencies, CollapsedGrid, CollapsibleTileData,
+    };
 
     pub trait CollapseBounds<D: Dimensionality> {
         type Ways: WaysToBeOption<D>;
         type PerOption: PerOptionData<D, Self>;
         type OptionAdjacency: DirectionTable<D, Vec<usize>> + Default;
         type CollapsedGrid: CollapsedGrid<D, Self>;
+        type PositionQueueProcession: PositionQueueProcession<D>;
     }
 
     #[derive(Clone, Debug, Default)]

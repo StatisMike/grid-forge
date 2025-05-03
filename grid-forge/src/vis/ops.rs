@@ -4,8 +4,8 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 
 use image::{ImageBuffer, Pixel};
 
-use crate::two_d::*;
 use crate::id::*;
+use crate::two_d::*;
 
 use super::collection::VisCollection;
 use super::error::VisError;
@@ -42,7 +42,10 @@ where
             image_buffer,
             &position,
         )?;
-        let tile = Tile2D::new(position, builder.build_tile_unchecked(create_tile_id_from_pixels(&pixels))); 
+        let tile = Tile2D::new(
+            position,
+            builder.build_tile_unchecked(create_tile_id_from_pixels(&pixels)),
+        );
         match collection.add_tile_pixels(&tile, image_buffer)? {
             super::collection::VisCollectionOutcome::Empty => {
                 continue;
@@ -137,8 +140,7 @@ where
         let data = grid_map
             .get_data_at_position(&position)
             .expect("cannot get tile");
-        TileRef2D::new(position, data)
-            .vis_to_buffer(image_buffer)?;
+        TileRef2D::new(position, data).vis_to_buffer(image_buffer)?;
     }
 
     Ok(())

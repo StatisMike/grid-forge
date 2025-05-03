@@ -3,7 +3,9 @@ pub(crate) mod two_d;
 
 pub(crate) mod common {
     use std::{
-        fmt::Debug, hash::Hash, ops::{Add, AddAssign, Index, Sub}
+        fmt::Debug,
+        hash::Hash,
+        ops::{Add, AddAssign, Index, Sub},
     };
 
     use crate::core::common::*;
@@ -27,7 +29,7 @@ pub(crate) mod common {
             + Sync
             + Hash,
     {
-        type Coords: AsRef<[u32]> + Index<usize, Output = u32>;
+        type Coords: AsRef<[u32]> + Index<usize, Output = u32> + Debug + Copy;
 
         /// Returns the coordinates of the position.
         ///

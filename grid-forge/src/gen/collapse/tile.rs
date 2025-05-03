@@ -34,7 +34,9 @@ impl CollapsedTileData {
 }
 
 /// Trait shared by [`TileData`] used within collapsible generative algorithms.
-pub trait CollapsibleTileData<D: Dimensionality, CB: CollapseBounds<D>>: TileData + private::CommonCollapsibleTileData<D, CB> {
+pub trait CollapsibleTileData<D: Dimensionality, CB: CollapseBounds<D> + ?Sized>:
+    TileData + private::CommonCollapsibleTileData<D, CB>
+{
     /// Returns number of possible options for the tile.
     fn num_compatible_options(&self) -> usize;
 
@@ -65,7 +67,7 @@ pub trait CollapsibleTileData<D: Dimensionality, CB: CollapseBounds<D>>: TileDat
 }
 
 pub(crate) mod private {
-    
+
     use rand::{
         distributions::{Distribution, Uniform},
         Rng,
@@ -73,15 +75,20 @@ pub(crate) mod private {
 
     use crate::{
         core::common::*,
-        r#gen::collapse::{entrophy::EntrophyUniform, option::private::{PerOptionData, WaysToBeOption}, private::CollapseBounds},
+        r#gen::collapse::{
+            entrophy::EntrophyUniform,
+            option::private::{PerOptionData, WaysToBeOption},
+            private::CollapseBounds,
+        },
     };
 
     use crate::gen::collapse::option::OptionWeights;
 
     /// Sealed trait for the [`CollapsibleTileData`] trait. It contains most of the shared logic for its implementors,
     /// which should be kept private.
-    pub trait CommonCollapsibleTileData<D: Dimensionality, CB: CollapseBounds<D>>: TileData {
-        
+    pub trait CommonCollapsibleTileData<D: Dimensionality, CB: CollapseBounds<D> + ?Sized>:
+        TileData
+    {
         /// Creates new uncollapsed tile.
         fn new_uncollapsed_tile(
             num_options: usize,
