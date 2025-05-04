@@ -2,12 +2,13 @@ mod utils;
 
 use std::time::Duration;
 
-use grid_forge::two_d::r#gen::collapse::singular::analyzer::{
+use grid_forge::r#gen::collapse::singular::analyzer::{
     Analyzer, BorderAnalyzer, FrequencyHints, IdentityAnalyzer,
 };
-use grid_forge::two_d::r#gen::collapse::singular::resolver::Resolver;
-use grid_forge::two_d::r#gen::collapse::singular::{CollapsibleTileGrid, CollapsibleTileGrid2D};
-use grid_forge::two_d::r#gen::collapse::PositionQueue;
+use grid_forge::r#gen::collapse::singular::resolver::Resolver;
+use grid_forge::r#gen::collapse::singular::CollapsibleTileGrid;
+use grid_forge::r#gen::collapse::two_d::CollapsibleTileGrid2D;
+use grid_forge::r#gen::collapse::queue::position::PositionQueue;
 use grid_forge::vis::ops::load_gridmap_identifiable_auto;
 use grid_forge::vis::DefaultVisPixel;
 use utils::RngHelper;

@@ -1,13 +1,6 @@
-mod entrophy;
-mod position;
-mod propagator;
-
-pub(crate) mod three_d;
-pub(crate) mod two_d;
-
-pub use entrophy::*;
-pub use position::*;
-pub use propagator::*;
+pub mod entrophy;
+pub mod position;
+pub mod propagator;
 
 pub(crate) use position::private::*;
 

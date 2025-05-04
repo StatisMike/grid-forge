@@ -35,21 +35,29 @@
 //! - *queues* are used to determine the order in which tiles are collapsed: [`PositionQueue`] takes next position to collapse in a fixed
 //!   order, while [`EntrophyQueue`] fetch the next position to collapse with the lowest entrophy.
 
-mod error;
-mod grid;
-mod option;
+pub mod error;
+pub mod grid;
+pub mod option;
 // pub mod overlap;
-mod queue;
+pub mod queue;
 pub mod singular;
-mod tile;
+pub mod tile;
+
+#[cfg(test)]
+mod dimension_tests;
+
+pub mod three_d;
+pub mod two_d;
 
 use std::{collections::HashSet, marker::PhantomData, ops::Index};
 
-pub(crate) mod common {
+pub mod common {
     pub use super::error::*;
-    pub use super::grid::*;
-    pub use super::option::*;
-    pub use super::queue::*;
+    pub use super::grid::{
+        private::CommonCollapsedGrid, private::CommonCollapsibleGrid, CollapsedGrid,
+        CollapsibleGrid,
+    };
+    pub use super::queue::{entrophy, position, propagator};
     pub use super::singular;
     pub use super::tile::*;
 
@@ -57,40 +65,6 @@ pub(crate) mod common {
 }
 
 use crate::core::common::*;
-
-pub(crate) mod two_d {
-    use crate::core::two_d::*;
-
-    pub use super::common::*;
-
-    pub use super::{
-        grid::two_d::*, option::two_d::*, queue::two_d::*, singular::two_d as singular,
-    };
-
-    impl crate::gen::collapse::private::CollapseBounds for TwoDim {
-        type WaysToBeOption = WaysToBeOption2D;
-        type PerOptionData = PerOptionData2D;
-        type OptionAdjacency = DirectionTable2D<Vec<usize>>;
-        type CollapsedGrid = CollapsedGrid2D;
-        type PositionQueueProcession = PositionQueueProcession2D;
-    }
-}
-
-pub mod three_d {
-    use crate::core::three_d::*;
-
-    pub use super::common::*;
-
-    use super::{grid::three_d::*, queue::three_d::PositionQueueProcession3D};
-
-    impl crate::gen::collapse::private::CollapseBounds for ThreeDim {
-        type WaysToBeOption = super::option::three_d::WaysToBeOption3D;
-        type PerOptionData = super::option::three_d::PerOptionData3D;
-        type OptionAdjacency = DirectionTable3D<Vec<usize>>;
-        type CollapsedGrid = CollapsedGrid3D;
-        type PositionQueueProcession = PositionQueueProcession3D;
-    }
-}
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct Adjacencies<D: Dimensionality> {
@@ -131,6 +105,8 @@ pub(crate) mod private {
     use std::collections::HashMap;
 
     use super::common::*;
+    use super::option::private::{PerOptionData, WaysToBeOption};
+    use super::queue::PositionQueueProcession;
     use super::Adjacencies;
     use crate::core::common::*;
 

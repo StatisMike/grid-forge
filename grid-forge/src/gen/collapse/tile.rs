@@ -72,7 +72,7 @@ pub(crate) mod private {
 
     use crate::{
         core::common::*,
-        r#gen::collapse::common::{CollapseBounds, EntrophyUniform},
+        r#gen::collapse::common::{entrophy::EntrophyUniform, CollapseBounds},
         r#gen::collapse::option::private::{PerOptionData, WaysToBeOption},
     };
 

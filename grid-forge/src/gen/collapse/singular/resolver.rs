@@ -2,10 +2,12 @@ use std::marker::PhantomData;
 
 use crate::core::common::*;
 use crate::id::*;
-use crate::r#gen::collapse::common::{CollapsibleGrid, PositionQueue};
+use crate::r#gen::collapse::common::{position::PositionQueue, CollapsibleGrid};
 use crate::r#gen::collapse::private::CollapseBounds;
 
-use crate::gen::collapse::common::{CollapsibleTileData, EntrophyQueue, PropagateItem, Propagator};
+use crate::gen::collapse::common::{
+    entrophy::EntrophyQueue, propagator::PropagateItem, propagator::Propagator, CollapsibleTileData,
+};
 
 use crate::gen::collapse::error::{CollapseError, CollapseErrorKind};
 use crate::gen::collapse::queue::CollapseQueue;

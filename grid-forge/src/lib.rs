@@ -221,22 +221,16 @@ pub mod gen;
 
 pub mod id;
 
-pub mod prelude {
+pub mod common {
     pub use crate::core::common::*;
 }
 
 pub mod two_d {
     pub use crate::core::two_d::*;
-
-    #[cfg(feature = "gen")]
-    pub use super::gen::two_d as gen;
 }
 
 pub mod three_d {
     pub use crate::core::three_d::*;
-
-    #[cfg(feature = "gen")]
-    pub use super::gen::three_d as gen;
 }
 
 // pub use map::*;

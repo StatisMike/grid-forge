@@ -3,11 +3,6 @@ use std::{
     ops::{Add, Sub, SubAssign},
 };
 
-pub(crate) mod three_d;
-pub(crate) mod two_d;
-
-pub(crate) use private::{PerOptionData, WaysToBeOption};
-
 use crate::{core::common::*, id::*, utils::OrderedFloat};
 
 use super::private::AdjacencyTable;

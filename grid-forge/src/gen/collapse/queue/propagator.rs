@@ -1,7 +1,12 @@
 use std::collections::HashSet;
 
 use crate::{
-    core::common::*, r#gen::collapse::common::*, r#gen::collapse::private::CollapseBounds,
+    core::common::*,
+    r#gen::collapse::{
+        common::*,
+        option::private::{PerOptionData, WaysToBeOption},
+        private::CollapseBounds,
+    },
 };
 
 use super::{entrophy::EntrophyQueue, CollapseQueue};

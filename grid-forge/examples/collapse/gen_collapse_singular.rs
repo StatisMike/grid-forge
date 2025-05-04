@@ -1,15 +1,15 @@
 use std::fs::File;
 
-use grid_forge::two_d::gen::collapse::singular;
-use grid_forge::two_d::r#gen::collapse::singular::analyzer::{
-    BorderAnalyzer, FrequencyHints, IdentityAnalyzer,
-};
-use grid_forge::two_d::r#gen::collapse::singular::resolver::Resolver;
-use grid_forge::two_d::r#gen::collapse::singular::{CollapsibleTileGrid, CollapsibleTileGrid2D};
-use grid_forge::two_d::r#gen::collapse::{CollapsedGrid, CollapsibleGrid, PositionQueue};
-use grid_forge::two_d::{GridMap, GridSize, GridSize2D};
 use grid_forge::{
-    two_d::r#gen::collapse::singular::analyzer::Analyzer, vis::collection::VisCollection,
+    r#gen::collapse::{
+        grid::{CollapsedGrid, CollapsibleGrid}, queue::position::PositionQueue, singular::{
+            analyzer::{Analyzer, BorderAnalyzer, FrequencyHints, IdentityAnalyzer},
+            resolver::Resolver,
+            subscriber::DebugSubscriber, CollapsibleTileGrid,
+        }, two_d::CollapsibleTileGrid2D
+    },
+    two_d::{GridMap, GridSize, GridSize2D},
+    vis::collection::VisCollection,
 };
 use rand_chacha::ChaChaRng;
 use utils::{ArgHelper, GifSingleSubscriber, RngHelper, VisGridLoaderHelper, VisRotate};
@@ -73,7 +73,7 @@ fn main() {
 
                 resolver = resolver.with_subscriber(Box::new(subscriber));
             } else if args.debug() {
-                let subsciber = singular::subscriber::DebugSubscriber::new(Some(
+                let subsciber = DebugSubscriber::new(Some(
                     File::create(format!("{}{}", OUTPUTS_DIR, "identity_entrophy_debug.txt"))
                         .unwrap(),
                 ));
@@ -136,7 +136,7 @@ fn main() {
 
             resolver = resolver.with_subscriber(Box::new(subscriber));
         } else if args.debug() {
-            let subsciber = singular::subscriber::DebugSubscriber::new(Some(
+            let subsciber = DebugSubscriber::new(Some(
                 File::create(format!("{}{}", OUTPUTS_DIR, "border_position_debug.txt")).unwrap(),
             ));
             resolver = resolver.with_subscriber(Box::new(subsciber));

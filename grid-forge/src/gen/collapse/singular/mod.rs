@@ -21,15 +21,11 @@
 
 pub mod analyzer;
 pub mod resolver;
-
-pub mod three_d;
-pub mod two_d;
-
 pub mod subscriber;
 
 use {
-    super::{grid::CollapsibleGrid, two_d::CollapseBounds},
-    crate::{id::IdentifiableTileData, two_d::Dimensionality},
+    super::{common::CollapseBounds, grid::CollapsibleGrid},
+    crate::{core::common::Dimensionality, id::IdentifiableTileData},
     analyzer::{AdjacencyRules, FrequencyHints},
 };
 

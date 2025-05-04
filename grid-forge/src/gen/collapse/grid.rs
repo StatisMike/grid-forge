@@ -4,92 +4,6 @@ use crate::{core::common::*, id::*};
 
 use super::common::*;
 
-pub mod two_d {
-    use std::collections::HashSet;
-
-    use super::super::common::*;
-    use crate::core::two_d::*;
-
-    use super::{private::CommonCollapsedGrid, CollapsedGrid};
-
-    pub struct CollapsedGrid2D {
-        grid: GridMap2D<CollapsedTileData>,
-        tile_type_ids: HashSet<u64>,
-    }
-
-    impl CollapsedGrid<TwoDim> for CollapsedGrid2D {
-        fn new(size: &<TwoDim as Dimensionality>::Size) -> Self {
-            Self {
-                grid: GridMap2D::new(*size),
-                tile_type_ids: HashSet::new(),
-            }
-        }
-
-        #[allow(refining_impl_trait)]
-        fn grid(&self) -> &GridMap2D<CollapsedTileData> {
-            &self.grid
-        }
-
-        fn tile_type_ids(&self) -> &HashSet<u64> {
-            &self.tile_type_ids
-        }
-    }
-
-    impl CommonCollapsedGrid<TwoDim> for CollapsedGrid2D {
-        #[allow(refining_impl_trait)]
-        fn grid_mut(&mut self) -> &mut GridMap2D<CollapsedTileData> {
-            &mut self.grid
-        }
-
-        fn tile_type_ids_mut(&mut self) -> &mut HashSet<u64> {
-            &mut self.tile_type_ids
-        }
-    }
-}
-
-pub mod three_d {
-    use std::collections::HashSet;
-
-    use super::super::common::*;
-    use crate::core::three_d::*;
-
-    use super::{private::CommonCollapsedGrid, CollapsedGrid};
-
-    pub struct CollapsedGrid3D {
-        grid: GridMap3D<CollapsedTileData>,
-        tile_type_ids: HashSet<u64>,
-    }
-
-    impl CollapsedGrid<ThreeDim> for CollapsedGrid3D {
-        fn new(size: &GridSize3D) -> Self {
-            Self {
-                grid: GridMap3D::new(*size),
-                tile_type_ids: HashSet::new(),
-            }
-        }
-
-        #[allow(refining_impl_trait)]
-        fn grid(&self) -> &GridMap3D<CollapsedTileData> {
-            &self.grid
-        }
-
-        fn tile_type_ids(&self) -> &HashSet<u64> {
-            &self.tile_type_ids
-        }
-    }
-
-    impl CommonCollapsedGrid<ThreeDim> for CollapsedGrid3D {
-        #[allow(refining_impl_trait)]
-        fn grid_mut(&mut self) -> &mut GridMap3D<CollapsedTileData> {
-            &mut self.grid
-        }
-
-        fn tile_type_ids_mut(&mut self) -> &mut HashSet<u64> {
-            &mut self.tile_type_ids
-        }
-    }
-}
-
 pub trait CollapsedGrid<D: Dimensionality + CollapseBounds + ?Sized>:
     private::CommonCollapsedGrid<D>
 {
@@ -237,7 +151,11 @@ pub(crate) mod private {
     use std::collections::HashMap;
 
     use super::*;
-    use crate::r#gen::collapse::tile::private::CommonCollapsibleTileData;
+    use crate::r#gen::collapse::{
+        option::private::{PerOptionData, WaysToBeOption},
+        queue::propagator::PropagateItem,
+        tile::private::CommonCollapsibleTileData,
+    };
 
     pub trait CommonCollapsibleGrid<D: Dimensionality + CollapseBounds + ?Sized> {
         type CollapsibleData: CollapsibleTileData<D>;
