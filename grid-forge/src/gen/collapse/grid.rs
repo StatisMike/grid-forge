@@ -2,20 +2,13 @@ use std::collections::HashSet;
 
 use crate::{core::common::*, id::*};
 
-use super::{
-    error::CollapsibleGridError,
-    private::CollapseBounds,
-    singular::{AdjacencyRules, FrequencyHints},
-    CollapsedTileData, CollapsibleTileData,
-};
+use super::common::*;
 
 pub mod two_d {
     use std::collections::HashSet;
 
-    use crate::{
-        core::two_d::*,
-        r#gen::collapse::{two_d::TwoDimCollapseBounds, CollapsedTileData},
-    };
+    use super::super::common::*;
+    use crate::core::two_d::*;
 
     use super::{private::CommonCollapsedGrid, CollapsedGrid};
 
@@ -24,7 +17,7 @@ pub mod two_d {
         tile_type_ids: HashSet<u64>,
     }
 
-    impl CollapsedGrid<TwoDim, TwoDimCollapseBounds> for CollapsedGrid2D {
+    impl CollapsedGrid<TwoDim> for CollapsedGrid2D {
         fn new(size: &<TwoDim as Dimensionality>::Size) -> Self {
             Self {
                 grid: GridMap2D::new(*size),
@@ -42,7 +35,7 @@ pub mod two_d {
         }
     }
 
-    impl CommonCollapsedGrid<TwoDim, TwoDimCollapseBounds> for CollapsedGrid2D {
+    impl CommonCollapsedGrid<TwoDim> for CollapsedGrid2D {
         #[allow(refining_impl_trait)]
         fn grid_mut(&mut self) -> &mut GridMap2D<CollapsedTileData> {
             &mut self.grid
@@ -57,10 +50,8 @@ pub mod two_d {
 pub mod three_d {
     use std::collections::HashSet;
 
-    use crate::{
-        core::three_d::*,
-        r#gen::collapse::{three_d::ThreeDimCollapseBounds, CollapsedTileData},
-    };
+    use super::super::common::*;
+    use crate::core::three_d::*;
 
     use super::{private::CommonCollapsedGrid, CollapsedGrid};
 
@@ -69,7 +60,7 @@ pub mod three_d {
         tile_type_ids: HashSet<u64>,
     }
 
-    impl CollapsedGrid<ThreeDim, ThreeDimCollapseBounds> for CollapsedGrid3D {
+    impl CollapsedGrid<ThreeDim> for CollapsedGrid3D {
         fn new(size: &GridSize3D) -> Self {
             Self {
                 grid: GridMap3D::new(*size),
@@ -87,7 +78,7 @@ pub mod three_d {
         }
     }
 
-    impl CommonCollapsedGrid<ThreeDim, ThreeDimCollapseBounds> for CollapsedGrid3D {
+    impl CommonCollapsedGrid<ThreeDim> for CollapsedGrid3D {
         #[allow(refining_impl_trait)]
         fn grid_mut(&mut self) -> &mut GridMap3D<CollapsedTileData> {
             &mut self.grid
@@ -99,8 +90,8 @@ pub mod three_d {
     }
 }
 
-pub trait CollapsedGrid<D: Dimensionality, CD: CollapseBounds<D> + ?Sized>:
-    private::CommonCollapsedGrid<D, CD>
+pub trait CollapsedGrid<D: Dimensionality + CollapseBounds + ?Sized>:
+    private::CommonCollapsedGrid<D>
 {
     fn new(size: &D::Size) -> Self;
 
@@ -127,21 +118,14 @@ pub trait CollapsedGrid<D: Dimensionality, CD: CollapseBounds<D> + ?Sized>:
 
 /// Trait shared by a structs holding a grid of [`CollapsibleTileData`], useable by dedicated resolvers to collapse
 /// the grid.
-pub trait CollapsibleGrid<D, CB, IT>
+pub trait CollapsibleGrid<D, IT>
 where
-    D: Dimensionality,
-    CB: CollapseBounds<D>,
+    D: Dimensionality + CollapseBounds + ?Sized,
     IT: IdentifiableTileData,
-    Self: private::CommonCollapsibleGrid<D, CB>,
+    Self: private::CommonCollapsibleGrid<D>,
 {
-    fn new_empty(
-        size: D::Size,
-        frequencies: &FrequencyHints<D, IT>,
-        adjacencies: &AdjacencyRules<D, IT>,
-    ) -> Self;
-
-    fn retrieve_collapsed(&self) -> CB::CollapsedGrid {
-        let mut out = CB::CollapsedGrid::new(self._grid().size());
+    fn retrieve_collapsed(&self) -> D::CollapsedGrid {
+        let mut out = D::CollapsedGrid::new(self._grid().size());
 
         for (pos, data) in self._grid().iter_tiles() {
             if !data.is_collapsed() {
@@ -253,15 +237,10 @@ pub(crate) mod private {
     use std::collections::HashMap;
 
     use super::*;
-    use crate::r#gen::collapse::{
-        option::private::{PerOptionData, WaysToBeOption},
-        private::CollapseBounds,
-        tile::private::CommonCollapsibleTileData,
-        PropagateItem,
-    };
+    use crate::r#gen::collapse::tile::private::CommonCollapsibleTileData;
 
-    pub trait CommonCollapsibleGrid<D: Dimensionality, CB: CollapseBounds<D>> {
-        type CollapsibleData: CollapsibleTileData<D, CB>;
+    pub trait CommonCollapsibleGrid<D: Dimensionality + CollapseBounds + ?Sized> {
+        type CollapsibleData: CollapsibleTileData<D>;
 
         type CollapsibleGrid: GridMap<D, Self::CollapsibleData>;
 
@@ -272,7 +251,7 @@ pub(crate) mod private {
         fn _grid_mut(&mut self) -> &mut Self::CollapsibleGrid;
 
         #[doc(hidden)]
-        fn _option_data(&self) -> &CB::PerOption;
+        fn _option_data(&self) -> &D::PerOptionData;
 
         #[doc(hidden)]
         fn _get_initial_propagate_items(&self, to_collapse: &[D::Pos]) -> Vec<PropagateItem<D>> {
@@ -308,7 +287,7 @@ pub(crate) mod private {
             grid: &mut Self::CollapsibleGrid,
             collapsed_option: usize,
             collapsed_position: &D::Pos,
-            option_data: &CB::PerOption,
+            option_data: &D::PerOptionData,
         ) {
             for direction in D::Dir::all() {
                 if let Some((_, tile)) = grid.get_mut_neighbour_at(collapsed_position, direction) {
@@ -336,7 +315,7 @@ pub(crate) mod private {
         fn purge_incompatible_options(
             grid: &mut Self::CollapsibleGrid,
             position: &D::Pos,
-            option_data: &CB::PerOption,
+            option_data: &D::PerOptionData,
         ) -> bool {
             let num_options = option_data.option_count();
             let mut possible_options = Vec::with_capacity(num_options);
@@ -389,7 +368,7 @@ pub(crate) mod private {
         }
     }
 
-    pub trait CommonCollapsedGrid<D: Dimensionality, CD: CollapseBounds<D> + ?Sized> {
+    pub trait CommonCollapsedGrid<D: Dimensionality + CollapseBounds + ?Sized> {
         fn grid_mut(&mut self) -> &mut impl GridMap<D, CollapsedTileData>;
         fn tile_type_ids_mut(&mut self) -> &mut HashSet<u64>;
     }

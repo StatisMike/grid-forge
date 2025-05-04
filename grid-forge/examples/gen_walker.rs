@@ -1,9 +1,10 @@
 //! Shows the usage of Random Walker generative algorithm.
 
-use grid_forge::gen::walker::GridWalker2DBuilder;
+use grid_forge::two_d::*;
 use grid_forge::vis::ops::{init_map_image_buffer, write_gridmap_vis};
 use grid_forge::vis::{DefaultVisPixel, VisTileData};
-use grid_forge::{GridPosition, GridSize, GridTile, TileData};
+
+use grid_forge::gen::walker::GridWalkerBuilder;
 
 use image::imageops::resize;
 use rand::SeedableRng;
@@ -53,23 +54,24 @@ fn main() {
     }
     let rng = rand_chacha::ChaChaRng::from_seed(seed);
 
-    let size = GridSize::new_xy(255, 255);
-    let mut walker = GridWalker2DBuilder::default()
+    let size = GridSize2D::new(255, 255);
+    let mut walker = GridWalkerBuilder::default()
         .with_size(size)
-        .with_current_pos(GridPosition::new_xy(size.center().0, size.center().1))
+        .with_current_pos(size.center())
         .with_rng(rng)
-        .with_min_step_size(2)
-        .with_max_step_size(5)
+        .with_min_step_size(4)
+        .with_max_step_size(7)
         .build()
         .unwrap();
 
-    while walker.current_iters() <= 45000 {
+    while walker.current_iters() <= 15000 {
         walker.walk();
     }
 
-    let mut map =
-        walker.gen_grid_map(|pos| GridTile::new(pos, TwoColoredTileData::new(TileColor::Red)));
-    map.fill_empty_using(|pos| GridTile::new(pos, TwoColoredTileData::new(TileColor::Gray)));
+    let mut map: GridMap2D<TwoColoredTileData> =
+        walker.gen_grid_map(|_| TwoColoredTileData::new(TileColor::Red));
+
+    map.fill_empty_using(|_| TwoColoredTileData::new(TileColor::Gray));
 
     let mut image = init_map_image_buffer::<DefaultVisPixel, 1, 1>(&size);
 

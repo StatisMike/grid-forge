@@ -144,6 +144,10 @@ pub trait IdentTileCollection {
         self.rev().get(&Self::generate_type_id(data)).copied()
     }
 
+    fn get_tile_type_ids(&self) -> Vec<u64> {
+        self.inner().keys().copied().collect()
+    }
+
     /// Generates `tile_type_id` using provided [`DATA`](IdentTileCollection::DATA).
     fn generate_type_id(data: &Self::DATA) -> u64 {
         let mut hasher = DefaultHasher::default();
@@ -333,6 +337,31 @@ mod test {
         for (data_id, data) in TEST_DATA.iter().enumerate() {
             let extracted_data = collection
                 .get_tile_data(tile_type_ids.get(data_id).expect("cannot get tile type id"))
+                .expect("cannot get tile data");
+            assert_eq!(data, extracted_data);
+        }
+    }
+
+    #[test]
+    fn test_collection_get_all() {
+        let mut collection = TestTileCollection::default();
+
+        for (tile_type_id, data) in TEST_DATA.iter().enumerate() {
+            assert!(
+                collection.add_tile_data(tile_type_id as u64, *data),
+                "no data: {data} has been added"
+            );
+        }
+
+        assert_eq!(TEST_DATA.len(), collection.inner().len());
+        assert_eq!(TEST_DATA.len(), collection.rev().len());
+
+        let mut tile_type_ids = collection.get_tile_type_ids();
+        tile_type_ids.sort();
+
+        for (data, tile_type_id) in TEST_DATA.iter().zip(tile_type_ids.iter()) {
+            let extracted_data = collection
+                .get_tile_data(&tile_type_id)
                 .expect("cannot get tile data");
             assert_eq!(data, extracted_data);
         }

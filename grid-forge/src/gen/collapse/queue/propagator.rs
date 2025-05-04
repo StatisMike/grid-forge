@@ -1,23 +1,18 @@
 use std::collections::HashSet;
 
 use crate::{
-    core::common::*,
-    r#gen::collapse::{
-        option::private::{PerOptionData, WaysToBeOption},
-        private::CollapseBounds,
-        CollapsibleTileData,
-    },
+    core::common::*, r#gen::collapse::common::*, r#gen::collapse::private::CollapseBounds,
 };
 
 use super::{entrophy::EntrophyQueue, CollapseQueue};
 
 #[derive(Debug)]
-pub struct PropagateItem<D: Dimensionality> {
+pub struct PropagateItem<D: Dimensionality + CollapseBounds + ?Sized> {
     pub position: D::Pos,
     pub to_remove: usize,
 }
 
-impl<D: Dimensionality> PropagateItem<D> {
+impl<D: Dimensionality + CollapseBounds + ?Sized> PropagateItem<D> {
     pub fn new(position: D::Pos, to_remove: usize) -> Self {
         Self {
             position,
@@ -27,24 +22,23 @@ impl<D: Dimensionality> PropagateItem<D> {
 }
 
 #[derive(Default)]
-pub struct Propagator<D: Dimensionality> {
+pub struct Propagator<D: Dimensionality + CollapseBounds + ?Sized> {
     inner: Vec<PropagateItem<D>>,
 }
 
-impl<D: Dimensionality> Propagator<D> {
+impl<D: Dimensionality + CollapseBounds + ?Sized> Propagator<D> {
     pub fn push_propagate(&mut self, item: PropagateItem<D>) {
         self.inner.push(item);
     }
 
-    pub(crate) fn propagate<CB, Tile, Grid>(
+    pub(crate) fn propagate<Tile, Grid>(
         &mut self,
         grid: &mut Grid,
-        option_data: &CB::PerOption,
-        queue: &mut EntrophyQueue<D, CB, Tile>,
+        option_data: &D::PerOptionData,
+        queue: &mut EntrophyQueue<D, Tile>,
     ) -> Result<(), D::Pos>
     where
-        CB: CollapseBounds<D>,
-        Tile: CollapsibleTileData<D, CB>,
+        Tile: CollapsibleTileData<D>,
         Grid: GridMap<D, Tile>,
     {
         let mut tiles_to_update = HashSet::new();
@@ -57,7 +51,7 @@ impl<D: Dimensionality> Propagator<D> {
                     } else {
                         continue;
                     };
-                let mut tile = if let Some(tile) = grid.get_mut_data_at_position(&pos_to_update) {
+                let tile = if let Some(tile) = grid.get_mut_data_at_position(&pos_to_update) {
                     tile
                 } else {
                     continue;

@@ -3,7 +3,14 @@
 mod gif_subscribers;
 
 use grid_forge::{
-    r#gen::collapse::{grid::two_d::CollapsedGrid2D, two_d::CollapsibleTileGrid2D, CollapseError, CollapsedTileData, CollapsibleGrid}, id::{IdentTileDefaultBuilder, IdentifiableTileData}, two_d::{GridMap2D, TwoDim}, vis::{collection::VisCollection, ops::load_gridmap_identifiable_auto, DefaultVisPixel}
+    id::{BasicIdentTileData, IdentTileDefaultBuilder, IdentifiableTileData},
+    two_d::{
+        gen::collapse::{
+            singular::CollapsibleTileGrid2D, CollapseError, CollapsedGrid2D, CollapsibleGrid,
+        },
+        GridMap2D, TwoDim,
+    },
+    vis::{collection::VisCollection, ops::load_gridmap_identifiable_auto, DefaultVisPixel},
 };
 use image::{ImageBuffer, Rgb};
 use rand::SeedableRng;
@@ -142,7 +149,7 @@ impl<'a> VisGridLoaderHelper<'a> {
         &mut self,
         paths: &[&str],
         rotations: &[VisRotate],
-    ) -> Vec<GridMap2D<CollapsedTileData>> {
+    ) -> Vec<GridMap2D<BasicIdentTileData>> {
         let mut out = Vec::new();
         let builder = IdentTileDefaultBuilder::default();
         for path in paths {
@@ -177,7 +184,7 @@ pub fn try_n_times_2d<Tile: IdentifiableTileData>(
                     return Err(err);
                 }
                 current_iter += 1;
-            },
+            }
         }
     }
 }

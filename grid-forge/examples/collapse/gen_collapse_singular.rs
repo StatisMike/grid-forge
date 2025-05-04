@@ -1,13 +1,16 @@
 use std::fs::File;
 
-use grid_forge::gen::collapse::grid::two_d::CollapsedGrid2D;
-use grid_forge::gen::collapse::singular::subscriber::DebugSubscriber;
-use grid_forge::gen::collapse::{singular, CollapsibleGrid};
-use grid_forge::id::IdentifiableTileData;
-use grid_forge::r#gen::collapse::two_d::CollapsibleTileGrid2D;
-use grid_forge::r#gen::collapse::{CollapseError, CollapsedGrid, PositionQueue};
-use grid_forge::two_d::*;
-use grid_forge::vis::collection::VisCollection;
+use grid_forge::two_d::gen::collapse::singular;
+use grid_forge::two_d::r#gen::collapse::singular::analyzer::{
+    BorderAnalyzer, FrequencyHints, IdentityAnalyzer,
+};
+use grid_forge::two_d::r#gen::collapse::singular::resolver::Resolver;
+use grid_forge::two_d::r#gen::collapse::singular::{CollapsibleTileGrid, CollapsibleTileGrid2D};
+use grid_forge::two_d::r#gen::collapse::{CollapsedGrid, CollapsibleGrid, PositionQueue};
+use grid_forge::two_d::{GridMap, GridSize, GridSize2D};
+use grid_forge::{
+    two_d::r#gen::collapse::singular::analyzer::Analyzer, vis::collection::VisCollection,
+};
 use rand_chacha::ChaChaRng;
 use utils::{ArgHelper, GifSingleSubscriber, RngHelper, VisGridLoaderHelper, VisRotate};
 
@@ -28,8 +31,8 @@ fn main() {
     // VisCollection to handle Image <-> GridMap2D roundabouts.
     let mut vis_collection = VisCollection::default();
 
-    // I'm loading two sample maps with 90 deegrees rotation to increase variety of rules which will be generated
-    // after analyzing the maps.
+    // I'm loading two sample maps with 90 and 180 deegrees rotation to increase variety of rules which will
+    // be generated after analyzing the maps.
     //
     // Custom helper is used there to keep the example less verbose.
     let maps = VisGridLoaderHelper::new(&mut vis_collection).load_w_rotate(
@@ -38,11 +41,9 @@ fn main() {
     );
 
     // Create Identity (for `identity_entrophy`) and Border (for `border_position`) analyzers and FrequencyRules.
-    let mut identity_analyzer = singular::IdentityAnalyzer::default();
-    let mut border_analyzer = singular::BorderAnalyzer::default();
-    let mut frequency_hints = singular::FrequencyHints::default();
-
-    use grid_forge::r#gen::collapse::singular::Analyzer as _;
+    let mut identity_analyzer = IdentityAnalyzer::default();
+    let mut border_analyzer = BorderAnalyzer::default();
+    let mut frequency_hints = FrequencyHints::default();
 
     // Analyze the loaded maps, recording the `AdjacencyRules` in analyzers.
     for map in maps {
@@ -54,7 +55,7 @@ fn main() {
     let outputs_size = GridSize2D::new(30, 30);
 
     // Resolver can be reused, as it is used for the same tile type.
-    let mut resolver = singular::Resolver::default();
+    let mut resolver = Resolver::default();
 
     // ----- Singular with Entrophy Queue ----- //
     //
@@ -72,7 +73,7 @@ fn main() {
 
                 resolver = resolver.with_subscriber(Box::new(subscriber));
             } else if args.debug() {
-                let subsciber = DebugSubscriber::new(Some(
+                let subsciber = singular::subscriber::DebugSubscriber::new(Some(
                     File::create(format!("{}{}", OUTPUTS_DIR, "identity_entrophy_debug.txt"))
                         .unwrap(),
                 ));
@@ -135,7 +136,7 @@ fn main() {
 
             resolver = resolver.with_subscriber(Box::new(subscriber));
         } else if args.debug() {
-            let subsciber = DebugSubscriber::new(Some(
+            let subsciber = singular::subscriber::DebugSubscriber::new(Some(
                 File::create(format!("{}{}", OUTPUTS_DIR, "border_position_debug.txt")).unwrap(),
             ));
             resolver = resolver.with_subscriber(Box::new(subsciber));

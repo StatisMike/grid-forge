@@ -2,11 +2,11 @@
 //! This is very useful in development state, as before creating maps out of final desired GridTile it is best to test
 //! out the algorithms used, but is rarely useful in final build.
 //!
-//! Most examples use the `vis` feature to present visual representation of GridMap2D.
+//! Most examples use the `vis` feature to present visual representation of two dimensional [GridMap].
 
+use grid_forge::two_d::*;
 use grid_forge::vis::ops::{init_map_image_buffer, write_gridmap_vis};
 use grid_forge::vis::{DefaultVisPixel, VisTileData};
-use grid_forge::*;
 
 use image::imageops;
 use rand::{Rng, SeedableRng};
@@ -52,7 +52,7 @@ fn main() {
     let mut rng = rand_chacha::ChaChaRng::from_seed(seed);
 
     // Create an empty GridMap...
-    let size = GridSize::new_xy(100, 100);
+    let size = GridSize2D::new(100, 100);
     let mut map = GridMap2D::<TwoColoredTile>::new(size);
 
     // and fill it with colors at random.
@@ -62,8 +62,7 @@ fn main() {
         } else {
             TileColor::Green
         };
-        let tile = GridTile::new(pos, TwoColoredTile { color });
-        map.insert_tile(tile);
+        map.insert_data(&pos, TwoColoredTile { color });
     }
 
     // Create image and save it in examples dir.

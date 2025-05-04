@@ -1,20 +1,24 @@
-pub(crate) mod entrophy;
-pub mod position;
+mod entrophy;
+mod position;
 mod propagator;
 
-pub use entrophy::EntrophyQueue;
+pub(crate) mod three_d;
+pub(crate) mod two_d;
+
+pub use entrophy::*;
 pub use position::*;
-pub(crate) use propagator::*;
+pub use propagator::*;
+
+pub(crate) use position::private::*;
 
 use super::{private::CollapseBounds, tile::CollapsibleTileData};
-use crate::{core::common::*, id::IdentifiableTileData};
+use crate::core::common::*;
 
 /// Trait shared by objects that handle the selecting algorithm for next tile to collapse within collapse resolvers.
-pub trait CollapseQueue<D, CB, Data: CollapsibleTileData<D, CB>>
+pub trait CollapseQueue<D, Data: CollapsibleTileData<D>>
 where
-    Self: Default + Sized + private::Sealed<D, CB, Data>,
-    D: Dimensionality,
-    CB: CollapseBounds<D>,
+    Self: Default + Sized + private::Sealed<D, Data>,
+    D: Dimensionality + CollapseBounds + ?Sized,
 {
     /// Pop next position for collapsing.
     fn get_next_position(&mut self) -> Option<D::Pos>;
@@ -35,19 +39,17 @@ pub(crate) mod private {
     use rand::Rng;
 
     use crate::{
-        core::common::*,
-        id::IdentifiableTileData,
-        r#gen::collapse::{private::CollapseBounds, CollapsibleTileData},
+        core::common::*, r#gen::collapse::common::*, r#gen::collapse::private::CollapseBounds,
     };
 
     /// Sealed trait for queues usable in collapse resolvers.
-    pub trait Sealed<D: Dimensionality, CB: CollapseBounds<D>, Data: CollapsibleTileData<D, CB>> {
+    pub trait Sealed<D: Dimensionality + CollapseBounds + ?Sized, Data: CollapsibleTileData<D>> {
         fn populate_inner_grid<R>(
             &mut self,
             rng: &mut R,
             grid: &mut impl GridMap<D, Data>,
             positions: &[D::Pos],
-            options_data: &CB::PerOption,
+            options_data: &D::PerOptionData,
         ) where
             R: Rng;
 

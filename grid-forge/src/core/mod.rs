@@ -48,6 +48,13 @@ pub(crate) mod two_d {
     pub use crate::core::size::two_d::*;
     pub use crate::core::tile::two_d::*;
 
+    /// [Dimensionality] for basic 2D rectangular grid.
+    ///
+    /// Its main types are:
+    /// - [Direction2D] as [Dimensionality::Dir].
+    /// - [GridSize2D] as [Dimensionality::Size].
+    /// - [GridPosition2D] as [Dimensionality::Pos].
+    ///
     #[derive(Debug, Copy, Clone, Default)]
     pub struct TwoDim {}
     impl super::private::Sealed for TwoDim {}
@@ -70,7 +77,13 @@ pub(crate) mod three_d {
     pub use crate::core::size::three_d::*;
     pub use crate::core::tile::three_d::*;
 
-    /// Three-dimensional space.
+    /// [Dimensionality] for basic 3D rectangular grid.
+    ///
+    /// Its main types are:
+    /// - [Direction3D] as [Dimensionality::Dir].
+    /// - [GridSize3D] as [Dimensionality::Size].
+    /// - [GridPosition3D] as [Dimensionality::Pos].
+    ///
     #[derive(Debug, Copy, Clone, Default)]
     pub struct ThreeDim {}
     impl super::private::Sealed for ThreeDim {}

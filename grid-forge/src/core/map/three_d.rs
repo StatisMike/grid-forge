@@ -1,4 +1,7 @@
-use crate::core::three_d::*;
+use crate::{
+    core::three_d::*,
+    two_d::{GridPosition2D, GridSize2D, Tile2D},
+};
 
 use super::{private::*, two_d::GridMap2D};
 
@@ -58,5 +61,24 @@ impl<Data: TileData> GridMap3D<Data> {
             .for_each(|(pos, data)| {
                 self.insert_tile(Tile3D::new(pos, data));
             });
+    }
+
+    pub fn remove_layer(&mut self, z: u32) -> GridMap2D<Data> {
+        let layer_size = GridSize2D::new(self.size.x(), self.size.y());
+        let mut out = GridMap2D::new(layer_size);
+        let positions = self
+            .iter_all_positions()
+            .filter(|pos| pos.z() == z)
+            .collect::<Vec<_>>();
+        for pos in positions {
+            let tile: Option<Tile3D<Data>> = self.remove_tile_at_position(&pos);
+            if let Some(tile) = tile {
+                out.insert_tile(Tile2D::new(
+                    GridPosition2D::from_slice(&tile.0.coords()[0..2]),
+                    tile.1,
+                ));
+            }
+        }
+        out
     }
 }

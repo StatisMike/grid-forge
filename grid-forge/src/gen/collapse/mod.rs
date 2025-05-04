@@ -36,33 +36,40 @@
 //!   order, while [`EntrophyQueue`] fetch the next position to collapse with the lowest entrophy.
 
 mod error;
-pub mod grid;
+mod grid;
 mod option;
 // pub mod overlap;
 mod queue;
 pub mod singular;
 mod tile;
 
-use std::{collections::HashSet, fs::File, io::Write, marker::PhantomData, ops::Index};
+use std::{collections::HashSet, marker::PhantomData, ops::Index};
 
-// Flattened reexports
-pub use error::CollapseError;
-pub use grid::{CollapsedGrid, CollapsibleGrid};
-pub use queue::*;
-pub use tile::*;
+pub(crate) mod common {
+    pub use super::error::*;
+    pub use super::grid::*;
+    pub use super::option::*;
+    pub use super::queue::*;
+    pub use super::singular;
+    pub use super::tile::*;
+
+    pub use super::private::*;
+}
 
 use crate::core::common::*;
 
-pub mod two_d {
+pub(crate) mod two_d {
     use crate::core::two_d::*;
 
-    use super::{grid::two_d::*, queue::two_d::PositionQueueProcession2D};
-    pub use crate::gen::collapse::singular::tile::two_d::*;
+    pub use super::common::*;
 
-    pub struct TwoDimCollapseBounds;
-    impl crate::gen::collapse::private::CollapseBounds<TwoDim> for TwoDimCollapseBounds {
-        type Ways = super::option::two_d::WaysToBeOption2D;
-        type PerOption = super::option::two_d::PerOptionData2D;
+    pub use super::{
+        grid::two_d::*, option::two_d::*, queue::two_d::*, singular::two_d as singular,
+    };
+
+    impl crate::gen::collapse::private::CollapseBounds for TwoDim {
+        type WaysToBeOption = WaysToBeOption2D;
+        type PerOptionData = PerOptionData2D;
         type OptionAdjacency = DirectionTable2D<Vec<usize>>;
         type CollapsedGrid = CollapsedGrid2D;
         type PositionQueueProcession = PositionQueueProcession2D;
@@ -72,12 +79,13 @@ pub mod two_d {
 pub mod three_d {
     use crate::core::three_d::*;
 
+    pub use super::common::*;
+
     use super::{grid::three_d::*, queue::three_d::PositionQueueProcession3D};
 
-    pub struct ThreeDimCollapseBounds;
-    impl crate::gen::collapse::private::CollapseBounds<ThreeDim> for ThreeDimCollapseBounds {
-        type Ways = super::option::three_d::WaysToBeOption3D;
-        type PerOption = super::option::three_d::PerOptionData3D;
+    impl crate::gen::collapse::private::CollapseBounds for ThreeDim {
+        type WaysToBeOption = super::option::three_d::WaysToBeOption3D;
+        type PerOptionData = super::option::three_d::PerOptionData3D;
         type OptionAdjacency = DirectionTable3D<Vec<usize>>;
         type CollapsedGrid = CollapsedGrid3D;
         type PositionQueueProcession = PositionQueueProcession3D;
@@ -119,40 +127,20 @@ impl<D: Dimensionality> Index<D::Dir> for Adjacencies<D> {
     }
 }
 
-// impl<D: Dimensionality> overlap::Subscriber<D> for DebugSubscriber {
-//     fn on_collapse(&mut self, position: &D::Pos, tile_type_id: u64, pattern_id: u64) {
-//         if let Some(file) = &mut self.file {
-//             writeln!(
-//                 file,
-//                 "collapsed tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}"
-//             )
-//             .unwrap();
-//         } else {
-//             println!(
-//                 "collapsed tile_type_id: {tile_type_id}, pattern_id: {pattern_id} on position: {position:?}"
-//             );
-//         }
-//     }
-// }
-
 pub(crate) mod private {
     use std::collections::HashMap;
 
+    use super::common::*;
+    use super::Adjacencies;
     use crate::core::common::*;
 
-    use super::{
-        option::private::{PerOptionData, WaysToBeOption},
-        position::private::PositionQueueProcession,
-        singular::TileBordersAdjacency,
-        Adjacencies, CollapsedGrid, CollapsibleTileData,
-    };
-
-    pub trait CollapseBounds<D: Dimensionality> {
-        type Ways: WaysToBeOption<D>;
-        type PerOption: PerOptionData<D, Self>;
-        type OptionAdjacency: DirectionTable<D, Vec<usize>> + Default;
-        type CollapsedGrid: CollapsedGrid<D, Self>;
-        type PositionQueueProcession: PositionQueueProcession<D>;
+    /// Extension trait for [`Dimensionality`] trait, providing the necessary types for the collapse generative algorithm.
+    pub trait CollapseBounds: Dimensionality {
+        type WaysToBeOption: WaysToBeOption<Self>;
+        type PerOptionData: PerOptionData<Self>;
+        type OptionAdjacency: DirectionTable<Self, Vec<usize>> + Default;
+        type CollapsedGrid: CollapsedGrid<Self>;
+        type PositionQueueProcession: PositionQueueProcession<Self>;
     }
 
     #[derive(Clone, Debug, Default)]

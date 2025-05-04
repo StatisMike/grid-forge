@@ -34,8 +34,8 @@ impl CollapsedTileData {
 }
 
 /// Trait shared by [`TileData`] used within collapsible generative algorithms.
-pub trait CollapsibleTileData<D: Dimensionality, CB: CollapseBounds<D> + ?Sized>:
-    TileData + private::CommonCollapsibleTileData<D, CB>
+pub trait CollapsibleTileData<D: Dimensionality + CollapseBounds + ?Sized>:
+    TileData + private::CommonCollapsibleTileData<D>
 {
     /// Returns number of possible options for the tile.
     fn num_compatible_options(&self) -> usize;
@@ -68,31 +68,25 @@ pub trait CollapsibleTileData<D: Dimensionality, CB: CollapseBounds<D> + ?Sized>
 
 pub(crate) mod private {
 
-    use rand::{
-        distributions::{Distribution, Uniform},
-        Rng,
-    };
+    use rand::{distributions::Uniform, Rng};
 
     use crate::{
         core::common::*,
-        r#gen::collapse::{
-            entrophy::EntrophyUniform,
-            option::private::{PerOptionData, WaysToBeOption},
-            private::CollapseBounds,
-        },
+        r#gen::collapse::common::{CollapseBounds, EntrophyUniform},
+        r#gen::collapse::option::private::{PerOptionData, WaysToBeOption},
     };
 
     use crate::gen::collapse::option::OptionWeights;
 
     /// Sealed trait for the [`CollapsibleTileData`] trait. It contains most of the shared logic for its implementors,
     /// which should be kept private.
-    pub trait CommonCollapsibleTileData<D: Dimensionality, CB: CollapseBounds<D> + ?Sized>:
+    pub trait CommonCollapsibleTileData<D: Dimensionality + CollapseBounds + ?Sized>:
         TileData
     {
         /// Creates new uncollapsed tile.
         fn new_uncollapsed_tile(
             num_options: usize,
-            ways_to_be_option: CB::Ways,
+            ways_to_be_option: D::WaysToBeOption,
             weight: OptionWeights,
             entrophy_noise: f32,
         ) -> Self;
@@ -101,7 +95,7 @@ pub(crate) mod private {
         fn new_from_frequency_with_entrophy<R: Rng>(
             rng: &mut R,
             positions: &[D::Pos],
-            options_data: &CB::PerOption,
+            options_data: &D::PerOptionData,
         ) -> Vec<(D::Pos, Self)> {
             let rng_range = EntrophyUniform::new();
             let ways_to_be_option = options_data.ways_to_be_option();
@@ -130,7 +124,7 @@ pub(crate) mod private {
         /// Creates vector of uncollapsed tiles.
         fn new_from_frequency(
             positions: &[D::Pos],
-            options_data: &CB::PerOption,
+            options_data: &D::PerOptionData,
         ) -> Vec<(D::Pos, Self)> {
             let ways_to_be_option = options_data.ways_to_be_option();
 
@@ -157,9 +151,9 @@ pub(crate) mod private {
 
         fn num_possible_options(&self) -> usize;
 
-        fn ways_to_be_option(&self) -> &CB::Ways;
+        fn ways_to_be_option(&self) -> &D::WaysToBeOption;
 
-        fn mut_ways_to_be_option(&mut self) -> &mut CB::Ways;
+        fn mut_ways_to_be_option(&mut self) -> &mut D::WaysToBeOption;
 
         /// Removes single option from tile.
         fn remove_option(&mut self, weights: OptionWeights);
@@ -177,7 +171,7 @@ pub(crate) mod private {
         fn collapse_gather_removed<R: Rng>(
             &mut self,
             rng: &mut R,
-            options_data: &CB::PerOption,
+            options_data: &D::PerOptionData,
         ) -> Vec<usize> {
             assert!(
                 self.weight_sum() > 0,
@@ -200,7 +194,7 @@ pub(crate) mod private {
         }
 
         /// Collapses tiles into one of possible options.
-        fn collapse_basic<R: Rng>(&mut self, rng: &mut R, options_data: &CB::PerOption) {
+        fn collapse_basic<R: Rng>(&mut self, rng: &mut R, options_data: &D::PerOptionData) {
             assert!(
                 self.weight_sum() > 0,
                 "weight sum should be positive when collapsing!"

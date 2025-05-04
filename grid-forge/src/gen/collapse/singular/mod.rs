@@ -19,9 +19,29 @@
 //! - [`CollapsibleTileGrid`] is the collection of [`CollapsibleTile`].
 //! - [`Resolver`] is the main executor of the algorithm.
 
-mod analyzer;
-mod resolver;
-pub mod subscriber;
-pub(crate) mod tile;
+pub mod analyzer;
+pub mod resolver;
 
-pub use {analyzer::*, resolver::*, tile::*};
+pub mod three_d;
+pub mod two_d;
+
+pub mod subscriber;
+
+use {
+    super::{grid::CollapsibleGrid, two_d::CollapseBounds},
+    crate::{id::IdentifiableTileData, two_d::Dimensionality},
+    analyzer::{AdjacencyRules, FrequencyHints},
+};
+
+pub trait CollapsibleTileGrid<D, IT>
+where
+    D: Dimensionality + CollapseBounds + ?Sized,
+    IT: IdentifiableTileData,
+    Self: CollapsibleGrid<D, IT>,
+{
+    fn new_empty(
+        size: D::Size,
+        frequencies: &FrequencyHints<D, IT>,
+        adjacencies: &AdjacencyRules<D, IT>,
+    ) -> Self;
+}

@@ -28,7 +28,7 @@ impl<Data: TileData> SealedGrid<Data, TwoDim> for GridMap2D<Data> {
 }
 
 impl<Data: TileData> GridMap<TwoDim, Data> for GridMap2D<Data> {
-    fn new(size: <TwoDim as Dimensionality>::Size) -> Self {
+    fn new(size: GridSize2D) -> Self {
         let count = size.max_tile_count();
         let mut tiles = Vec::with_capacity(count);
         for _ in 0..count {

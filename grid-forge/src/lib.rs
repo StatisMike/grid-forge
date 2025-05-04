@@ -214,9 +214,10 @@
 //! See `example_godot` crate for an example of simple Godot App using the `grid-forge` for loading the map from image file and procedural generation, rendering it in Godot's `TileMap` class.
 
 mod core;
-mod error;
-// mod tile;
 mod utils;
+
+#[cfg(feature = "gen")]
+pub mod gen;
 
 pub mod id;
 
@@ -226,15 +227,18 @@ pub mod prelude {
 
 pub mod two_d {
     pub use crate::core::two_d::*;
-    pub use crate::error::*;
+
+    #[cfg(feature = "gen")]
+    pub use super::gen::two_d as gen;
 }
 
 pub mod three_d {
     pub use crate::core::three_d::*;
-    pub use crate::error::*;
+
+    #[cfg(feature = "gen")]
+    pub use super::gen::three_d as gen;
 }
 
-pub use error::*;
 // pub use map::*;
 // pub use tile::*;
 
@@ -250,6 +254,3 @@ pub use error::*;
 
 // #[cfg(feature = "vis")]
 pub mod vis;
-
-// #[cfg(feature = "gen")]
-pub mod gen;

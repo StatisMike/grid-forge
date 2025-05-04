@@ -13,12 +13,12 @@ use crate::{core::common::*, r#gen::collapse::private::CollapseBounds};
 use crate::{gen::collapse::tile::CollapsibleTileData, utils::OrderedFloat};
 
 #[derive(Clone, Copy)]
-pub(crate) struct EntrophyItem<D: Dimensionality> {
+pub(crate) struct EntrophyItem<D: Dimensionality + CollapseBounds + ?Sized> {
     pos: D::Pos,
     entrophy: OrderedFloat,
 }
 
-impl<D: Dimensionality> EntrophyItem<D> {
+impl<D: Dimensionality + CollapseBounds + ?Sized> EntrophyItem<D> {
     pub fn new(pos: D::Pos, entrophy: f32) -> Self {
         Self {
             pos,
@@ -27,21 +27,21 @@ impl<D: Dimensionality> EntrophyItem<D> {
     }
 }
 
-impl<D: Dimensionality> Eq for EntrophyItem<D> {}
+impl<D: Dimensionality + CollapseBounds + ?Sized> Eq for EntrophyItem<D> {}
 
-impl<D: Dimensionality> PartialEq for EntrophyItem<D> {
+impl<D: Dimensionality + CollapseBounds + ?Sized> PartialEq for EntrophyItem<D> {
     fn eq(&self, other: &Self) -> bool {
         self.entrophy == other.entrophy && self.pos == other.pos
     }
 }
 
-impl<D: Dimensionality> PartialOrd for EntrophyItem<D> {
+impl<D: Dimensionality + CollapseBounds + ?Sized> PartialOrd for EntrophyItem<D> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<D: Dimensionality> Ord for EntrophyItem<D> {
+impl<D: Dimensionality + CollapseBounds + ?Sized> Ord for EntrophyItem<D> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.entrophy
             .cmp(&other.entrophy)
@@ -52,23 +52,23 @@ impl<D: Dimensionality> Ord for EntrophyItem<D> {
 /// Select next position to collapse using smallest entrophy condition.
 ///
 /// Its state will be updated every time after tile entrophy changed by removing some of its options.
-pub struct EntrophyQueue<D: Dimensionality, CB: CollapseBounds<D>, Data: CollapsibleTileData<D, CB>>
+pub struct EntrophyQueue<D: Dimensionality + CollapseBounds + ?Sized, Data: CollapsibleTileData<D>>
 {
     by_entrophy: BTreeSet<EntrophyItem<D>>,
     by_pos: HashMap<D::Pos, OrderedFloat>,
-    phantom: PhantomData<(CB, Data)>,
+    phantom: PhantomData<Data>,
 }
 
-impl<D: Dimensionality, CB: CollapseBounds<D>, Data: CollapsibleTileData<D, CB>>
-    EntrophyQueue<D, CB, Data>
+impl<D: Dimensionality + CollapseBounds + ?Sized, Data: CollapsibleTileData<D>>
+    EntrophyQueue<D, Data>
 {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-impl<D: Dimensionality, CB: CollapseBounds<D>, Data: CollapsibleTileData<D, CB>> Default
-    for EntrophyQueue<D, CB, Data>
+impl<D: Dimensionality + CollapseBounds + ?Sized, Data: CollapsibleTileData<D>> Default
+    for EntrophyQueue<D, Data>
 {
     fn default() -> Self {
         Self {
@@ -79,8 +79,8 @@ impl<D: Dimensionality, CB: CollapseBounds<D>, Data: CollapsibleTileData<D, CB>>
     }
 }
 
-impl<D: Dimensionality, CB: CollapseBounds<D>, Data: CollapsibleTileData<D, CB>>
-    CollapseQueue<D, CB, Data> for EntrophyQueue<D, CB, Data>
+impl<D: Dimensionality + CollapseBounds + ?Sized, Data: CollapsibleTileData<D>>
+    CollapseQueue<D, Data> for EntrophyQueue<D, Data>
 {
     fn get_next_position(&mut self) -> Option<D::Pos> {
         if let Some(item) = self.by_entrophy.pop_first() {
@@ -133,15 +133,15 @@ impl EntrophyUniform {
     }
 }
 
-impl<D: Dimensionality, CB: CollapseBounds<D>, Data: CollapsibleTileData<D, CB>>
-    super::private::Sealed<D, CB, Data> for EntrophyQueue<D, CB, Data>
+impl<D: Dimensionality + CollapseBounds + ?Sized, Data: CollapsibleTileData<D>>
+    super::private::Sealed<D, Data> for EntrophyQueue<D, Data>
 {
     fn populate_inner_grid<R: Rng>(
         &mut self,
         rng: &mut R,
         grid: &mut impl GridMap<D, Data>,
         positions: &[D::Pos],
-        options_data: &CB::PerOption,
+        options_data: &D::PerOptionData,
     ) {
         let tiles = Data::new_from_frequency_with_entrophy(rng, positions, options_data);
 

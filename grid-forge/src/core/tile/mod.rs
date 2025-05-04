@@ -10,7 +10,9 @@ pub(crate) mod common {
 
     pub trait TileData: Sized {}
 
-    pub trait Tile<D: Dimensionality, Data: TileData>: TileContainer<D> + AsRef<Data> {
+    pub trait Tile<D: Dimensionality, Data: TileData>:
+        TileContainer<D> + AsRef<Data> + From<(D::Pos, Data)>
+    {
         fn into_data(self) -> Data;
     }
 }

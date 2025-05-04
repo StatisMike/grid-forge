@@ -63,7 +63,10 @@ pub(crate) mod common {
                 .collect::<Vec<_>>()
         }
 
-        fn insert_tile<T: Tile<D, Data>>(&mut self, tile: T) -> bool {
+        fn insert_tile<T>(&mut self, tile: T) -> bool
+        where
+            T: Tile<D, Data>,
+        {
             if !self.size().is_position_valid(&tile.grid_position()) {
                 return false;
             }
@@ -85,17 +88,20 @@ pub(crate) mod common {
             true
         }
 
-        fn remove_tile_at_position(&mut self, position: &D::Pos) -> bool {
+        fn remove_tile_at_position<T>(&mut self, position: &D::Pos) -> Option<T>
+        where
+            T: Tile<D, Data>,
+        {
             if !self.size().is_position_valid(position) {
-                return false;
+                return None;
             }
             let offset = self.size().offset(position);
 
             unsafe {
-                self.get_unchecked_mut(offset).take();
+                self.get_unchecked_mut(offset)
+                    .take()
+                    .and_then(|t| Some((*position, t).into()))
             }
-
-            true
         }
 
         fn get_neighbours(&self, position: &D::Pos) -> Vec<(D::Pos, &Data)> {
@@ -136,10 +142,26 @@ pub(crate) mod common {
                 .collect()
         }
 
+        fn iter_all_positions<'a>(&'a self) -> impl Iterator<Item = D::Pos>
+        where
+            Data: 'a,
+        {
+            self.indexed_iter()
+                .filter_map(|(pos, t)| if t.is_some() { Some(pos) } else { None })
+        }
+
         fn get_all_empty_positions(&self) -> Vec<D::Pos> {
             self.indexed_iter()
                 .filter_map(|(pos, t)| if t.is_none() { Some(pos) } else { None })
                 .collect()
+        }
+
+        fn iter_all_empty_positions<'a>(&'a self) -> impl Iterator<Item = D::Pos>
+        where
+            Data: 'a,
+        {
+            self.indexed_iter()
+                .filter_map(|(pos, t)| if t.is_none() { Some(pos) } else { None })
         }
 
         fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = &'a mut Option<Data>>

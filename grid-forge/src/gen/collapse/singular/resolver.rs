@@ -2,34 +2,34 @@ use std::marker::PhantomData;
 
 use crate::core::common::*;
 use crate::id::*;
+use crate::r#gen::collapse::common::{CollapsibleGrid, PositionQueue};
 use crate::r#gen::collapse::private::CollapseBounds;
-use crate::r#gen::collapse::{CollapsibleGrid, PositionQueue};
 
-use crate::gen::collapse::{CollapsibleTileData, EntrophyQueue, PropagateItem, Propagator};
+use crate::gen::collapse::common::{CollapsibleTileData, EntrophyQueue, PropagateItem, Propagator};
 
 use crate::gen::collapse::error::{CollapseError, CollapseErrorKind};
 use crate::gen::collapse::queue::CollapseQueue;
 
 use rand::Rng;
 
-use super::private::BorderAdjacencySelector;
+use super::analyzer::private::BorderAdjacencySelector;
 use super::subscriber::Subscriber;
 
 /// Resolver of the singular collapsible procedural algorithm.
 ///
 /// It uses either [`EntrophyQueue`] or [`PositionQueue`] to process the option collapsing process of the [`CollapsibleTileGrid`],
 /// additionally providing an option to subscribe to the collapse process via [`singular::Subscriber`](Subscriber).
-pub struct Resolver<D: Dimensionality, CB: CollapseBounds<D>, Data>
+pub struct Resolver<D: Dimensionality + CollapseBounds + ?Sized, Data>
 where
     Data: IdentifiableTileData,
 {
     subscriber: Option<Box<dyn Subscriber<D>>>,
-    tile_type: PhantomData<(CB, Data)>,
+    tile_type: PhantomData<Data>,
 }
 
-impl<D, CB: CollapseBounds<D>, Data> Default for Resolver<D, CB, Data>
+impl<D, Data> Default for Resolver<D, Data>
 where
-    D: Dimensionality,
+    D: Dimensionality + CollapseBounds + ?Sized,
     Data: IdentifiableTileData,
 {
     fn default() -> Self {
@@ -40,9 +40,9 @@ where
     }
 }
 
-impl<D, CB: CollapseBounds<D>, Data> Resolver<D, CB, Data>
+impl<D, Data> Resolver<D, Data>
 where
-    D: Dimensionality,
+    D: Dimensionality + CollapseBounds + ?Sized,
     Data: IdentifiableTileData,
 {
     /// Attach a subscriber to the resolver. The subscriber will be notified of each tile being collapsed.
@@ -70,7 +70,7 @@ where
     ///
     /// Provided `grid` can be translated into either a [`CollapsedGrid`](crate::gen::collapse::grid::CollapsedGrid)
     /// or [`GridMap2D`](crate::map::GridMap2D) of some [`IdentifiableTileData`] after the process.
-    pub fn generate_entrophy<CG: CollapsibleGrid<D, CB, Data>, R>(
+    pub fn generate_entrophy<CG: CollapsibleGrid<D, Data>, R>(
         &mut self,
         grid: &mut CG,
         rng: &mut R,
@@ -149,12 +149,12 @@ where
         Ok(())
     }
 
-    pub fn generate_position<CG: CollapsibleGrid<D, CB, Data>, R, SG>(
+    pub fn generate_position<CG: CollapsibleGrid<D, Data>, R, SG>(
         &mut self,
         grid: &mut CG,
         rng: &mut R,
         positions: &[D::Pos],
-        mut queue: PositionQueue<D, CB, CG::CollapsibleData>,
+        mut queue: PositionQueue<D, CG::CollapsibleData>,
     ) -> Result<(), CollapseError<D>>
     where
         R: Rng,

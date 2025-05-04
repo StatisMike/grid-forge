@@ -13,7 +13,6 @@ use std::fmt::Display;
 use std::marker::PhantomData;
 
 use super::*;
-use crate::core::common::*;
 // use crate::tile::{GridPosition, GridTile};
 
 /// [`IdentTileBuilder`] which creates new tiles of [`Clone`]-implementing tile struct. Prototype of tile with each `tile_id` need to be
@@ -268,7 +267,7 @@ impl<Data: IdDefault> IdentTileBuilder<Data> for IdentTileDefaultBuilder<Data> {
 }
 
 /// Trait shared by objects which on basis of the grid position and tile identifier of given [`IdentifiableTileData`]-implementing struct can
-/// create correct instance of the tile. Necessary for many [`GridMap2D`](crate::map::GridMap2D) creating methods.
+/// create correct instance of the tile. Necessary for many [`GridMap`](crate::core::common::GridMap) creating methods.
 ///
 /// Three different builders are available in the `grid_forge`:
 /// - [`IdentTileFunBuilder`] - for tiles not implementing any additional traits.
