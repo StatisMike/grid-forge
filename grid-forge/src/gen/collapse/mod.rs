@@ -119,9 +119,17 @@ pub(crate) mod private {
         type PositionQueueProcession: PositionQueueProcession<Self>;
     }
 
-    #[derive(Clone, Debug, Default)]
+    #[derive(Clone, Debug)]
     pub struct AdjacencyTable<D: Dimensionality> {
         inner: HashMap<u64, Adjacencies<D>>,
+    }
+
+    impl <D: Dimensionality> Default for AdjacencyTable<D> {
+        fn default() -> Self {
+            Self {
+                inner: HashMap::new()
+            }
+        }
     }
 
     impl<D: Dimensionality> AsRef<HashMap<u64, Adjacencies<D>>> for AdjacencyTable<D> {

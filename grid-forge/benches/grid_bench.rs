@@ -2,6 +2,7 @@ use std::hint::black_box;
 use std::time::Duration;
 
 use criterion::*;
+use grid_forge::common::*;
 use grid_forge::three_d::*;
 use grid_forge::two_d::*;
 
@@ -188,8 +189,8 @@ pub fn grid_access_3d_100x10x10_mut(c: &mut Criterion) {
     c.bench_function("grid_access_3d_100x10x10_mut", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let mut tile: TileMut3D<DefaultTile> =
-                    grid.get_mut_tile_at_position(pos).unwrap().into();
+                let mut tile =
+                    grid.get_mut_tile_at_position(pos).unwrap();
                 tile.as_mut().offset = 1;
             }
         })
@@ -207,11 +208,11 @@ criterion_group!(
 criterion_group!(
     name = grid_1000_neighbour;
     config = Criterion::default().measurement_time(Duration::from_secs(5)).warm_up_time(Duration::from_secs(3));
-    targets =   //grid_access_2d_100x100_neighbour,
+    targets =   grid_access_2d_100x100_neighbour,
                 grid_access_2d_100x100_all_neighbours
 );
 
 criterion_main!(
-    // grid_1000,
+    grid_1000,
     grid_1000_neighbour
 );

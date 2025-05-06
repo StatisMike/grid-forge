@@ -1,5 +1,6 @@
 use super::private::*;
 use crate::core::three_d::*;
+use crate::core::common::GridSize;
 
 #[derive(Debug, Clone, Copy)]
 pub struct GridSize3D {

@@ -1,4 +1,5 @@
 use crate::core::three_d::*;
+use crate::core::common::{Tile, TileContainer, TileData, TileMut, TileRef};
 
 pub struct Tile3D<Data: TileData>(pub GridPosition3D, pub Data);
 
@@ -11,6 +12,9 @@ impl<Data: TileData> Tile3D<Data> {
 impl<Data: TileData> Tile<ThreeDim, Data> for Tile3D<Data> {
     fn into_data(self) -> Data {
         self.1
+    }
+    fn data(&self) -> &Data {
+        &self.1
     }
 }
 
@@ -35,6 +39,12 @@ impl<Data: TileData> AsRef<Data> for Tile3D<Data> {
 impl<Data: TileData> AsMut<Data> for Tile3D<Data> {
     fn as_mut(&mut self) -> &mut Data {
         &mut self.1
+    }
+}
+
+impl<'a, Data: TileData + 'a> TileRef<'a, ThreeDim, Data> for TileRef3D<'a, Data> {
+    fn data(&self) -> & Data {
+        self.1
     }
 }
 
@@ -81,5 +91,11 @@ impl<Data: TileData> AsRef<Data> for TileMut3D<'_, Data> {
 impl<Data: TileData> AsMut<Data> for TileMut3D<'_, Data> {
     fn as_mut(&mut self) -> &mut Data {
         &mut self.1
+    }
+}
+
+impl<'a ,Data: TileData + 'a> TileMut<'a, ThreeDim, Data> for TileMut3D<'a, Data> {
+    fn data(&mut self) -> &mut Data {
+        self.1
     }
 }

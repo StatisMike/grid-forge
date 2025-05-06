@@ -5,7 +5,12 @@ use std::ops::AddAssign;
 use std::ops::Sub;
 
 use crate::core::two_d::*;
+use crate::core::common::{GridPosition, Dimensionality};
 
+/// Position of the tile in the [`TwoDim`] dimensionality.
+/// 
+/// It contains two coordinates, `x` for the horizontal axis and `y` for the vertical.
+/// 
 #[derive(Debug, Copy, Clone)]
 pub struct GridPosition2D {
     x: u32,
@@ -13,7 +18,7 @@ pub struct GridPosition2D {
 }
 impl super::private::Sealed for GridPosition2D {}
 
-impl GridPositionTrait<TwoDim> for GridPosition2D {
+impl GridPosition<TwoDim> for GridPosition2D {
     type Coords = [u32; 2];
 
     #[inline]

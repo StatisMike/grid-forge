@@ -1,6 +1,11 @@
 use super::private::*;
 use crate::core::two_d::*;
+use crate::core::common::GridSize;
 
+/// Size of the grid in the [`TwoDim`] dimensionality.
+/// 
+/// It creates bounds for the [`GridMap2D`] and provides it with most of the computational 
+/// methods to work with [`GridPosition2D`].
 #[derive(Debug, Clone, Copy)]
 pub struct GridSize2D {
     x: u32,
@@ -8,9 +13,33 @@ pub struct GridSize2D {
     x_usize: usize,
     center: GridPosition2D,
 }
+
 impl Sealed for GridSize2D {}
 
 impl GridSize<TwoDim> for GridSize2D {
+
+    /// Creates a new [`GridSize2D`] from a slice of coordinates.
+    /// 
+    /// # Panics
+    /// Panics if the length of the slice is not equal to the [Dimensionality::N] of the space,
+    /// which is 2.
+    /// 
+    /// ```should_panic
+    /// # use grid_forge::common::GridSize;
+    /// # use grid_forge::two_d::GridSize2D;
+    /// // will panic!
+    /// let size = GridSize2D::from_slice(&[10, 10, 10]);
+    /// ```
+    /// 
+    /// # Examples
+    /// ```
+    /// use grid_forge::common::GridSize;
+    /// use grid_forge::two_d::GridSize2D;
+    /// 
+    /// let size = GridSize2D::from_slice(&[10, 10]);
+    /// assert_eq!(size.x(), 10);
+    /// assert_eq!(size.y(), 10);
+    /// ```
     fn from_slice(slice: &[u32]) -> Self {
         let [x, y] = slice else {
             panic!("slice should have length 2")
@@ -18,16 +47,59 @@ impl GridSize<TwoDim> for GridSize2D {
         Self::new(*x, *y)
     }
 
+    /// Checks if the given position is valid for this size.
+    /// 
+    /// Position is valid if it is contained within the bounds of the size.
+    /// 
+    /// # Examples
+    /// ```
+    /// use grid_forge::common::GridSize;
+    /// use grid_forge::two_d::{GridSize2D, GridPosition2D};
+    /// 
+    /// let size = GridSize2D::new(10, 10);
+    /// assert!(size.is_position_valid(&GridPosition2D::new(0, 0)));
+    /// assert!(size.is_position_valid(&GridPosition2D::new(9, 9)));
+    /// assert!(!size.is_position_valid(&GridPosition2D::new(10, 10)));
+    /// ```
     #[inline]
     fn is_position_valid(&self, position: &GridPosition2D) -> bool {
         position.x() < self.x && position.y() < self.y
     }
 
+    /// Check if this size is contained within other size.
+    /// 
+    /// One size is contained within another if the other size is larger than this.
+    /// 
+    /// # Examples
+    /// ```
+    /// use grid_forge::common::GridSize;
+    /// use grid_forge::two_d::GridSize2D;
+    /// 
+    /// let size = GridSize2D::new(10, 10);
+    /// let other = GridSize2D::new(5, 5);
+    /// assert!(!size.is_contained_within(&other));
+    /// assert!(other.is_contained_within(&size));
+    /// ```
     #[inline]
     fn is_contained_within(&self, other: &Self) -> bool {
         self.x <= other.x && self.y <= other.y
     }
 
+    /// Returns a vector of all possible positions for this size.
+    /// 
+    /// # Examples
+    /// ```
+    /// use grid_forge::common::GridSize;
+    /// use grid_forge::two_d::{GridSize2D, GridPosition2D};
+    /// 
+    /// let size = GridSize2D::new(3, 3);
+    /// let positions = size.get_all_possible_positions();
+    /// assert_eq!(positions.len(), 9);
+    /// 
+    /// for pos in positions {
+    ///     assert!(size.is_position_valid(&pos));
+    /// }
+    /// ```
     fn get_all_possible_positions(&self) -> Vec<GridPosition2D> {
         let mut out = Vec::with_capacity((self.x * self.y) as usize);
 
@@ -40,6 +112,20 @@ impl GridSize<TwoDim> for GridSize2D {
         out
     }
 
+    /// Returns the distance from the border in grid of this [`GridSize2D`] to the given position.
+    /// 
+    /// If the position is not valid for this size, returns `None`.
+    /// 
+    /// # Examples
+    /// ```
+    /// use grid_forge::common::GridSize;
+    /// use grid_forge::two_d::{GridSize2D, GridPosition2D};
+    /// 
+    /// let size = GridSize2D::new(10, 10);
+    /// assert_eq!(size.distance_from_border(&GridPosition2D::new(0, 0)), Some(0));
+    /// assert_eq!(size.distance_from_border(&GridPosition2D::new(9, 9)), Some(0));
+    /// assert_eq!(size.distance_from_border(&GridPosition2D::new(10, 10)), None);
+    /// ```
     fn distance_from_border(&self, position: &GridPosition2D) -> Option<u32> {
         if !self.is_position_valid(position) {
             return None;
@@ -75,11 +161,31 @@ impl GridSize<TwoDim> for GridSize2D {
         )
     }
 
+    /// Returns the center position of this [`GridSize2D`].
+    /// 
+    /// # Examples
+    /// ```
+    /// use grid_forge::common::GridSize;
+    /// use grid_forge::two_d::{GridSize2D, GridPosition2D};
+    /// 
+    /// let size = GridSize2D::new(10, 10);
+    /// assert_eq!(size.center(), GridPosition2D::new(5, 5));    
+    /// ```
     #[inline]
     fn center(&self) -> GridPosition2D {
         self.center
     }
 
+    /// Returns the maximum number of tiles that can be placed in this [`GridSize2D`].
+    /// 
+    /// # Examples
+    /// ```
+    /// use grid_forge::common::GridSize;
+    /// use grid_forge::two_d::GridSize2D;
+    /// 
+    /// let size = GridSize2D::new(10, 10);
+    /// assert_eq!(size.max_tile_count(), 100);
+    /// ```
     #[inline]
     fn max_tile_count(&self) -> usize {
         (self.x * self.y) as usize

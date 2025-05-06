@@ -316,21 +316,21 @@ impl<Tile: IdentifiableTileData>
         let check_provided: HashSet<_> = HashSet::from_iter(to_collapse.iter());
 
         for pos_to_collapse in to_collapse {
-            for (pos, neighbour_tile) in self.grid.get_neighbours(pos_to_collapse) {
-                if !neighbour_tile.is_collapsed()
-                    || check_provided.contains(&pos)
-                    || check_generated.contains(&pos)
+            for neighbour_tile in self.grid.get_neighbours(pos_to_collapse) { 
+                if !neighbour_tile.as_ref().is_collapsed()
+                    || check_provided.contains(&neighbour_tile.grid_position())
+                    || check_generated.contains(&neighbour_tile.grid_position())
                 {
                     continue;
                 }
-                check_generated.insert(pos);
-                let collapsed_idx = neighbour_tile.collapse_idx().unwrap();
+                check_generated.insert(neighbour_tile.grid_position());
+                let collapsed_idx = neighbour_tile.as_ref().collapse_idx().unwrap();
                 for opt_to_remove in cache.entry(collapsed_idx).or_insert_with(|| {
                     (0..self.option_data.option_count())
                         .filter(|option_idx| option_idx != &collapsed_idx)
                         .collect::<Vec<usize>>()
                 }) {
-                    out.push(PropagateItem::new(pos, *opt_to_remove))
+                    out.push(PropagateItem::new(neighbour_tile.grid_position(), *opt_to_remove))
                 }
             }
         }

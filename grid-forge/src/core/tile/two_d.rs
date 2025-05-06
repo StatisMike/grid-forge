@@ -1,4 +1,5 @@
 use crate::core::two_d::*;
+use crate::core::common::{Tile, TileContainer, TileData, TileMut, TileRef};
 
 pub struct Tile2D<Data: TileData>(pub GridPosition2D, pub Data);
 
@@ -11,6 +12,10 @@ impl<Data: TileData> Tile2D<Data> {
 impl<Data: TileData> Tile<TwoDim, Data> for Tile2D<Data> {
     fn into_data(self) -> Data {
         self.1
+    }
+
+    fn data(&self) -> &Data {
+        &self.1
     }
 }
 
@@ -64,6 +69,12 @@ impl<Data: TileData> AsRef<Data> for TileRef2D<'_, Data> {
     }
 }
 
+impl <'a, Data: TileData + 'a> TileRef<'a, TwoDim, Data> for TileRef2D<'a, Data> {
+    fn data(&self) -> &Data {
+        self.1
+    }
+}
+
 pub struct TileMut2D<'a, Data: TileData>(pub GridPosition2D, pub &'a mut Data);
 
 impl<'a, Data: TileData> TileMut2D<'a, Data> {
@@ -93,5 +104,11 @@ impl<Data: TileData> AsRef<Data> for TileMut2D<'_, Data> {
 impl<Data: TileData> AsMut<Data> for TileMut2D<'_, Data> {
     fn as_mut(&mut self) -> &mut Data {
         &mut self.1
+    }
+}
+
+impl <'a, Data: TileData + 'a> TileMut<'a, TwoDim, Data> for TileMut2D<'a, Data> {
+    fn data(&mut self) -> &mut Data {
+        self.1
     }
 }

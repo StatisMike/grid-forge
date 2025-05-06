@@ -4,7 +4,8 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 
 use image::{ImageBuffer, Luma, LumaA, Pixel, Rgb, Rgba};
 
-use crate::two_d::{GridPosition2D, GridPositionTrait, TileContainer, TileData, TwoDim};
+use crate::two_d::{GridPosition2D, TwoDim};
+use crate::common::{GridPosition, TileContainer, TileData};
 
 use self::error::VisError;
 
@@ -233,7 +234,7 @@ where
 mod test {
     use image::{ImageBuffer, Pixel, Rgb};
 
-    use crate::{core::two_d::*, vis::PixelWithDefault};
+    use crate::{core::two_d::*, vis::PixelWithDefault, common::TileData};
 
     use super::{read_tile, write_tile, DefaultVisPixel, VisTile, VisTileData};
 

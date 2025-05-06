@@ -8,10 +8,7 @@ use std::collections::HashSet;
 
 pub use error::*;
 
-use crate::{
-    core::common::{Dimensionality, Direction, GridMap, TileData},
-    two_d::GridSize,
-};
+use crate::core::common::{Dimensionality, Direction, GridMap, GridSize, TileData};
 
 /// Struct implementing the random walker algorithm, producing the collection of [GridPositions](`Dimensionality::Pos`).
 /// To be created with [`GridWalkerBuilder`].
@@ -75,7 +72,7 @@ where
         &self.walked
     }
 
-    /// Generate [GridMap2D] out of gathered [GridPosition].
+    /// Generate [GridMap] out of gathered [GridPosition].
     ///
     /// # Arguments
     ///

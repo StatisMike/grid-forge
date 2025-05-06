@@ -113,14 +113,14 @@ where
     Data: IdentifiableTileData,
 {
     fn analyze_tile_at_pos<G: GridMap<D, Data>>(&mut self, map: &G, pos: D::Pos) {
-        if let Some((pos, tile)) = map.get_tile_at_position(&pos) {
-            if !self.tiles.contains(&tile.tile_type_id()) {
-                self.tiles.push(tile.tile_type_id());
+        if let Some(tile) = map.get_tile_at_position(&pos) {
+            if !self.tiles.contains(&tile.as_ref().tile_type_id()) {
+                self.tiles.push(tile.as_ref().tile_type_id());
             }
 
             for dir in D::Dir::all() {
-                if let Some((_, neighbour)) = map.get_neighbour_at(&pos, dir) {
-                    self.adjacency_rules.add_adjacency(&tile, &neighbour, *dir)
+                if let Some(neighbour) = map.get_neighbour_at(&pos, dir) {
+                    self.adjacency_rules.add_adjacency(&tile.as_ref(), &neighbour.as_ref(), *dir)
                 }
             }
         }
@@ -238,8 +238,8 @@ where
             }
 
             for dir in D::Dir::all() {
-                if let Some((_, neighbour)) = map.get_neighbour_at(&pos, dir) {
-                    self.add_adjacency_raw(tile.tile_type_id(), neighbour.tile_type_id(), dir);
+                if let Some(neighbour) = map.get_neighbour_at(&pos, dir) {
+                    self.add_adjacency_raw(tile.tile_type_id(), neighbour.as_ref().tile_type_id(), dir);
                 }
             }
         }

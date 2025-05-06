@@ -10,11 +10,34 @@ pub(crate) mod common {
 
     use crate::core::common::*;
 
+    /// Collection of tiles in [`Dimensionality`] space.
+    /// 
+    /// Each kind of dimension has its own dedicated implementation of this trait,
+    /// as well as its associated classes.
     pub trait GridMap<D: Dimensionality, Data: TileData>: SealedGrid<Data, D> + Sized {
+
+        /// Type owning the tile data, retrieved or inserted into the [`GridMap`].
+        type Tile: Tile<D, Data>;
+        /// Reference to the tile data retrieved from the [`GridMap`].
+        type TileRef<'a>: TileRef<'a, D, Data> where Data: 'a, Self: 'a;
+        /// Mutable reference to the tile data retrieved from the [`GridMap`].
+        type TileMut<'a>: TileMut<'a, D, Data> where Data: 'a, Self: 'a;
+
+        /// Creates a new empty grid with the specified dimensions.
+        ///
+        /// All tile slots are initialized as empty. Use insertion methods to populate the grid.
         fn new(size: D::Size) -> Self;
 
+        /// Returns the size of the [`GridMap`].
         fn size(&self) -> &D::Size;
 
+        /// Gets a direct reference to data at a position if present and valid.
+        ///
+        /// # Returns
+        /// - `Some(&Data)` if position is valid and contains data
+        /// - `None` otherwise
+        ///
+        /// For a version that returns position+data together, see [`get_tile_at_position`](GridMap::get_tile_at_position).
         fn get_data_at_position(&self, position: &D::Pos) -> Option<&Data> {
             let size = self.size().clone();
             if !size.is_position_valid(position) {
@@ -23,7 +46,14 @@ pub(crate) mod common {
             unsafe { self.get_unchecked(size.offset(&position)).as_ref() }
         }
 
-        fn get_tile_at_position(&self, position: &D::Pos) -> Option<(D::Pos, &Data)> {
+        /// Gets an immutable tile reference containing both position and data.
+        ///
+        /// # Returns
+        /// - [`Some(TileRef)`](GridMap::TileRef) if position is valid and contains data
+        /// - `None` otherwise
+        ///
+        /// For direct data access without position, see [`get_data_at_position`](GridMap::get_data_at_position).
+        fn get_tile_at_position<'a>(&'a self, position: &D::Pos) -> Option<Self::TileRef<'a>> {
             let size = self.size().clone();
             if !size.is_position_valid(position) {
                 return None;
@@ -31,10 +61,17 @@ pub(crate) mod common {
             unsafe {
                 self.get_unchecked(size.offset(&position))
                     .as_ref()
-                    .map(|data| (*position, data))
+                    .map(|data| (*position, data).into())
             }
         }
 
+        /// Returns the direct mutable reference to the data stored at the position.
+        /// 
+        /// # Returns
+        /// - `Some(&mut Data)` if position is valid and contains data
+        /// - `None` otherwise
+        /// 
+        /// For a version that returns position+data together, see [`get_mut_tile_at_position`](GridMap::get_mut_tile_at_position).
         fn get_mut_data_at_position(&mut self, position: &D::Pos) -> Option<&mut Data> {
             let size = self.size().clone();
             if !size.is_position_valid(position) {
@@ -44,7 +81,14 @@ pub(crate) mod common {
             unsafe { self.get_unchecked_mut(offset).as_mut() }
         }
 
-        fn get_mut_tile_at_position(&mut self, position: &D::Pos) -> Option<(D::Pos, &mut Data)> {
+        /// Gets a mutable tile reference containing both position and data.
+        /// 
+        /// # Returns
+        /// - [`Some(TileMut)`](GridMap::TileMut) if position is valid and contains data
+        /// - `None` otherwise
+        /// 
+        /// For direct data access without position, see [`get_mut_data_at_position`](GridMap::get_mut_data_at_position).
+        fn get_mut_tile_at_position<'a>(&'a mut self, position: &D::Pos) -> Option<Self::TileMut<'a>> {
             if !self.size().is_position_valid(position) {
                 return None;
             }
@@ -52,20 +96,27 @@ pub(crate) mod common {
             unsafe {
                 self.get_unchecked_mut(offset)
                     .as_mut()
-                    .map(|data| (*position, data))
+                    .map(|data| (*position, data).into())
             }
         }
 
-        fn get_tiles_at_positions(&self, positions: &[D::Pos]) -> Vec<(D::Pos, &Data)> {
+        /// Gets mutliple immutable tile references containing both position and data.
+        ///
+        /// # Returns
+        /// `Vec` of [`TileRef`](GridMap::TileRef) for each provided position if all positions are valid and contain data
+        fn get_tiles_at_positions<'a>(&'a self, positions: &[D::Pos]) -> Vec<Self::TileRef<'a>> {
             positions
                 .iter()
                 .filter_map(|position| self.get_tile_at_position(position))
                 .collect::<Vec<_>>()
         }
 
-        fn insert_tile<T>(&mut self, tile: T) -> bool
-        where
-            T: Tile<D, Data>,
+        /// Inserts a [`Tile`](GridMap::Tile) into the grid using its stored position.
+        /// 
+        /// # Returns
+        /// - `true` if insertion succeeded (valid position)
+        /// - `false` if position is out of bounds
+        fn insert_tile(&mut self, tile: Self::Tile) -> bool
         {
             if !self.size().is_position_valid(&tile.grid_position()) {
                 return false;
@@ -77,6 +128,13 @@ pub(crate) mod common {
             true
         }
 
+        /// Inserts raw data at a specific position.
+        ///
+        /// See [`insert_tile`](GridMap::insert_tile) for version using tile type.
+        /// 
+        /// # Returns
+        /// - `true` if insertion succeeded (valid position)
+        /// - `false` if position is out of bounds
         fn insert_data(&mut self, position: &D::Pos, data: Data) -> bool {
             if !self.size().is_position_valid(position) {
                 return false;
@@ -88,9 +146,12 @@ pub(crate) mod common {
             true
         }
 
-        fn remove_tile_at_position<T>(&mut self, position: &D::Pos) -> Option<T>
-        where
-            T: Tile<D, Data>,
+        /// Removes and returns the tile at a position if present.
+        ///
+        /// # Returns
+        /// - [`Some(Tile)`](GridMap::Tile) if position was valid and contained data
+        /// - `None` otherwise
+        fn remove_tile_at_position(&mut self, position: &D::Pos) -> Option<Self::Tile>
         {
             if !self.size().is_position_valid(position) {
                 return None;
@@ -104,44 +165,59 @@ pub(crate) mod common {
             }
         }
 
-        fn get_neighbours(&self, position: &D::Pos) -> Vec<(D::Pos, &Data)> {
+        /// Retrieve all neigbours of the provided position.
+        ///
+        /// Returns the [`TileRef`](GridMap::TileRef) holding the data and position for each neighbour of the provided position.
+        fn get_neighbours<'a>(&'a self, position: &D::Pos) -> Vec<Self::TileRef<'a>> {
             let mut result = Vec::with_capacity(D::Dir::N);
             for direction in D::Dir::all() {
                 if let Some(pos) = direction.march_step(position, &self.size()) {
-                    result.push(self.get_tile_at_position(&pos).unwrap());
+                    if let Some(tile) = self.get_tile_at_position(&pos) {
+                        result.push(tile);
+                    }
                 }
             }
             result
         }
 
-        fn get_neighbour_at(
-            &self,
+        /// Retrieve neighbour in given [Direction] of the provided position.
+        /// 
+        /// Returns the [`TileRef`](GridMap::TileRef) holding the data or `None` if there is no data in neighbour position,
+        /// or neighbour position is outside of the grid size.
+        fn get_neighbour_at<'a>(
+            &'a self,
             position: &D::Pos,
             direction: &D::Dir,
-        ) -> Option<(D::Pos, &Data)> {
+        ) -> Option<Self::TileRef<'a>> {
             if let Some(position) = direction.march_step(position, &self.size()) {
                 return self.get_tile_at_position(&position);
             }
             None
         }
 
-        fn get_mut_neighbour_at(
-            &mut self,
+        /// Mutably retrieve neighbour in given [Direction] of the provided position.
+        /// 
+        /// Returns the [`TileMut`](GridMap::TileMut) holding the data or `None` if there is no data in neighbour position,
+        /// or neighbour position is outside of the grid size.
+        fn get_mut_neighbour_at<'a>(
+            &'a mut self,
             position: &D::Pos,
             direction: &D::Dir,
-        ) -> Option<(D::Pos, &mut Data)> {
+        ) -> Option<Self::TileMut<'a>> {
             if let Some(position) = direction.march_step(position, &self.size()) {
                 return self.get_mut_tile_at_position(&position);
             }
             None
         }
 
+        /// Returns all taken [positions](crate::core::common::GridPosition) in the [`GridMap`].
         fn get_all_positions(&self) -> Vec<D::Pos> {
             self.indexed_iter()
                 .filter_map(|(pos, t)| if t.is_some() { Some(pos) } else { None })
                 .collect()
         }
 
+        /// Returns iterator over all taken [positions](crate::core::common::GridPosition) in the [`GridMap`].
         fn iter_all_positions<'a>(&'a self) -> impl Iterator<Item = D::Pos>
         where
             Data: 'a,
@@ -150,12 +226,14 @@ pub(crate) mod common {
                 .filter_map(|(pos, t)| if t.is_some() { Some(pos) } else { None })
         }
 
+        /// Returns all empty [positions](crate::core::common::GridPosition) in the [`GridMap`].
         fn get_all_empty_positions(&self) -> Vec<D::Pos> {
             self.indexed_iter()
                 .filter_map(|(pos, t)| if t.is_none() { Some(pos) } else { None })
                 .collect()
         }
 
+        /// Returns iterator over all empty [positions](crate::core::common::GridPosition) in the [`GridMap`].
         fn iter_all_empty_positions<'a>(&'a self) -> impl Iterator<Item = D::Pos>
         where
             Data: 'a,
@@ -164,6 +242,11 @@ pub(crate) mod common {
                 .filter_map(|(pos, t)| if t.is_none() { Some(pos) } else { None })
         }
 
+        /// Returns iterator over all tile slots in the [`GridMap`].
+        /// 
+        /// For each position in the [`GridMap`] there is a slot, which can be either empty or filled with data.
+        /// 
+        /// To iterate over [`TileMut`](GridMap::TileMut) of all filled positions, use [`iter_mut_tiles`](GridMap::iter_mut_tiles).
         fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = &'a mut Option<Data>>
         where
             Data: 'a,
@@ -171,22 +254,35 @@ pub(crate) mod common {
             self.tiles_mut().iter_mut()
         }
 
-        fn iter_tiles<'a>(&'a self) -> impl Iterator<Item = (D::Pos, &'a Data)>
+        /// Returns iterator over all [`TileRef`](GridMap::TileRef) in the [`GridMap`].
+        fn iter_tiles<'a>(&'a self) -> impl Iterator<Item = Self::TileRef<'a>>
         where
             Data: 'a,
         {
             self.indexed_iter()
-                .filter_map(|(pos, data)| data.as_ref().map(|d| (pos, d)))
+                .filter_map(|(pos, data)| data.as_ref().map(|d| (pos, d).into()))
         }
 
-        fn iter_mut_tiles<'a>(&'a mut self) -> impl Iterator<Item = (D::Pos, &'a mut Data)>
+        /// Returns iterator over all [`TileMut`](GridMap::TileMut) in the [`GridMap`].
+        /// 
+        /// To iterate mutably over all tile slots, use [`iter_mut`](GridMap::iter_mut).
+        fn iter_mut_tiles<'a>(&'a mut self) -> impl Iterator<Item = Self::TileMut<'a>>
         where
             Data: 'a,
         {
             self.indexed_iter_mut()
-                .filter_map(|(pos, data)| data.as_mut().map(|d| (pos, d)))
+                .filter_map(|(pos, data)| data.as_mut().map(|d| (pos, d).into()))
         }
 
+        /// Returns iterator over all tile slots in the [`GridMap`] and their [position](crate::core::common::GridPosition).
+        /// 
+        /// For each position in the [`GridMap`] there is a slot, which can be either empty or filled with data.
+        /// This iterator returns both empty and filled slots.
+        /// 
+        /// # Other iterators:
+        /// - over slots and their positions mutably: [`indexed_iter_mut`](GridMap::indexed_iter_mut).
+        /// - over [`TileRef`](GridMap::TileRef) of all filled positions: [`iter_tiles`](GridMap::iter_tiles).
+        /// - over [`TileMut`](GridMap::TileMut) of all filled positions: [`iter_mut_tiles`](GridMap::iter_mut_tiles).
         fn indexed_iter<'a>(&'a self) -> impl Iterator<Item = (D::Pos, &'a Option<Data>)>
         where
             Data: 'a,
@@ -197,6 +293,15 @@ pub(crate) mod common {
                 .map(move |(idx, t)| (self.size().pos_from_offset(idx), t))
         }
 
+        /// Returns mutable iterator over all tile slots in the [`GridMap`] and their [position](crate::core::common::GridPosition).
+        /// 
+        /// For each position in the [`GridMap`] there is a slot, which can be either empty or filled with data.
+        /// This iterator returns both empty and filled slots, with mutable access to the slot.
+        /// 
+        /// # Other iterators:
+        /// - over slots and their positions: [`indexed_iter`](GridMap::indexed_iter).
+        /// - over [`TileRef`](GridMap::TileRef) of all filled positions: [`iter_tiles`](GridMap::iter_tiles).
+        /// - over [`TileMut`](GridMap::TileMut) of all filled positions: [`iter_mut_tiles`](GridMap::iter_mut_tiles).
         fn indexed_iter_mut<'a>(
             &'a mut self,
         ) -> impl Iterator<Item = (D::Pos, &'a mut Option<Data>)>
@@ -210,30 +315,38 @@ pub(crate) mod common {
                 .map(move |(idx, t)| (size.pos_from_offset(idx), t))
         }
 
-        fn drain_remapped(mut self, anchor_pos: D::Pos) -> Vec<(D::Pos, Data)> {
+        /// Drains all filled slots and returns them as a vec of [`Tile`](GridMap::Tile) with position shift.
+        /// 
+        /// The position of the tiles is shifted by the provided anchor position. Map is consumed
+        /// after the operation.
+        fn drain_remapped(mut self, anchor_pos: D::Pos) -> Vec<Self::Tile> {
             self.indexed_iter_mut()
                 .filter_map(|(pos, t)| {
                     if t.is_none() {
                         None
                     } else {
-                        Some((anchor_pos + pos, t.take().unwrap()))
+                        Some((anchor_pos + pos, t.take().unwrap()).into())
                     }
                 })
                 .collect()
         }
 
-        fn drain(mut self) -> Vec<(D::Pos, Data)> {
+        /// Drains all filled slots and returns them as a vec of [`Tile`](GridMap::Tile).
+        /// 
+        /// Map is consumed after the operation.
+        fn drain(mut self) -> Vec<Self::Tile> {
             self.indexed_iter_mut()
                 .filter_map(|(pos, t)| {
                     if t.is_none() {
                         None
                     } else {
-                        Some((pos, t.take().unwrap()))
+                        Some((pos, t.take().unwrap()).into())
                     }
                 })
                 .collect()
         }
 
+        /// Fills all empty slots using the provided function.
         fn fill_empty_using(&mut self, func: fn(D::Pos) -> Data) {
             for (pos, t) in self.indexed_iter_mut() {
                 if t.is_none() {
@@ -242,6 +355,7 @@ pub(crate) mod common {
             }
         }
 
+        /// Fills all empty slots with default value of the data.
         fn fill_empty_with_default(&mut self)
         where
             Data: Default,
@@ -252,6 +366,7 @@ pub(crate) mod common {
             }
         }
 
+        /// Fills all empty slots with clones of the provided data.
         fn fill_empty_with(&mut self, data: Data)
         where
             Data: Clone,
@@ -261,14 +376,18 @@ pub(crate) mod common {
             }
         }
 
-        fn get_remapped(&self, anchor_pos: D::Pos) -> Vec<(D::Pos, Data)>
+        /// Creates cloned tiles with positions offset by an anchor.
+        ///
+        /// The original grid remains intact. For moving tiles while consuming the grid,
+        /// see [`drain_remapped`](GridMap::drain_remapped).
+        fn get_remapped(&self, anchor_pos: D::Pos) -> Vec<Self::Tile>
         where
             Data: Clone,
         {
             self.indexed_iter()
                 .filter_map(|(pos, t)| {
                     if t.is_some() {
-                        Some((anchor_pos + pos, t.clone().unwrap()))
+                        Some((anchor_pos + pos, t.clone().unwrap()).into())
                     } else {
                         None
                     }
@@ -331,13 +450,13 @@ pub(crate) mod tests {
 
         let size = *grid.size();
         for pos in size.get_all_possible_positions() {
-            let (tile_pos, tile_data) = grid.get_tile_at_position(&pos).unwrap();
+            let tile = grid.get_tile_at_position(&pos).unwrap();
             assert_eq!(
-                tile_pos, pos,
+                tile.grid_position(), pos,
                 "wrong position on position: {pos:?}; simple access"
             );
             assert_eq!(
-                tile_data.offset,
+                tile.data().offset,
                 size.offset(&pos),
                 "wrong offset on position: {pos:?}; simple access"
             );
@@ -352,19 +471,19 @@ pub(crate) mod tests {
             );
         }
 
-        for (pos, tile) in grid.iter_tiles() {
+        for tile in grid.iter_tiles() {
             assert_eq!(
-                tile.offset,
-                size.offset(&pos),
-                "wrong varia on position: {pos:?}; iter access"
+                tile.data().offset,
+                size.offset(&tile.grid_position()),
+                "wrong varia on position: {:?}; iter access", tile.grid_position()
             );
         }
 
-        for (pos, tile) in grid.drain() {
+        for tile in grid.drain() {
             assert_eq!(
-                tile.offset,
-                size.offset(&pos),
-                "wrong offset on position: {pos:?}; drain access"
+                tile.data().offset,
+                size.offset(&tile.grid_position()),
+                "wrong offset on position: {:?}; drain access", tile.grid_position()
             );
         }
     }
@@ -379,8 +498,8 @@ pub(crate) mod tests {
 
         let size = *grid.size();
         for pos in size.get_all_possible_positions() {
-            let tile = grid.get_mut_tile_at_position(&pos).unwrap();
-            tile.1.varia = size.offset(&pos);
+            let mut tile = grid.get_mut_tile_at_position(&pos).unwrap();
+            tile.data().varia = size.offset(&pos);
         }
 
         for pos in size.get_all_possible_positions() {
@@ -398,11 +517,11 @@ pub(crate) mod tests {
             data.varia *= 2;
         }
 
-        for (pos, data) in grid.drain() {
+        for tile in grid.drain() {
             assert_eq!(
-                data.varia,
-                size.offset(&pos) * 2,
-                "wrong offset on position: {pos:?}"
+                tile.data().varia,
+                size.offset(&tile.grid_position()) * 2,
+                "wrong offset on position: {:?}", tile.grid_position()
             );
         }
     }
@@ -414,12 +533,12 @@ pub(crate) mod tests {
         set_up_grid::<D>(&mut grid);
 
         let size = *grid.size();
-        for (remapped_pos, data) in grid.drain_remapped(remap_pos) {
-            let original_pos = size.pos_from_offset(data.offset);
+        for tile in grid.drain_remapped(remap_pos) {
+            let original_pos = size.pos_from_offset(tile.data().offset);
             assert_eq!(
-                remapped_pos,
+                tile.grid_position(),
                 original_pos + remap_pos,
-                "wrong position on remapped position: {remapped_pos:?};"
+                "wrong position on remapped position: {:?};", tile.grid_position()
             );
         }
     }
@@ -448,12 +567,12 @@ pub(crate) mod tests {
         {
             let actual = grid.get_neighbour_at(pos, direction);
             match (actual, expected) {
-                (Some((neighbour_pos, data)), Some(expected_pos)) => {
-                    assert_eq!(neighbour_pos, *expected_pos, "wrong neighbour at position: {pos:?}; direction: {direction:?}. Case: {i}, Size: {size:?}");
-                    assert_eq!(data.offset, size.offset(&neighbour_pos), "wrong offset on position: {pos:?}; direction: {direction:?}. Case: {i}, Size: {size:?}");
+                (Some(neighbour), Some(expected_pos)) => {
+                    assert_eq!(neighbour.grid_position(), *expected_pos, "wrong neighbour at position: {pos:?}; direction: {direction:?}. Case: {i}, Size: {size:?}");
+                    assert_eq!(neighbour.data().offset, size.offset(&neighbour.grid_position()), "wrong offset on position: {pos:?}; direction: {direction:?}. Case: {i}, Size: {size:?}");
                 },
-                (Some((neighbour_pos, _)), None) =>
-                    panic!("neigbour at position: {pos:?}; direction: {direction:?} should be None, but is: {neighbour_pos:?}. Case: {i}, Size: {size:?}"),
+                (Some(neighbour), None) =>
+                    panic!("neigbour at position: {pos:?}; direction: {direction:?} should be None, but is: {neighbour_pos:?}. Case: {i}, Size: {size:?}", neighbour_pos = neighbour.grid_position()),
                 (None, Some(expected_pos)) =>
                     panic!("neigbour at position: {pos:?}; direction: {direction:?} should be {expected_pos:?}, but is None. Case: {i}, Size: {size:?}"),
                 (None, None) => {}
@@ -479,13 +598,13 @@ pub(crate) mod tests {
 
             let unmatched = actual
                 .iter()
-                .map(|tile| tile.0)
+                .map(|tile| tile.grid_position())
                 .filter(|p| !expected.contains(p))
                 .collect::<Vec<_>>();
 
             let missing = expected
                 .iter()
-                .filter(|p| !actual.iter().any(|tile| tile.0 == **p))
+                .filter(|p| !actual.iter().any(|tile| tile.grid_position() == **p))
                 .collect::<Vec<_>>();
 
             if !unmatched.is_empty() {

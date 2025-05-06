@@ -1,6 +1,7 @@
 use crate::{
     core::three_d::*,
-    two_d::{GridPosition2D, GridSize2D, Tile2D},
+    core::two_d::{GridPosition2D, GridSize2D, Tile2D},
+    core::common::*,
 };
 
 use super::{private::*, two_d::GridMap2D};
@@ -33,6 +34,11 @@ impl<Data: TileData> SealedGrid<Data, ThreeDim> for GridMap3D<Data> {
 }
 
 impl<Data: TileData> GridMap<ThreeDim, Data> for GridMap3D<Data> {
+
+    type Tile = Tile3D<Data>;
+    type TileRef<'a> = TileRef3D<'a, Data> where Data: 'a;
+    type TileMut<'a> = TileMut3D<'a, Data> where Data: 'a;
+
     fn new(size: GridSize3D) -> Self {
         let count = size.max_tile_count();
         let mut tiles = Vec::with_capacity(count);
@@ -57,7 +63,7 @@ impl<Data: TileData> GridMap3D<Data> {
         layer
             .drain()
             .into_iter()
-            .map(|(pos, data)| (GridPosition3D::new(pos.x(), pos.y(), z), data))
+            .map(|tile| (GridPosition3D::new(tile.grid_position().x(), tile.grid_position().y(), z), tile.into_data()))
             .for_each(|(pos, data)| {
                 self.insert_tile(Tile3D::new(pos, data));
             });
@@ -81,4 +87,80 @@ impl<Data: TileData> GridMap3D<Data> {
         }
         out
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::core::map::tests::*;
+    use crate::three_d::*;
+
+    #[test]
+    fn test_3d_grid_read_access() {
+        test_grid_read_access::<3, ThreeDim, GridMap3D<TestData<ThreeDim>>>();
+    }
+
+    #[test]
+    fn test_3d_grid_write_access() {
+        test_grid_write_access::<3, ThreeDim, GridMap3D<TestData<ThreeDim>>>();
+    }
+
+    #[test]
+    fn test_3d_remapped() {
+        test_remapped::<3, ThreeDim, GridMap3D<TestData<ThreeDim>>>(GridPosition3D::new(5, 5, 5));
+    }
+
+    #[test]
+    fn test_3d_neighbours() {
+        test_neighbours::<ThreeDim, GridMap3D<TestData<ThreeDim>>>(
+            GridSize3D::new(10, 10, 10),
+            &[
+                NeighbourTestCase {
+                    pos: GridPosition3D::new(0, 0, 0),
+                    direction: Direction3D::Down,
+                    expected: Some(GridPosition3D::new(0, 1, 0)),
+                },
+                NeighbourTestCase {
+                    pos: GridPosition3D::new(0, 0, 0),
+                    direction: Direction3D::Left,
+                    expected: None,
+                },
+                NeighbourTestCase {
+                    pos: GridPosition3D::new(9, 9, 9),
+                    direction: Direction3D::Up,
+                    expected: Some(GridPosition3D::new(9, 8, 9)),
+                },
+                NeighbourTestCase {
+                    pos: GridPosition3D::new(9, 9, 9),
+                    direction: Direction3D::Right,
+                    expected: None,
+                },
+            ],
+        );
+    }
+
+    // #[test]
+    // fn test_3d_all_neighbours() {
+    //     test_all_neighbours::<TwoDim, GridMap2D<TestData<TwoDim>>>(
+    //         GridSize2D::new(10, 10),
+    //         &[
+    //             AllNeighboursTestCase {
+    //                 pos: GridPosition2D::new(0, 0),
+    //                 expected: vec![GridPosition2D::new(0, 1), GridPosition2D::new(1, 0)],
+    //             },
+    //             AllNeighboursTestCase {
+    //                 pos: GridPosition2D::new(5, 5),
+    //                 expected: vec![
+    //                     GridPosition2D::new(4, 5),
+    //                     GridPosition2D::new(5, 4),
+    //                     GridPosition2D::new(6, 5),
+    //                     GridPosition2D::new(5, 6),
+    //                 ],
+    //             },
+    //             AllNeighboursTestCase {
+    //                 pos: GridPosition2D::new(9, 9),
+    //                 expected: vec![GridPosition2D::new(8, 9), GridPosition2D::new(9, 8)],
+    //             },
+    //         ],
+    //     );
+    // }
 }

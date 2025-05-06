@@ -1,7 +1,11 @@
-use crate::core::two_d::*;
+use crate::two_d::*;
+use crate::core::common::*;
 
 use super::private::*;
 
+/// [`GridMap`] in [`TwoDim`] dimensionality.
+/// 
+/// 
 pub struct GridMap2D<Data: TileData> {
     size: GridSize2D,
     tiles: Vec<Option<Data>>,
@@ -28,6 +32,11 @@ impl<Data: TileData> SealedGrid<Data, TwoDim> for GridMap2D<Data> {
 }
 
 impl<Data: TileData> GridMap<TwoDim, Data> for GridMap2D<Data> {
+
+    type Tile = Tile2D<Data>;
+    type TileRef<'a> = TileRef2D<'a, Data> where Data: 'a;
+    type TileMut<'a> = TileMut2D<'a, Data> where Data: 'a;
+
     fn new(size: GridSize2D) -> Self {
         let count = size.max_tile_count();
         let mut tiles = Vec::with_capacity(count);

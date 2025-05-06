@@ -221,17 +221,14 @@ pub mod gen;
 
 pub mod id;
 
-pub mod common {
-    pub use crate::core::common::*;
-}
+pub mod common;
 
-pub mod two_d {
-    pub use crate::core::two_d::*;
-}
+#[doc(inline)]
+pub use core::two_d;
 
-pub mod three_d {
-    pub use crate::core::three_d::*;
-}
+#[doc(inline)]
+pub use core::three_d;
+
 
 // pub use map::*;
 // pub use tile::*;

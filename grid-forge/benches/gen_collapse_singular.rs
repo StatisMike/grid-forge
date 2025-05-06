@@ -2,6 +2,7 @@ mod utils;
 
 use std::time::Duration;
 
+use grid_forge::common::GridSize as _;
 use grid_forge::r#gen::collapse::singular::analyzer::{
     Analyzer, BorderAnalyzer, FrequencyHints, IdentityAnalyzer,
 };

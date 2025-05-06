@@ -110,9 +110,9 @@ where
 
         // Progress with collapse.
         while let Some(collapse_position) = queue.get_next_position() {
-            let (_, to_collapse) = grid
+            let to_collapse = grid
                 ._grid_mut()
-                .get_mut_tile_at_position(&collapse_position)
+                .get_mut_data_at_position(&collapse_position)
                 .unwrap();
             // skip collapsed;
             if to_collapse.is_collapsed() {
@@ -179,9 +179,9 @@ where
 
         // Progress with collapse.
         while let Some(collapse_position) = queue.get_next_position() {
-            let (_, to_collapse) = grid
+            let to_collapse = grid
                 ._grid()
-                .get_tile_at_position(&collapse_position)
+                .get_data_at_position(&collapse_position)
                 .unwrap();
             // skip collapsed;
             if to_collapse.is_collapsed() {

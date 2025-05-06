@@ -41,17 +41,17 @@ where
     fn retrieve_collapsed(&self) -> D::CollapsedGrid {
         let mut out = D::CollapsedGrid::new(self._grid().size());
 
-        for (pos, data) in self._grid().iter_tiles() {
-            if !data.is_collapsed() {
+        for tile in self._grid().iter_tiles() {
+            if !tile.data().is_collapsed() {
                 continue;
             }
 
             out.insert_data(
-                &pos,
+                &tile.grid_position(),
                 CollapsedTileData::new(
                     self._option_data()
                         .get_tile_type_id(
-                            &data
+                            &tile.data()
                                 .collapse_idx()
                                 .expect("cannot get `collapse_idx` for uncollapsed tile"),
                         )
@@ -69,16 +69,16 @@ where
     ) -> Result<OG, CollapsibleGridError<D>> {
         let mut out = OG::new(*self._grid().size());
 
-        for (pos, data) in self._grid().iter_tiles() {
-            if !data.is_collapsed() {
+        for tile in self._grid().iter_tiles() {
+            if !tile.data().is_collapsed() {
                 continue;
             }
             out.insert_data(
-                &pos,
+                &tile.grid_position(),
                 builder.build_tile_unchecked(
                     self._option_data()
                         .get_tile_type_id(
-                            &data
+                            &tile.data()
                                 .collapse_idx()
                                 .expect("cannot get `collapse_idx` for uncollapsed tile"),
                         )
@@ -96,16 +96,16 @@ where
     {
         let mut out = OG::new(*self._grid().size());
 
-        for (pos, data) in self._grid().iter_tiles() {
-            if !data.is_collapsed() {
+        for tile in self._grid().iter_tiles() {
+            if !tile.data().is_collapsed() {
                 continue;
             }
             out.insert_data(
-                &pos,
+                &tile.grid_position(),
                 IT::tile_type_default(
                     self._option_data()
                         .get_tile_type_id(
-                            &data
+                            &tile.data()
                                 .collapse_idx()
                                 .expect("cannot get `collapse_idx` for uncollapsed tile"),
                         )
@@ -124,14 +124,21 @@ where
 
     /// Returns all possitions in the internal grid holds collapsed or uncollapsed tiles are either collapsed.
     fn retrieve_positions(&self, collapsed: bool) -> Vec<D::Pos> {
-        let func: fn((D::Pos, &Self::CollapsibleData)) -> bool = if collapsed {
-            |(_, d)| d.is_collapsed()
+        let func: fn(&Self::CollapsibleData) -> bool = if collapsed {
+            |d| d.is_collapsed()
         } else {
-            |(_, d)| !d.is_collapsed()
+            |d| !d.is_collapsed()
         };
         self._grid()
-            .iter_tiles()
-            .filter_map(|t| if func(t) { Some(t.0) } else { None })
+            .indexed_iter()
+            .filter_map(|t| {
+                if let Some(d) = t.1 {
+                    if func(d) {
+                        return Some(t.0);
+                    }
+                }
+                None
+            })
             .collect()
     }
 
@@ -179,21 +186,21 @@ pub(crate) mod private {
             let check_provided: HashSet<_> = HashSet::from_iter(to_collapse.iter());
 
             for pos_to_collapse in to_collapse {
-                for (pos, neighbour_tile) in self._grid().get_neighbours(pos_to_collapse) {
-                    if !neighbour_tile.is_collapsed()
-                        || check_provided.contains(&pos)
-                        || check_generated.contains(&pos)
+                for neighbour_tile in self._grid().get_neighbours(pos_to_collapse) {
+                    if !neighbour_tile.as_ref().is_collapsed()
+                        || check_provided.contains(&neighbour_tile.grid_position())
+                        || check_generated.contains(&neighbour_tile.grid_position())
                     {
                         continue;
                     }
-                    check_generated.insert(pos);
-                    let collapsed_idx = neighbour_tile.collapse_idx().unwrap();
+                    check_generated.insert(neighbour_tile.grid_position());
+                    let collapsed_idx = neighbour_tile.as_ref().collapse_idx().unwrap();
                     for opt_to_remove in cache.entry(collapsed_idx).or_insert_with(|| {
                         (0..self._option_data().option_count())
                             .filter(|option_idx| option_idx != &collapsed_idx)
                             .collect::<Vec<usize>>()
                     }) {
-                        out.push(PropagateItem::new(pos, *opt_to_remove))
+                        out.push(PropagateItem::new(neighbour_tile.grid_position(), *opt_to_remove))
                     }
                 }
             }
@@ -208,21 +215,21 @@ pub(crate) mod private {
             option_data: &D::PerOptionData,
         ) {
             for direction in D::Dir::all() {
-                if let Some((_, tile)) = grid.get_mut_neighbour_at(collapsed_position, direction) {
-                    if tile.is_collapsed() {
+                if let Some(mut tile) = grid.get_mut_neighbour_at(collapsed_position, direction) {
+                    if tile.as_ref().is_collapsed() {
                         continue;
                     }
 
                     let enabled =
                         option_data.get_all_enabled_in_direction(collapsed_option, *direction);
                     for possible_option in
-                        tile.ways_to_be_option().iter_possible().collect::<Vec<_>>()
+                        tile.as_ref().ways_to_be_option().iter_possible().collect::<Vec<_>>()
                     {
                         if !enabled.contains(&possible_option)
-                            && tile.mut_ways_to_be_option().purge_option(possible_option)
+                            && tile.as_mut().mut_ways_to_be_option().purge_option(possible_option)
                         {
                             let weights = option_data.get_weights(possible_option);
-                            tile.remove_option(weights);
+                            tile.as_mut().remove_option(weights);
                         }
                     }
                 }
@@ -240,8 +247,8 @@ pub(crate) mod private {
             possible_options.resize(num_options, true);
 
             for direction in D::Dir::all() {
-                if let Some((_, tile)) = grid.get_neighbour_at(position, direction) {
-                    if let Some(collapsed_idx) = tile.collapse_idx() {
+                if let Some(tile) = grid.get_neighbour_at(position, direction) {
+                    if let Some(collapsed_idx) = tile.as_ref().collapse_idx() {
                         let enabled = option_data
                             .get_all_enabled_in_direction(collapsed_idx, direction.opposite());
                         for (option_idx, state) in possible_options.iter_mut().enumerate() {
@@ -249,9 +256,9 @@ pub(crate) mod private {
                                 *state = false;
                             }
                         }
-                    } else if tile.num_compatible_options() < option_data.possible_options_count() {
+                    } else if tile.as_ref().num_compatible_options() < option_data.possible_options_count() {
                         let mut possible_in_any: HashSet<usize> = HashSet::new();
-                        for neigbour_idx in tile.ways_to_be_option().iter_possible() {
+                        for neigbour_idx in tile.as_ref().ways_to_be_option().iter_possible() {
                             possible_in_any.extend(
                                 option_data
                                     .get_all_enabled_in_direction(
@@ -274,7 +281,7 @@ pub(crate) mod private {
                 return false;
             }
 
-            let (_, tile) = grid.get_mut_tile_at_position(position).unwrap();
+            let tile = grid.get_mut_data_at_position(position).unwrap();
             for (possible, (option_idx, weights)) in
                 possible_options.iter().zip(option_data.iter_weights())
             {

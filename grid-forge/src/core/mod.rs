@@ -21,9 +21,9 @@ pub(crate) mod common {
     pub use crate::core::size::common::*;
     pub use crate::core::tile::common::*;
 
-    /// Trait declaring the number of dimensions in the space of the grid.
+    /// Trait declaring the dimensionality of the grid.
     pub trait Dimensionality:
-        super::private::Sealed + 'static + Debug + Clone + Copy + Default
+        super::private::Sealed + 'static + Debug + Clone + Copy
     {
         /// Number of dimensions
         const N: usize;
@@ -35,67 +35,12 @@ pub(crate) mod common {
         type Size: GridSize<Self>;
 
         /// Position of the tile in the grid
-        type Pos: GridPositionTrait<Self>;
+        type Pos: GridPosition<Self>;
     }
 }
 
-pub(crate) mod two_d {
-    pub use super::common::*;
-
-    pub use crate::core::direction::two_d::*;
-    pub use crate::core::map::two_d::*;
-    pub use crate::core::position::two_d::*;
-    pub use crate::core::size::two_d::*;
-    pub use crate::core::tile::two_d::*;
-
-    /// [Dimensionality] for basic 2D rectangular grid.
-    ///
-    /// Its main types are:
-    /// - [Direction2D] as [Dimensionality::Dir].
-    /// - [GridSize2D] as [Dimensionality::Size].
-    /// - [GridPosition2D] as [Dimensionality::Pos].
-    ///
-    #[derive(Debug, Copy, Clone, Default)]
-    pub struct TwoDim {}
-    impl super::private::Sealed for TwoDim {}
-
-    impl Dimensionality for TwoDim {
-        const N: usize = 2;
-
-        type Dir = Direction2D;
-        type Size = GridSize2D;
-        type Pos = GridPosition2D;
-    }
-}
-
-pub(crate) mod three_d {
-    pub use super::common::*;
-
-    pub use crate::core::direction::three_d::*;
-    pub use crate::core::map::three_d::*;
-    pub use crate::core::position::three_d::*;
-    pub use crate::core::size::three_d::*;
-    pub use crate::core::tile::three_d::*;
-
-    /// [Dimensionality] for basic 3D rectangular grid.
-    ///
-    /// Its main types are:
-    /// - [Direction3D] as [Dimensionality::Dir].
-    /// - [GridSize3D] as [Dimensionality::Size].
-    /// - [GridPosition3D] as [Dimensionality::Pos].
-    ///
-    #[derive(Debug, Copy, Clone, Default)]
-    pub struct ThreeDim {}
-    impl super::private::Sealed for ThreeDim {}
-
-    impl Dimensionality for ThreeDim {
-        const N: usize = 3;
-
-        type Dir = Direction3D;
-        type Size = GridSize3D;
-        type Pos = GridPosition3D;
-    }
-}
+pub mod two_d;
+pub mod three_d;
 
 mod private {
     pub trait Sealed {}

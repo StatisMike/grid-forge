@@ -12,7 +12,10 @@ pub(crate) mod common {
 
     use super::private;
 
-    pub trait GridPositionTrait<D>
+    /// Position of the tile in the grid.
+    /// 
+    /// Used by [`GridMap`] to keep track of the position of the tile.
+    pub trait GridPosition<D>
     where
         D: Dimensionality + ?Sized,
         Self: private::Sealed
@@ -86,8 +89,41 @@ pub(crate) mod common {
             true
         }
 
+        /// Generates all possible positions in the area between two positions.
         fn generate_rect_area(a: &Self, b: &Self) -> Vec<Self>;
 
+        /// Filters out the provided positions from the provided vector.
+        /// 
+        /// # Arguments
+        /// - `pos` - vector to filter out the positions from.
+        /// - `to_filter` - positions to filter out.
+        /// 
+        /// # Example
+        /// ```
+        /// use grid_forge::{common::GridPosition, two_d::GridPosition2D};
+        /// 
+        /// let mut positions = vec![
+        ///     GridPosition2D::new(0, 0),
+        ///     GridPosition2D::new(1, 0),
+        ///     GridPosition2D::new(2, 0),
+        ///     GridPosition2D::new(3, 0),
+        ///     GridPosition2D::new(4, 0),
+        /// ];
+        /// 
+        /// let to_filter = vec![
+        ///     GridPosition2D::new(1, 0),
+        ///     GridPosition2D::new(0, 1),
+        /// ];
+        ///
+        /// GridPosition2D::filter_positions(&mut positions, &to_filter);
+        /// 
+        /// assert_eq!(positions, vec![
+        ///     GridPosition2D::new(0, 0),
+        ///     GridPosition2D::new(2, 0),
+        ///     GridPosition2D::new(3, 0),
+        ///     GridPosition2D::new(4, 0),
+        /// ]);
+        /// ```
         fn filter_positions(pos: &mut Vec<Self>, to_filter: &[Self]) {
             pos.retain(|p| !to_filter.contains(p));
         }

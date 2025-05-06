@@ -5,7 +5,9 @@ use std::ops::AddAssign;
 use std::ops::Sub;
 
 use crate::core::three_d::*;
+use crate::core::common::{GridPosition, Dimensionality};
 
+/// Position of the tile in 3D rectangular grid.
 #[derive(Debug, Copy, Clone)]
 pub struct GridPosition3D {
     x: u32,
@@ -14,7 +16,7 @@ pub struct GridPosition3D {
 }
 impl super::private::Sealed for GridPosition3D {}
 
-impl GridPositionTrait<ThreeDim> for GridPosition3D {
+impl GridPosition<ThreeDim> for GridPosition3D {
     type Coords = [u32; 3];
 
     #[inline]

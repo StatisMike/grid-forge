@@ -1,5 +1,6 @@
 //! Shows the usage of Random Walker generative algorithm.
 
+use grid_forge::common::{GridMap as _, GridSize as _, TileData};
 use grid_forge::two_d::*;
 use grid_forge::vis::ops::{init_map_image_buffer, write_gridmap_vis};
 use grid_forge::vis::{DefaultVisPixel, VisTileData};

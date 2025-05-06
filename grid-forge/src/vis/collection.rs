@@ -3,6 +3,8 @@ use std::collections::HashMap;
 
 use image::{ImageBuffer, Pixel};
 
+use crate::common::GridMap;
+use crate::common::TileContainer;
 use crate::id::*;
 use crate::two_d::*;
 

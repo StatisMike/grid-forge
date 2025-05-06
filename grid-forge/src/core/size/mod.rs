@@ -8,25 +8,59 @@ pub(crate) mod common {
 
     use super::private;
 
+    /// Size of the grid in given [Dimensionality](crate::core::common::Dimensionality).
+    /// 
+    /// It creates bounds for the [`GridMap`], provides it with most of the computational methods to work with positions.
     pub trait GridSize<D: Dimensionality + ?Sized>: private::Sealed + Clone + Copy + Debug {
+
+        /// Creates a new [`GridSize`] from a slice of coordinates.
+        /// 
+        /// # Panics
+        /// Panics if the length of the slice is not equal to the [Dimensionality::N] of the space.
         fn from_slice(slice: &[u32]) -> Self;
 
+        /// Checks if the position is valid for the grid.
+        ///
+        /// Position is valid if it could be contained within the [GridMap] of given [GridSize].
         fn is_position_valid(&self, position: &D::Pos) -> bool;
 
+        /// Checks if it could be contained within other [`GridSize`].
+        /// 
+        /// Return `true` if the size is smaller or equal to the other size.
         fn is_contained_within(&self, other: &Self) -> bool;
 
+        /// Returns all possible [`GridPosition`] in the [`GridMap`] of this [`GridSize`].
         fn get_all_possible_positions(&self) -> Vec<D::Pos>;
 
+        /// Checks the distance from the border of the [`GridMap`] of this [`GridSize`].
+        /// 
+        /// Returns `None` if the position is not valid for the grid.
         fn distance_from_border(&self, position: &D::Pos) -> Option<u32>;
 
         fn distance_from_center(&self, position: &D::Pos) -> Option<u32>;
 
+        /// Returns the center [`GridPosition`] of the [`GridMap`] of this [`GridSize`].
+        /// 
+        /// If the size is even in any dimension, the coordinate will be rounded down.
         fn center(&self) -> D::Pos;
 
+        /// Returns the maximum number of tiles in the [`GridMap`] of this [`GridSize`].
         fn max_tile_count(&self) -> usize;
 
+        /// Returns the offset of the [`GridPosition`] in the [`GridMap`] of this [`GridSize`].
+        /// 
+        /// It is mostly implementation detail - it is used for calculating the offset of the tile in the 
+        /// internal container of the map.
+        /// 
+        /// See also [`pos_from_offset()`](GridSize::pos_from_offset).
         fn offset(&self, pos: &D::Pos) -> usize;
 
+        /// Returns the [`GridPosition`] from the offset in the [`GridMap`] of this [`GridSize`].
+        /// 
+        /// It is mostly implementation detail - it is used for calculating the position from the offset
+        /// of the tile in the internal container of the map.
+        /// 
+        /// See also [`offset()`](GridSize::offset).
         fn pos_from_offset(&self, offset: usize) -> D::Pos;
     }
 }

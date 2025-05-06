@@ -1,7 +1,7 @@
 use crate::core::common::Dimensionality;
 
 use super::{common::CollapseBounds, queue::PositionQueueProcession};
-use crate::core::common::GridPositionTrait;
+use crate::core::common::GridPosition;
 
 mod three_d;
 mod two_d;

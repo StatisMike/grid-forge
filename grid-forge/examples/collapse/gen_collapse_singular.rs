@@ -1,15 +1,13 @@
 use std::fs::File;
 
 use grid_forge::{
-    r#gen::collapse::{
+    common::{GridMap as _, GridSize as _}, r#gen::collapse::{
         grid::{CollapsedGrid, CollapsibleGrid}, queue::position::PositionQueue, singular::{
             analyzer::{Analyzer, BorderAnalyzer, FrequencyHints, IdentityAnalyzer},
             resolver::Resolver,
             subscriber::DebugSubscriber, CollapsibleTileGrid,
         }, two_d::CollapsibleTileGrid2D
-    },
-    two_d::{GridMap, GridSize, GridSize2D},
-    vis::collection::VisCollection,
+    }, two_d::GridSize2D, vis::collection::VisCollection
 };
 use rand_chacha::ChaChaRng;
 use utils::{ArgHelper, GifSingleSubscriber, RngHelper, VisGridLoaderHelper, VisRotate};

@@ -4,6 +4,8 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 
 use image::{ImageBuffer, Pixel};
 
+use crate::common::GridMap;
+use crate::common::GridSize;
 use crate::id::*;
 use crate::two_d::*;
 

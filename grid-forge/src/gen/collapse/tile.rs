@@ -1,5 +1,5 @@
+use crate::common::*;
 use crate::id::*;
-use crate::two_d::*;
 
 use super::private::CollapseBounds;
 
