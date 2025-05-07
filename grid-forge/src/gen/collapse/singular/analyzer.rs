@@ -11,7 +11,7 @@ use crate::id::*;
 pub trait Analyzer<D, Data, Grid>
 where
     D: Dimensionality,
-    Data: IdentifiableTileData,
+    Data: TypedData,
     Grid: GridMap<D, Data>,
 {
     /// Retrieves the adjacency rules.
@@ -27,7 +27,7 @@ where
 pub struct AdjacencyRules<D, Data>
 where
     D: Dimensionality,
-    Data: IdentifiableTileData,
+    Data: TypedData,
 {
     inner: AdjacencyTable<D>,
     id_type: PhantomData<Data>,
@@ -36,7 +36,7 @@ where
 impl<D, Data> Clone for AdjacencyRules<D, Data>
 where
     D: Dimensionality,
-    Data: IdentifiableTileData,
+    Data: TypedData,
 {
     fn clone(&self) -> Self {
         Self {
@@ -49,7 +49,7 @@ where
 impl<D, Data> Default for AdjacencyRules<D, Data>
 where
     D: Dimensionality,
-    Data: IdentifiableTileData,
+    Data: TypedData,
 {
     fn default() -> Self {
         Self {
@@ -62,7 +62,7 @@ where
 impl<D, Data> AdjacencyRules<D, Data>
 where
     D: Dimensionality,
-    Data: IdentifiableTileData,
+    Data: TypedData,
 {
     /// Method for manual addition of the adjacency between two tiles.
     ///
@@ -88,7 +88,7 @@ where
 pub struct IdentityAnalyzer<D, Data>
 where
     D: Dimensionality,
-    Data: IdentifiableTileData,
+    Data: TypedData,
 {
     tiles: Vec<u64>,
     adjacency_rules: AdjacencyRules<D, Data>,
@@ -97,7 +97,7 @@ where
 impl<D, Data> Default for IdentityAnalyzer<D, Data>
 where
     D: Dimensionality,
-    Data: IdentifiableTileData,
+    Data: TypedData,
 {
     fn default() -> Self {
         Self {
@@ -110,7 +110,7 @@ where
 impl<D, Data> IdentityAnalyzer<D, Data>
 where
     D: Dimensionality,
-    Data: IdentifiableTileData,
+    Data: TypedData,
 {
     fn analyze_tile_at_pos<G: GridMap<D, Data>>(&mut self, map: &G, pos: D::Pos) {
         if let Some(tile) = map.get_tile_at_position(&pos) {
@@ -134,7 +134,7 @@ where
 impl<D, Data, Grid> Analyzer<D, Data, Grid> for IdentityAnalyzer<D, Data>
 where
     D: Dimensionality,
-    Data: IdentifiableTileData,
+    Data: TypedData,
     Grid: GridMap<D, Data>,
 {
     fn analyze(&mut self, map: &Grid) {
@@ -162,7 +162,7 @@ where
 pub struct BorderAnalyzer<D, Data, Grid>
 where
     D: Dimensionality + BorderAdjacencySelector<D, Data, Grid>,
-    Data: IdentifiableTileData,
+    Data: TypedData,
     Grid: GridMap<D, Data>,
 {
     tiles: Vec<u64>,
@@ -177,7 +177,7 @@ where
 impl<D, Data, Grid> Default for BorderAnalyzer<D, Data, Grid>
 where
     D: Dimensionality + BorderAdjacencySelector<D, Data, Grid>,
-    Data: IdentifiableTileData,
+    Data: TypedData,
     Grid: GridMap<D, Data>,
 {
     fn default() -> Self {
@@ -194,7 +194,7 @@ where
 impl<D, Data, Grid> Analyzer<D, Data, Grid> for BorderAnalyzer<D, Data, Grid>
 where
     D: Dimensionality + BorderAdjacencySelector<D, Data, Grid>,
-    Data: IdentifiableTileData,
+    Data: TypedData,
     Grid: GridMap<D, Data>,
 {
     fn analyze(&mut self, map: &Grid) {
@@ -217,7 +217,7 @@ where
 impl<D, Data, Grid> BorderAnalyzer<D, Data, Grid>
 where
     D: Dimensionality + BorderAdjacencySelector<D, Data, Grid>,
-    Data: IdentifiableTileData,
+    Data: TypedData,
     Grid: GridMap<D, Data>,
 {
     /// Manually add adjacency between two tiles.
@@ -362,7 +362,7 @@ where
 // Common trait definition
 pub trait TileBordersAdjacency<
     D: Dimensionality,
-    Data: IdentifiableTileData,
+    Data: TypedData,
     Grid: GridMap<D, Data>,
 >: Default
 {
@@ -384,7 +384,7 @@ pub(crate) mod two_d {
     #[derive(Debug, Clone)]
     pub struct TileBordersAdjacency2D<Data>
     where
-        Data: IdentifiableTileData,
+        Data: TypedData,
     {
         borders: [Option<u64>; 4], // 4 directions in 2D
         phantom: PhantomData<Data>,
@@ -392,7 +392,7 @@ pub(crate) mod two_d {
 
     impl<Data> TileBordersAdjacency<TwoDim, Data, GridMap2D<Data>> for TileBordersAdjacency2D<Data>
     where
-        Data: IdentifiableTileData,
+        Data: TypedData,
     {
         fn set_at_dir(&mut self, dir: &Direction2D, border_id: u64) {
             self.borders[dir.as_idx()] = Some(border_id);
@@ -405,7 +405,7 @@ pub(crate) mod two_d {
 
     impl<Data> Default for TileBordersAdjacency2D<Data>
     where
-        Data: IdentifiableTileData,
+        Data: TypedData,
     {
         fn default() -> Self {
             Self {
@@ -417,7 +417,7 @@ pub(crate) mod two_d {
 
     impl<Data> super::private::BorderAdjacencySelector<TwoDim, Data, GridMap2D<Data>> for TwoDim
     where
-        Data: IdentifiableTileData,
+        Data: TypedData,
     {
         type Adjacency = TileBordersAdjacency2D<Data>;
     }
@@ -431,7 +431,7 @@ pub(crate) mod three_d {
     #[derive(Debug, Clone)]
     pub struct TileBordersAdjacency3D<Data>
     where
-        Data: IdentifiableTileData,
+        Data: TypedData,
     {
         borders: [Option<u64>; 6], // 6 directions in 3D
         phantom: PhantomData<Data>,
@@ -439,7 +439,7 @@ pub(crate) mod three_d {
 
     impl<Data> TileBordersAdjacency<ThreeDim, Data, GridMap3D<Data>> for TileBordersAdjacency3D<Data>
     where
-        Data: IdentifiableTileData,
+        Data: TypedData,
     {
         fn set_at_dir(&mut self, dir: &Direction3D, border_id: u64) {
             self.borders[dir.as_idx()] = Some(border_id);
@@ -452,7 +452,7 @@ pub(crate) mod three_d {
 
     impl<Data> Default for TileBordersAdjacency3D<Data>
     where
-        Data: IdentifiableTileData,
+        Data: TypedData,
     {
         fn default() -> Self {
             Self {
@@ -464,7 +464,7 @@ pub(crate) mod three_d {
 
     impl<Data> super::private::BorderAdjacencySelector<ThreeDim, Data, GridMap3D<Data>> for ThreeDim
     where
-        Data: IdentifiableTileData,
+        Data: TypedData,
     {
         type Adjacency = TileBordersAdjacency3D<Data>;
     }
@@ -478,7 +478,7 @@ pub(crate) mod three_d {
 pub struct FrequencyHints<D, Data>
 where
     D: Dimensionality,
-    Data: IdentifiableTileData,
+    Data: TypedData,
 {
     weights: BTreeMap<u64, u32>,
     id_type: PhantomData<(D, Data)>,
@@ -487,7 +487,7 @@ where
 impl<D, Data> Clone for FrequencyHints<D, Data>
 where
     D: Dimensionality,
-    Data: IdentifiableTileData,
+    Data: TypedData,
 {
     fn clone(&self) -> Self {
         Self {
@@ -500,7 +500,7 @@ where
 impl<D, T> Default for FrequencyHints<D, T>
 where
     D: Dimensionality,
-    T: IdentifiableTileData,
+    T: TypedData,
 {
     fn default() -> Self {
         Self {
@@ -513,7 +513,7 @@ where
 impl<D, Data> FrequencyHints<D, Data>
 where
     D: Dimensionality,
-    Data: IdentifiableTileData,
+    Data: TypedData,
 {
     pub fn set_weight_for_data<Tile>(&mut self, data: &Data, weight: u32) {
         let entry = self.weights.entry(data.tile_type_id()).or_default();
@@ -544,13 +544,13 @@ pub(crate) mod private {
     use super::TileBordersAdjacency;
     use crate::{
         core::common::{Dimensionality, GridMap},
-        id::IdentifiableTileData,
+        id::TypedData,
     };
 
     pub trait BorderAdjacencySelector<D, Data, Grid>
     where
         D: Dimensionality,
-        Data: IdentifiableTileData,
+        Data: TypedData,
         Grid: GridMap<D, Data>,
     {
         type Adjacency: TileBordersAdjacency<D, Data, Grid>;

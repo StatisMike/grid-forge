@@ -23,7 +23,7 @@ use super::subscriber::Subscriber;
 /// additionally providing an option to subscribe to the collapse process via [`singular::Subscriber`](Subscriber).
 pub struct Resolver<D: Dimensionality + CollapseBounds + ?Sized, Data>
 where
-    Data: IdentifiableTileData,
+    Data: TypedData,
 {
     subscriber: Option<Box<dyn Subscriber<D>>>,
     tile_type: PhantomData<Data>,
@@ -32,7 +32,7 @@ where
 impl<D, Data> Default for Resolver<D, Data>
 where
     D: Dimensionality + CollapseBounds + ?Sized,
-    Data: IdentifiableTileData,
+    Data: TypedData,
 {
     fn default() -> Self {
         Self {
@@ -45,7 +45,7 @@ where
 impl<D, Data> Resolver<D, Data>
 where
     D: Dimensionality + CollapseBounds + ?Sized,
-    Data: IdentifiableTileData,
+    Data: TypedData,
 {
     /// Attach a subscriber to the resolver. The subscriber will be notified of each tile being collapsed.
     pub fn with_subscriber(mut self, subscriber: Box<dyn Subscriber<D>>) -> Self {

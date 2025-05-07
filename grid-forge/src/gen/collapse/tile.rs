@@ -14,7 +14,7 @@ pub struct CollapsedTileData {
 
 impl TileData for CollapsedTileData {}
 
-impl IdentifiableTileData for CollapsedTileData {
+impl TypedData for CollapsedTileData {
     fn tile_type_id(&self) -> u64 {
         self.tile_type_id
     }
@@ -81,7 +81,7 @@ pub(crate) mod private {
     /// Sealed trait for the [`CollapsibleTileData`] trait. It contains most of the shared logic for its implementors,
     /// which should be kept private.
     pub trait CommonCollapsibleTileData<D: Dimensionality + CollapseBounds + ?Sized>:
-        TileData
+        TileData + Sized
     {
         /// Creates new uncollapsed tile.
         fn new_uncollapsed_tile(

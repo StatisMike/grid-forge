@@ -25,14 +25,14 @@ pub mod subscriber;
 
 use {
     super::{common::CollapseBounds, grid::CollapsibleGrid},
-    crate::{core::common::Dimensionality, id::IdentifiableTileData},
+    crate::{core::common::Dimensionality, id::TypedData},
     analyzer::{AdjacencyRules, FrequencyHints},
 };
 
 pub trait CollapsibleTileGrid<D, IT>
 where
     D: Dimensionality + CollapseBounds + ?Sized,
-    IT: IdentifiableTileData,
+    IT: TypedData,
     Self: CollapsibleGrid<D, IT>,
 {
     fn new_empty(

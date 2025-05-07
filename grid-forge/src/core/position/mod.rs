@@ -56,7 +56,8 @@ pub(crate) mod common {
         ///
         /// ## 2D space
         /// ```
-        /// use grid_forge::two_d::*;
+        /// use grid_forge::two_d::{GridPosition2D};
+        /// use grid_forge::common::GridPosition;
         ///
         /// assert!(GridPosition2D::new(0, 0)
         ///             .in_range(&GridPosition2D::new(3, 3), 6));
@@ -67,7 +68,8 @@ pub(crate) mod common {
         ///
         /// ## 3D space
         /// ```
-        /// use grid_forge::three_d::*;
+        /// use grid_forge::three_d::{GridPosition3D};
+        /// use grid_forge::common::GridPosition;
         ///
         /// assert!(GridPosition3D::new(0, 0, 0)
         ///             .in_range(&GridPosition3D::new(3, 3, 3), 9));

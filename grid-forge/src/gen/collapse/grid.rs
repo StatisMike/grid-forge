@@ -35,7 +35,7 @@ pub trait CollapsedGrid<D: Dimensionality + CollapseBounds + ?Sized>:
 pub trait CollapsibleGrid<D, IT>
 where
     D: Dimensionality + CollapseBounds + ?Sized,
-    IT: IdentifiableTileData,
+    IT: TypedData,
     Self: private::CommonCollapsibleGrid<D>,
 {
     fn retrieve_collapsed(&self) -> D::CollapsedGrid {

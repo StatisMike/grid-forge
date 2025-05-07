@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 use crate::core::common::*;
 use crate::core::two_d::*;
 use crate::id::IdentTileCollection;
-use crate::id::IdentifiableTileData;
+use crate::id::TypedData;
 
 use super::common::CommonCollapsedGrid;
 use super::grid::CollapsedGrid;
@@ -279,13 +279,13 @@ impl crate::gen::collapse::tile::private::CommonCollapsibleTileData<TwoDim> for 
     }
 }
 
-pub struct CollapsibleTileGrid2D<Tile: IdentifiableTileData> {
+pub struct CollapsibleTileGrid2D<Tile: TypedData> {
     grid: GridMap2D<CollapsibleTile2D>,
     option_data: PerOptionData2D,
     tile_type: PhantomData<Tile>,
 }
 
-impl<Tile: IdentifiableTileData> crate::gen::collapse::grid::private::CommonCollapsibleGrid<TwoDim>
+impl<Tile: TypedData> crate::gen::collapse::grid::private::CommonCollapsibleGrid<TwoDim>
     for CollapsibleTileGrid2D<Tile>
 {
     type CollapsibleData = CollapsibleTile2D;
@@ -335,9 +335,9 @@ impl<Tile: IdentifiableTileData> crate::gen::collapse::grid::private::CommonColl
     }
 }
 
-impl<Tile: IdentifiableTileData> CollapsibleGrid<TwoDim, Tile> for CollapsibleTileGrid2D<Tile> {}
+impl<Tile: TypedData> CollapsibleGrid<TwoDim, Tile> for CollapsibleTileGrid2D<Tile> {}
 
-impl<Tile: IdentifiableTileData> CollapsibleTileGrid<TwoDim, Tile> for CollapsibleTileGrid2D<Tile> {
+impl<Tile: TypedData> CollapsibleTileGrid<TwoDim, Tile> for CollapsibleTileGrid2D<Tile> {
     fn new_empty(
         size: GridSize2D,
         frequencies: &FrequencyHints<TwoDim, Tile>,

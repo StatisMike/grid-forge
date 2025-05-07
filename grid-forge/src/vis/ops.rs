@@ -32,7 +32,7 @@ pub fn load_gridmap_identifiable_auto<Data, P, B, const WIDTH: usize, const HEIG
     builder: &B,
 ) -> Result<GridMap2D<Data>, VisError<WIDTH, HEIGHT>>
 where
-    Data: IdentifiableTileData,
+    Data: TypedData,
     P: PixelWithDefault + 'static,
     B: IdentTileBuilder<Data>,
 {
@@ -74,7 +74,7 @@ pub fn load_gridmap_identifiable_manual<Data, P, B, const WIDTH: usize, const HE
     builder: &B,
 ) -> Result<GridMap2D<Data>, VisError<WIDTH, HEIGHT>>
 where
-    Data: IdentifiableTileData,
+    Data: TypedData,
     P: PixelWithDefault + 'static,
     B: IdentTileBuilder<Data>,
 {
@@ -117,7 +117,7 @@ pub fn write_gridmap_identifiable<Data, P, const WIDTH: usize, const HEIGHT: usi
     collection: &VisCollection<P, WIDTH, HEIGHT>,
 ) -> Result<(), VisError<WIDTH, HEIGHT>>
 where
-    Data: IdentifiableTileData,
+    Data: TypedData,
     P: PixelWithDefault + 'static,
 {
     collection.draw_map(grid_map, image_buffer)?;

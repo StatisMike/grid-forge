@@ -51,7 +51,8 @@ pub(crate) mod common {
         /// # Examples
         /// ## 2D space
         /// ```
-        /// use grid_forge::two_d::*;
+        /// use grid_forge::two_d::{GridPosition2D, GridSize2D, Direction2D};
+        /// use grid_forge::common::{Direction};
         ///
         /// let size = GridSize2D::new(10, 10);
         /// let mut pos = GridPosition2D::new(5, 5);
@@ -71,7 +72,8 @@ pub(crate) mod common {
         ///
         /// ## 3D space
         /// ```
-        /// use grid_forge::three_d::*;
+        /// use grid_forge::three_d::{GridPosition3D, GridSize3D, Direction3D};
+        /// use grid_forge::common::{Direction};
         ///
         /// let size = GridSize3D::new(10, 10, 10);
         /// let mut pos = GridPosition3D::new(5, 5, 5);

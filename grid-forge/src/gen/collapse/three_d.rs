@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 use crate::core::common::*;
 use crate::core::three_d::*;
 use crate::id::IdentTileCollection;
-use crate::id::IdentifiableTileData;
+use crate::id::TypedData;
 
 use super::common::CommonCollapsedGrid;
 use super::grid::CollapsedGrid;
@@ -281,13 +281,13 @@ impl crate::gen::collapse::tile::private::CommonCollapsibleTileData<ThreeDim>
     }
 }
 
-pub struct CollapsibleTileGrid3D<Tile: IdentifiableTileData> {
+pub struct CollapsibleTileGrid3D<Tile: TypedData> {
     grid: GridMap3D<CollapsibleTile3D>,
     option_data: PerOptionData3D,
     tile_type: PhantomData<Tile>,
 }
 
-impl<Tile: IdentifiableTileData>
+impl<Tile: TypedData>
     crate::gen::collapse::grid::private::CommonCollapsibleGrid<ThreeDim>
     for CollapsibleTileGrid3D<Tile>
 {
@@ -338,9 +338,9 @@ impl<Tile: IdentifiableTileData>
     }
 }
 
-impl<Tile: IdentifiableTileData> CollapsibleGrid<ThreeDim, Tile> for CollapsibleTileGrid3D<Tile> {}
+impl<Tile: TypedData> CollapsibleGrid<ThreeDim, Tile> for CollapsibleTileGrid3D<Tile> {}
 
-impl<Tile: IdentifiableTileData> CollapsibleTileGrid<ThreeDim, Tile>
+impl<Tile: TypedData> CollapsibleTileGrid<ThreeDim, Tile>
     for CollapsibleTileGrid3D<Tile>
 {
     fn new_empty(

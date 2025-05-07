@@ -3,7 +3,7 @@
 mod gif_subscribers;
 
 use grid_forge::{
-    r#gen::collapse::{error::CollapseError, grid::CollapsibleGrid, two_d::{CollapsedGrid2D, CollapsibleTileGrid2D}}, id::{BasicIdentTileData, IdentTileDefaultBuilder, IdentifiableTileData}, two_d::{GridMap2D, TwoDim}, vis::{collection::VisCollection, ops::load_gridmap_identifiable_auto, DefaultVisPixel}
+    r#gen::collapse::{error::CollapseError, grid::CollapsibleGrid, two_d::{CollapsedGrid2D, CollapsibleTileGrid2D}}, id::{BasicTypedData, IdentTileDefaultBuilder, TypedData}, two_d::{GridMap2D, TwoDim}, vis::{collection::VisCollection, ops::load_gridmap_identifiable_auto, DefaultVisPixel}
 };
 use image::{ImageBuffer, Rgb};
 use rand::SeedableRng;
@@ -142,7 +142,7 @@ impl<'a> VisGridLoaderHelper<'a> {
         &mut self,
         paths: &[&str],
         rotations: &[VisRotate],
-    ) -> Vec<GridMap2D<BasicIdentTileData>> {
+    ) -> Vec<GridMap2D<BasicTypedData>> {
         let mut out = Vec::new();
         let builder = IdentTileDefaultBuilder::default();
         for path in paths {
@@ -164,7 +164,7 @@ impl<'a> VisGridLoaderHelper<'a> {
     }
 }
 
-pub fn try_n_times_2d<Tile: IdentifiableTileData>(
+pub fn try_n_times_2d<Tile: TypedData>(
     n: u32,
     mut f: impl FnMut() -> Result<CollapsibleTileGrid2D<Tile>, CollapseError<TwoDim>>,
 ) -> Result<CollapsedGrid2D, CollapseError<TwoDim>> {

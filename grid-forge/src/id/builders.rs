@@ -81,11 +81,11 @@ use super::*;
 /// );
 /// ```
 #[derive(Debug, Clone)]
-pub struct IdentTileCloneBuilder<Data: IdentifiableTileData + Clone> {
+pub struct IdentTileCloneBuilder<Data: TypedData + Clone> {
     tiles: BTreeMap<u64, Data>,
 }
 
-impl<T: IdentifiableTileData + Clone> Default for IdentTileCloneBuilder<T> {
+impl<T: TypedData + Clone> Default for IdentTileCloneBuilder<T> {
     fn default() -> Self {
         Self {
             tiles: BTreeMap::new(),
@@ -93,7 +93,7 @@ impl<T: IdentifiableTileData + Clone> Default for IdentTileCloneBuilder<T> {
     }
 }
 
-impl<Data: IdentifiableTileData + Clone> IdentTileCloneBuilder<Data> {
+impl<Data: TypedData + Clone> IdentTileCloneBuilder<Data> {
     /// Provide tile prototypes to the builder, which will be used to create new tile instances.
     ///
     /// If `overwrite` is `true`, then if prototype for given `tile_id` has been already saved, it will be overwritten.
@@ -109,7 +109,7 @@ impl<Data: IdentifiableTileData + Clone> IdentTileCloneBuilder<Data> {
 
 impl<Data> IdentTileBuilder<Data> for IdentTileCloneBuilder<Data>
 where
-    Data: Clone + IdentifiableTileData,
+    Data: Clone + TypedData,
 {
     fn build_tile_unchecked(&self, tile_type_id: u64) -> Data {
         let tile_data = self
@@ -186,11 +186,11 @@ where
 /// assert_eq!((GridPosition::new_xy(3,4), 2, false), (tile_2nd.grid_position(), tile_2nd.as_ref().tile_type_id(), tile_2nd.as_ref().traversible));
 /// ```
 #[derive(Debug, Clone)]
-pub struct IdentTileFunBuilder<T: IdentifiableTileData> {
+pub struct IdentTileFunBuilder<T: TypedData> {
     funs: BTreeMap<u64, fn() -> T>,
 }
 
-impl<Data: IdentifiableTileData> IdentTileFunBuilder<Data> {
+impl<Data: TypedData> IdentTileFunBuilder<Data> {
     pub fn set_tile_constructor(&mut self, tile_id: u64, constructor: fn() -> Data) {
         self.funs.insert(tile_id, constructor);
     }
@@ -200,7 +200,7 @@ impl<Data: IdentifiableTileData> IdentTileFunBuilder<Data> {
     }
 }
 
-impl<Data: IdentifiableTileData> Default for IdentTileFunBuilder<Data> {
+impl<Data: TypedData> Default for IdentTileFunBuilder<Data> {
     fn default() -> Self {
         Self {
             funs: BTreeMap::new(),
@@ -208,7 +208,7 @@ impl<Data: IdentifiableTileData> Default for IdentTileFunBuilder<Data> {
     }
 }
 
-impl<Data: IdentifiableTileData> IdentTileBuilder<Data> for IdentTileFunBuilder<Data> {
+impl<Data: TypedData> IdentTileBuilder<Data> for IdentTileFunBuilder<Data> {
     fn build_tile_unchecked(&self, tile_type_id: u64) -> Data {
         let fun = self.funs.get(&tile_type_id).unwrap_or_else(|| {
             panic!("can't get tile constructor function for `tile_type_id`: {tile_type_id}")
@@ -277,7 +277,7 @@ impl<Data: IdDefault> IdentTileBuilder<Data> for IdentTileDefaultBuilder<Data> {
 /// [`build_tile`](IdentTileBuilder::build_tile) methods. The `unchecked` version is usually faster and is recommended
 /// to be used when creating a batch of tiles at once - can be used reliably if [`check_missing_ids`](IdentTileBuilder::check_missing_ids)
 /// is called before beginning the batch operation.
-pub trait IdentTileBuilder<Data: IdentifiableTileData> {
+pub trait IdentTileBuilder<Data: TypedData> {
     /// Creates tile data with given tile identifier at given grid position.
     ///
     /// # Panics

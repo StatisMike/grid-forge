@@ -25,7 +25,7 @@ const MAP_10X10: &str = "../assets/samples/seas.png";
 const MAP_20X20: &str = "../assets/samples/roads.png";
 
 fn analyze_adjacency_identity_10x10(c: &mut Criterion) {
-    let builder = IdentTileDefaultBuilder::<BasicIdentTileData>::default();
+    let builder = IdentTileDefaultBuilder::<BasicTypedData>::default();
     let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
 
     let seas_img = image::open(MAP_10X10).unwrap().into_rgb8();
@@ -41,7 +41,7 @@ fn analyze_adjacency_identity_10x10(c: &mut Criterion) {
 }
 
 fn analyze_adjacency_border_10x10(c: &mut Criterion) {
-    let builder = IdentTileDefaultBuilder::<BasicIdentTileData>::default();
+    let builder = IdentTileDefaultBuilder::<BasicTypedData>::default();
     let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
 
     let seas_img = image::open(MAP_20X20).unwrap().into_rgb8();
@@ -57,7 +57,7 @@ fn analyze_adjacency_border_10x10(c: &mut Criterion) {
 }
 
 fn analyze_frequency_10x10(c: &mut Criterion) {
-    let builder = IdentTileDefaultBuilder::<BasicIdentTileData>::default();
+    let builder = IdentTileDefaultBuilder::<BasicTypedData>::default();
     let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
 
     let seas_img = image::open(MAP_10X10).unwrap().into_rgb8();
@@ -73,7 +73,7 @@ fn analyze_frequency_10x10(c: &mut Criterion) {
 }
 
 fn analyze_build_collapsible_grid(c: &mut Criterion) {
-    let builder = IdentTileDefaultBuilder::<BasicIdentTileData>::default();
+    let builder = IdentTileDefaultBuilder::<BasicTypedData>::default();
     let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
 
     let seas_img = image::open(MAP_10X10).unwrap().into_rgb8();
@@ -95,7 +95,7 @@ fn analyze_build_collapsible_grid(c: &mut Criterion) {
 }
 
 fn gen_identity_position_10x10(c: &mut Criterion) {
-    let builder = IdentTileDefaultBuilder::<BasicIdentTileData>::default();
+    let builder = IdentTileDefaultBuilder::<BasicTypedData>::default();
     let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
 
     let mut analyzer = IdentityAnalyzer::default();
@@ -134,7 +134,7 @@ fn gen_identity_position_10x10(c: &mut Criterion) {
 }
 
 fn gen_identity_entrophy_10x10(c: &mut Criterion) {
-    let builder = IdentTileDefaultBuilder::<BasicIdentTileData>::default();
+    let builder = IdentTileDefaultBuilder::<BasicTypedData>::default();
     let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
 
     let mut analyzer = IdentityAnalyzer::default();
@@ -166,7 +166,7 @@ fn gen_identity_entrophy_10x10(c: &mut Criterion) {
 }
 
 fn gen_border_position_10x10(c: &mut Criterion) {
-    let builder = IdentTileDefaultBuilder::<BasicIdentTileData>::default();
+    let builder = IdentTileDefaultBuilder::<BasicTypedData>::default();
     let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
 
     let mut analyzer = BorderAnalyzer::default();
@@ -203,7 +203,7 @@ fn gen_border_position_10x10(c: &mut Criterion) {
 }
 
 fn gen_border_entrophy_10x10(c: &mut Criterion) {
-    let builder = IdentTileDefaultBuilder::<BasicIdentTileData>::default();
+    let builder = IdentTileDefaultBuilder::<BasicTypedData>::default();
     let mut collection = VisCollection::<DefaultVisPixel, 4, 4>::default();
 
     let mut analyzer = IdentityAnalyzer::default();
