@@ -219,6 +219,8 @@ mod utils;
 #[cfg(feature = "gen")]
 pub mod gen;
 
+pub mod pathfinding;
+
 pub mod id;
 
 pub mod common;

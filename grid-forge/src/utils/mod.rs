@@ -10,7 +10,7 @@ impl OrderedFloat {
     pub const EPSILON: f32 = 0.000001;
 
     /// Create a new OrderedFloat, panicking on NaN
-    pub fn new(value: f32) -> Self {
+    pub const fn new(value: f32) -> Self {
         assert!(!value.is_nan(), "Cannot create OrderedFloat from NaN");
         Self(value)
     }
