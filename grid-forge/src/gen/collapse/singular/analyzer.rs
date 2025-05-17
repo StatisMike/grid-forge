@@ -120,7 +120,8 @@ where
 
             for dir in D::Dir::all() {
                 if let Some(neighbour) = map.get_neighbour_at(&pos, dir) {
-                    self.adjacency_rules.add_adjacency(&tile.as_ref(), &neighbour.as_ref(), *dir)
+                    self.adjacency_rules
+                        .add_adjacency(&tile.as_ref(), &neighbour.as_ref(), *dir)
                 }
             }
         }
@@ -239,7 +240,11 @@ where
 
             for dir in D::Dir::all() {
                 if let Some(neighbour) = map.get_neighbour_at(&pos, dir) {
-                    self.add_adjacency_raw(tile.tile_type_id(), neighbour.as_ref().tile_type_id(), dir);
+                    self.add_adjacency_raw(
+                        tile.tile_type_id(),
+                        neighbour.as_ref().tile_type_id(),
+                        dir,
+                    );
                 }
             }
         }
@@ -360,11 +365,8 @@ where
 }
 
 // Common trait definition
-pub trait TileBordersAdjacency<
-    D: Dimensionality,
-    Data: TypedData,
-    Grid: GridMap<D, Data>,
->: Default
+pub trait TileBordersAdjacency<D: Dimensionality, Data: TypedData, Grid: GridMap<D, Data>>:
+    Default
 {
     fn set_at_dir(&mut self, dir: &D::Dir, border_id: u64);
     fn get_at_dir(&self, dir: &D::Dir) -> Option<u64>;

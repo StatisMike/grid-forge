@@ -1,13 +1,9 @@
-use std::ops::Index;
-use std::ops::IndexMut;
+use crate::core::direction::macros::__impl_direction_table;
 
-use super::common::*;
-
-use super::private::*;
-use crate::core::three_d::*;
+use crate::three_d::{GridPosition3D, GridSize3D};
 
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Direction3D {
     Up = 0,
     Down = 1,
@@ -16,25 +12,20 @@ pub enum Direction3D {
     Higher = 4,
     Lower = 5,
 }
-impl super::private::SealedDir for Direction3D {
-    const FIRST: Self = Self::Up;
-}
 
-impl Direction<ThreeDim> for Direction3D {
-    const N: usize = 6;
+impl Direction3D {
+    pub const COUNT: usize = 6;
+    pub const PRIMARY: [Self; 3] = [Self::Left, Self::Up, Self::Higher];
+    pub const ALL: [Self; 6] = [
+        Self::Up,
+        Self::Down,
+        Self::Left,
+        Self::Right,
+        Self::Higher,
+        Self::Lower,
+    ];
 
-    fn all() -> &'static [Self] {
-        &[
-            Self::Up,
-            Self::Down,
-            Self::Left,
-            Self::Right,
-            Self::Higher,
-            Self::Lower,
-        ]
-    }
-
-    fn march_step(&self, from: &GridPosition3D, size: &GridSize3D) -> Option<GridPosition3D> {
+    pub fn march_step(&self, from: &GridPosition3D, size: &GridSize3D) -> Option<GridPosition3D> {
         let (x_dif, y_dif, z_dif) = match self {
             Self::Up => {
                 if from.y() == 0 {
@@ -82,7 +73,7 @@ impl Direction<ThreeDim> for Direction3D {
         Some(GridPosition3D::new(x, y, z))
     }
 
-    fn opposite(&self) -> Self {
+    pub fn opposite(&self) -> Self {
         match self {
             Self::Up => Self::Down,
             Self::Down => Self::Up,
@@ -94,101 +85,52 @@ impl Direction<ThreeDim> for Direction3D {
     }
 
     #[inline]
-    fn as_idx(&self) -> usize {
+    pub fn as_idx(&self) -> usize {
         *self as usize
     }
 
+    pub fn from_idx(idx: usize) -> Option<Self> {
+        match idx {
+            0 => Some(Self::Up),
+            1 => Some(Self::Down),
+            2 => Some(Self::Left),
+            3 => Some(Self::Right),
+            4 => Some(Self::Higher),
+            5 => Some(Self::Lower),
+            _ => None,
+        }
+    }
+
     #[inline]
-    fn primary() -> &'static [Self] {
+    pub fn primary() -> &'static [Self] {
         &[Self::Left, Self::Up, Self::Higher]
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct DirectionTable3D<T> {
-    table: [T; 6],
-}
-
-impl<T> DirectionTable3D<T> {
-    pub const fn new(table: [T; 6]) -> Self {
-        Self { table }
-    }
-}
-
-impl<T> Sealed for DirectionTable3D<T> {}
-impl<T> DirectionTable<ThreeDim, T> for DirectionTable3D<T> {
-    type Inner = [T; 6];
-
-    fn new_array(values: [T; 6]) -> Self {
-        Self { table: values }
-    }
-
-    fn inner(&self) -> &[T; 6] {
-        &self.table
-    }
-
-    fn from_slice(slice: &[T]) -> Self
-    where
-        T: Copy,
-    {
-        let table = [slice[0], slice[1], slice[2], slice[3], slice[4], slice[5]];
-        Self { table }
-    }
-}
-
-impl<T: Default> Default for DirectionTable3D<T> {
-    fn default() -> Self {
-        Self {
-            table: [
-                T::default(),
-                T::default(),
-                T::default(),
-                T::default(),
-                T::default(),
-                T::default(),
-            ],
-        }
-    }
-}
-
-impl<T> Index<Direction3D> for DirectionTable3D<T> {
-    type Output = T;
-
-    fn index(&self, index: Direction3D) -> &Self::Output {
-        &self.table[index.as_idx()]
-    }
-}
-
-impl<T> IndexMut<Direction3D> for DirectionTable3D<T> {
-    fn index_mut(&mut self, index: Direction3D) -> &mut Self::Output {
-        &mut self.table[index.as_idx()]
-    }
-}
-
-impl<T> AsRef<[T]> for DirectionTable3D<T> {
-    fn as_ref(&self) -> &[T] {
-        self.table.as_ref()
-    }
-}
-
-impl<T> AsMut<[T]> for DirectionTable3D<T> {
-    fn as_mut(&mut self) -> &mut [T] {
-        self.table.as_mut()
-    }
+__impl_direction_table! {
+    direction_table: DirectionTable3D,
+    direction: Direction3D,
+    direction_count: 6,
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::core::direction::tests::*;
-    use crate::core::three_d::*;
+    use super::*;
+    use crate::core::direction::macros::__impl_direction_tests;
+    __impl_direction_tests! {
+        direction: Direction3D,
+        direction_table: DirectionTable3D,
+        dimension_count: 3,
+        position_type: GridPosition3D,
+        size_type: GridSize3D,
+    }
 
     #[test]
-    fn test_3d_march_step() {
-        const CASES: &[MarchStepTestCase<3, ThreeDim>] = &[
-            MarchStepTestCase {
-                grid_size: [10, 10, 10],
-                from_coords: [5, 5, 5],
-                dirs: &[
+    fn test_3d_march_step_10x10x10() {
+        const CASES: &[MarchStepTestCase] = &[
+            MarchStepTestCase::new(
+                GridPosition3D::new(5, 5, 5),
+                &[
                     Direction3D::Up,
                     Direction3D::Down,
                     Direction3D::Left,
@@ -196,78 +138,77 @@ mod tests {
                     Direction3D::Higher,
                     Direction3D::Lower,
                 ],
-                expected_coords: [5, 5, 5],
-                converged: true,
-            },
-            MarchStepTestCase {
-                grid_size: [10, 10, 10],
-                from_coords: [5, 5, 5],
-                dirs: &[
+                GridPosition3D::new(5, 5, 5),
+                true,
+            ),
+            MarchStepTestCase::new(
+                GridPosition3D::new(5, 5, 5),
+                &[
                     Direction3D::Up,
                     Direction3D::Up,
                     Direction3D::Up,
                     Direction3D::Up,
                 ],
-                expected_coords: [5, 1, 5],
-                converged: true,
-            },
-            MarchStepTestCase {
-                grid_size: [3, 3, 3],
-                from_coords: [1, 1, 1],
-                dirs: &[Direction3D::Up, Direction3D::Left, Direction3D::Higher],
-                expected_coords: [0, 0, 0],
-                converged: true,
-            },
-            MarchStepTestCase {
-                grid_size: [3, 3, 3],
-                from_coords: [0, 1, 1],
-                dirs: &[Direction3D::Left],
-                expected_coords: [0, 1, 1],
-                converged: false,
-            },
-            MarchStepTestCase {
-                grid_size: [3, 3, 3],
-                from_coords: [2, 1, 1],
-                dirs: &[Direction3D::Right],
-                expected_coords: [2, 1, 1],
-                converged: false,
-            },
-            MarchStepTestCase {
-                grid_size: [3, 3, 3],
-                from_coords: [1, 0, 1],
-                dirs: &[Direction3D::Up],
-                expected_coords: [1, 0, 1],
-                converged: false,
-            },
-            MarchStepTestCase {
-                grid_size: [3, 3, 3],
-                from_coords: [1, 2, 1],
-                dirs: &[Direction3D::Down],
-                expected_coords: [1, 2, 1],
-                converged: false,
-            },
-            MarchStepTestCase {
-                grid_size: [3, 3, 3],
-                from_coords: [1, 1, 0],
-                dirs: &[Direction3D::Higher],
-                expected_coords: [1, 1, 0],
-                converged: false,
-            },
-            MarchStepTestCase {
-                grid_size: [3, 3, 3],
-                from_coords: [1, 1, 2],
-                dirs: &[Direction3D::Lower],
-                expected_coords: [1, 1, 2],
-                converged: false,
-            },
+                GridPosition3D::new(5, 1, 5),
+                true,
+            ),
         ];
-        march_step_test::<3, ThreeDim>(CASES);
+        march_step_test(GridSize3D::new(10, 10, 10), CASES);
+    }
+
+    #[test]
+    fn test_3d_march_step_3x3x3() {
+        const CASES: &[MarchStepTestCase] = &[
+            MarchStepTestCase::new(
+                GridPosition3D::new(1, 1, 1),
+                &[Direction3D::Up, Direction3D::Left, Direction3D::Higher],
+                GridPosition3D::new(0, 0, 0),
+                true,
+            ),
+            MarchStepTestCase::new(
+                GridPosition3D::new(0, 1, 1),
+                &[Direction3D::Left],
+                GridPosition3D::new(0, 1, 1),
+                false,
+            ),
+            MarchStepTestCase::new(
+                GridPosition3D::new(2, 1, 1),
+                &[Direction3D::Right],
+                GridPosition3D::new(2, 1, 1),
+                false,
+            ),
+            MarchStepTestCase::new(
+                GridPosition3D::new(1, 0, 1),
+                &[Direction3D::Up],
+                GridPosition3D::new(1, 0, 1),
+                false,
+            ),
+            MarchStepTestCase::new(
+                GridPosition3D::new(1, 2, 1),
+                &[Direction3D::Down],
+                GridPosition3D::new(1, 2, 1),
+                false,
+            ),
+            MarchStepTestCase::new(
+                GridPosition3D::new(1, 1, 0),
+                &[Direction3D::Higher],
+                GridPosition3D::new(1, 1, 0),
+                false,
+            ),
+            MarchStepTestCase::new(
+                GridPosition3D::new(1, 1, 2),
+                &[Direction3D::Lower],
+                GridPosition3D::new(1, 1, 2),
+                false,
+            ),
+        ];
+        march_step_test(GridSize3D::new(3, 3, 3), CASES);
     }
 
     #[test]
     fn test_3d_direction_table() {
-        const CASES: &[DirectionTableTestCase<6, ThreeDim>] = &[
-            DirectionTableTestCase(&[
+        const CASES: &[DirectionTableTestCase] = &[
+            DirectionTableTestCase::new(&[
                 (Direction3D::Up, 22),
                 (Direction3D::Down, 33),
                 (Direction3D::Left, 44),
@@ -275,9 +216,9 @@ mod tests {
                 (Direction3D::Higher, 66),
                 (Direction3D::Lower, 77),
             ]),
-            DirectionTableTestCase(&[(Direction3D::Up, 88), (Direction3D::Down, 99)]),
+            DirectionTableTestCase::new(&[(Direction3D::Up, 88), (Direction3D::Down, 99)]),
         ];
 
-        direction_table_test::<6, ThreeDim, DirectionTable3D<u32>>(CASES);
+        direction_table_test(CASES);
     }
 }

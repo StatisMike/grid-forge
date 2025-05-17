@@ -51,7 +51,8 @@ where
                 CollapsedTileData::new(
                     self._option_data()
                         .get_tile_type_id(
-                            &tile.data()
+                            &tile
+                                .data()
                                 .collapse_idx()
                                 .expect("cannot get `collapse_idx` for uncollapsed tile"),
                         )
@@ -78,7 +79,8 @@ where
                 builder.build_tile_unchecked(
                     self._option_data()
                         .get_tile_type_id(
-                            &tile.data()
+                            &tile
+                                .data()
                                 .collapse_idx()
                                 .expect("cannot get `collapse_idx` for uncollapsed tile"),
                         )
@@ -105,7 +107,8 @@ where
                 IT::tile_type_default(
                     self._option_data()
                         .get_tile_type_id(
-                            &tile.data()
+                            &tile
+                                .data()
                                 .collapse_idx()
                                 .expect("cannot get `collapse_idx` for uncollapsed tile"),
                         )
@@ -200,7 +203,10 @@ pub(crate) mod private {
                             .filter(|option_idx| option_idx != &collapsed_idx)
                             .collect::<Vec<usize>>()
                     }) {
-                        out.push(PropagateItem::new(neighbour_tile.grid_position(), *opt_to_remove))
+                        out.push(PropagateItem::new(
+                            neighbour_tile.grid_position(),
+                            *opt_to_remove,
+                        ))
                     }
                 }
             }
@@ -222,11 +228,17 @@ pub(crate) mod private {
 
                     let enabled =
                         option_data.get_all_enabled_in_direction(collapsed_option, *direction);
-                    for possible_option in
-                        tile.as_ref().ways_to_be_option().iter_possible().collect::<Vec<_>>()
+                    for possible_option in tile
+                        .as_ref()
+                        .ways_to_be_option()
+                        .iter_possible()
+                        .collect::<Vec<_>>()
                     {
                         if !enabled.contains(&possible_option)
-                            && tile.as_mut().mut_ways_to_be_option().purge_option(possible_option)
+                            && tile
+                                .as_mut()
+                                .mut_ways_to_be_option()
+                                .purge_option(possible_option)
                         {
                             let weights = option_data.get_weights(possible_option);
                             tile.as_mut().remove_option(weights);
@@ -256,7 +268,9 @@ pub(crate) mod private {
                                 *state = false;
                             }
                         }
-                    } else if tile.as_ref().num_compatible_options() < option_data.possible_options_count() {
+                    } else if tile.as_ref().num_compatible_options()
+                        < option_data.possible_options_count()
+                    {
                         let mut possible_in_any: HashSet<usize> = HashSet::new();
                         for neigbour_idx in tile.as_ref().ways_to_be_option().iter_possible() {
                             possible_in_any.extend(

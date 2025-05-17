@@ -327,7 +327,10 @@ impl<Tile: TypedData> crate::gen::collapse::grid::private::CommonCollapsibleGrid
                         .filter(|option_idx| option_idx != &collapsed_idx)
                         .collect::<Vec<usize>>()
                 }) {
-                    out.push(PropagateItem::new(neighbour_tile.grid_position(), *opt_to_remove))
+                    out.push(PropagateItem::new(
+                        neighbour_tile.grid_position(),
+                        *opt_to_remove,
+                    ))
                 }
             }
         }

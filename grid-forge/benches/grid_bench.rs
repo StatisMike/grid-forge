@@ -2,9 +2,9 @@ use std::hint::black_box;
 use std::time::Duration;
 
 use criterion::*;
-use grid_forge::common::*;
 use grid_forge::three_d::*;
 use grid_forge::two_d::*;
+use grid_forge::TileData;
 
 pub struct DefaultTile {
     offset: usize,
@@ -87,7 +87,24 @@ pub fn grid_access_2d_100x100_mut(c: &mut Criterion) {
             for pos in possible_positions.iter() {
                 let mut tile: TileMut2D<DefaultTile> =
                     grid.get_mut_tile_at_position(pos).unwrap().into();
-                tile.as_mut().offset = 1;
+                tile.data().offset = 1;
+            }
+        })
+    });
+}
+
+pub fn grid_access_2d_100x100_mut_track(c: &mut Criterion) {
+    let size = GridSize2D::new(100, 100);
+    let mut grid = create_default_2d_grid(size.clone());
+    let possible_positions = size.get_all_possible_positions();
+    grid.mut_access_tracking(true);
+
+    c.bench_function("grid_access_2d_100x100_mut_track", |b| {
+        b.iter(|| {
+            for pos in possible_positions.iter() {
+                let mut tile: TileMut2D<DefaultTile> =
+                    grid.get_mut_tile_at_position(pos).unwrap().into();
+                tile.data().offset = 1;
             }
         })
     });
@@ -156,7 +173,7 @@ pub fn grid_access_2d_100x100_all_neighbours(c: &mut Criterion) {
     let grid = create_default_2d_grid(size.clone());
     let possible_positions = size.get_all_possible_positions();
 
-    c.bench_function("grid_access_2d_100x10x10_all_neighbours", |b| {
+    c.bench_function("grid_access_2d_100x100_all_neighbours", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
                 let tiles = grid.get_neighbours(pos);
@@ -189,9 +206,8 @@ pub fn grid_access_3d_100x10x10_mut(c: &mut Criterion) {
     c.bench_function("grid_access_3d_100x10x10_mut", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let mut tile =
-                    grid.get_mut_tile_at_position(pos).unwrap();
-                tile.as_mut().offset = 1;
+                let mut tile = grid.get_mut_tile_at_position(pos).unwrap();
+                tile.data().offset = 1;
             }
         })
     });
@@ -200,19 +216,17 @@ pub fn grid_access_3d_100x10x10_mut(c: &mut Criterion) {
 criterion_group!(
     name = grid_1000;
     config = Criterion::default().measurement_time(Duration::from_secs(10)).warm_up_time(Duration::from_secs(5));
-    targets =   create_2d_grid_bench_100x100, create_3d_grid_bench_100x10x10,
-                grid_access_2d_100x100, grid_access_2d_100x100_mut,
-                grid_access_3d_100x10x10, grid_access_3d_100x10x10_mut
+    targets =   // create_2d_grid_bench_100x100, create_3d_grid_bench_100x10x10,
+                // grid_access_2d_100x100, grid_access_2d_100x100_mut,
+                grid_access_2d_100x100_mut_track,
+                // grid_access_3d_100x10x10, grid_access_3d_100x10x10_mut
 );
 
 criterion_group!(
     name = grid_1000_neighbour;
     config = Criterion::default().measurement_time(Duration::from_secs(5)).warm_up_time(Duration::from_secs(3));
     targets =   grid_access_2d_100x100_neighbour,
-                grid_access_2d_100x100_all_neighbours
+                grid_access_2d_100x100_all_neighbours,
 );
 
-criterion_main!(
-    grid_1000,
-    grid_1000_neighbour
-);
+criterion_main!(grid_1000, grid_1000_neighbour);

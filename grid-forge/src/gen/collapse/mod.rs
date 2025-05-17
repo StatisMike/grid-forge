@@ -124,10 +124,10 @@ pub(crate) mod private {
         inner: HashMap<u64, Adjacencies<D>>,
     }
 
-    impl <D: Dimensionality> Default for AdjacencyTable<D> {
+    impl<D: Dimensionality> Default for AdjacencyTable<D> {
         fn default() -> Self {
             Self {
-                inner: HashMap::new()
+                inner: HashMap::new(),
             }
         }
     }

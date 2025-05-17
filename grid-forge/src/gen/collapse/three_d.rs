@@ -287,8 +287,7 @@ pub struct CollapsibleTileGrid3D<Tile: TypedData> {
     tile_type: PhantomData<Tile>,
 }
 
-impl<Tile: TypedData>
-    crate::gen::collapse::grid::private::CommonCollapsibleGrid<ThreeDim>
+impl<Tile: TypedData> crate::gen::collapse::grid::private::CommonCollapsibleGrid<ThreeDim>
     for CollapsibleTileGrid3D<Tile>
 {
     type CollapsibleData = CollapsibleTile3D;
@@ -316,7 +315,7 @@ impl<Tile: TypedData>
         let check_provided: HashSet<_> = HashSet::from_iter(to_collapse.iter());
 
         for pos_to_collapse in to_collapse {
-            for neighbour_tile in self.grid.get_neighbours(pos_to_collapse) { 
+            for neighbour_tile in self.grid.get_neighbours(pos_to_collapse) {
                 if !neighbour_tile.as_ref().is_collapsed()
                     || check_provided.contains(&neighbour_tile.grid_position())
                     || check_generated.contains(&neighbour_tile.grid_position())
@@ -330,7 +329,10 @@ impl<Tile: TypedData>
                         .filter(|option_idx| option_idx != &collapsed_idx)
                         .collect::<Vec<usize>>()
                 }) {
-                    out.push(PropagateItem::new(neighbour_tile.grid_position(), *opt_to_remove))
+                    out.push(PropagateItem::new(
+                        neighbour_tile.grid_position(),
+                        *opt_to_remove,
+                    ))
                 }
             }
         }
@@ -340,9 +342,7 @@ impl<Tile: TypedData>
 
 impl<Tile: TypedData> CollapsibleGrid<ThreeDim, Tile> for CollapsibleTileGrid3D<Tile> {}
 
-impl<Tile: TypedData> CollapsibleTileGrid<ThreeDim, Tile>
-    for CollapsibleTileGrid3D<Tile>
-{
+impl<Tile: TypedData> CollapsibleTileGrid<ThreeDim, Tile> for CollapsibleTileGrid3D<Tile> {
     fn new_empty(
         size: GridSize3D,
         frequencies: &FrequencyHints<ThreeDim, Tile>,

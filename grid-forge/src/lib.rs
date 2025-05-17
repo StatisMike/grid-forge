@@ -216,19 +216,19 @@
 mod core;
 mod utils;
 
-#[cfg(feature = "gen")]
-pub mod gen;
+// #[cfg(feature = "gen")]
+// pub mod gen;
+
+#[doc(inline)]
+pub use core::TileData;
 
 pub mod id;
-
-pub mod common;
 
 #[doc(inline)]
 pub use core::two_d;
 
 #[doc(inline)]
 pub use core::three_d;
-
 
 // pub use map::*;
 // pub use tile::*;
@@ -244,4 +244,4 @@ pub use core::three_d;
 // }
 
 // #[cfg(feature = "vis")]
-pub mod vis;
+// pub mod vis;

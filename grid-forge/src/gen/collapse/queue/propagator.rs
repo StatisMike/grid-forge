@@ -31,11 +31,9 @@ pub struct Propagator<D: Dimensionality + CollapseBounds + ?Sized> {
     inner: Vec<PropagateItem<D>>,
 }
 
-impl <D: Dimensionality + CollapseBounds + ?Sized> Default for Propagator<D> {
+impl<D: Dimensionality + CollapseBounds + ?Sized> Default for Propagator<D> {
     fn default() -> Self {
-        Self {
-            inner: Vec::new()
-        }
+        Self { inner: Vec::new() }
     }
 }
 

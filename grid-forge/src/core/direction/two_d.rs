@@ -1,13 +1,13 @@
-use std::ops::Index;
-use std::ops::IndexMut;
+use crate::core::direction::macros::__impl_direction_table;
 
-use super::common::*;
+use crate::two_d::{GridPosition2D, GridSize2D};
 
-use super::private::*;
-use crate::core::two_d::*;
-
+/// Direction in the 2D space.
+///
+/// These are all the directions that are possible on the rectangular 2D grid.
+/// Diagonal directions are not taken into account.
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Direction2D {
     Up = 0,
     Down = 1,
@@ -15,19 +15,48 @@ pub enum Direction2D {
     Right = 3,
 }
 
-impl SealedDir for Direction2D {
-    const FIRST: Self = Self::Up;
-}
+impl Direction2D {
+    /// Number of directions in the 2D space.
+    pub const COUNT: usize = 4;
 
-impl Direction<TwoDim> for Direction2D {
-    const N: usize = 4;
+    /// Primary directions in the 2D space.
+    ///
+    /// Primary directions are the directions that tend into the beginning
+    /// of the grid (all 0 coordinates).
+    pub const PRIMARY: [Self; 2] = [Self::Left, Self::Up];
 
-    #[inline]
-    fn all() -> &'static [Self] {
-        &[Self::Up, Self::Down, Self::Left, Self::Right]
-    }
+    /// All directions in the 2D space.
+    ///
+    /// Order is ascending based on their [`as_idx()`](Self::as_idx()) return value.
+    pub const ALL: [Self; 4] = [Self::Up, Self::Down, Self::Left, Self::Right];
 
-    fn march_step(&self, from: &GridPosition2D, size: &GridSize2D) -> Option<GridPosition2D> {
+    /// Marches the step in the given direction.
+    ///
+    /// Returns the next [GridPosition](crate::core::position::common::GridPositionTrait) in the given direction,
+    /// taking into the account the confines of the specific [GridSize](crate::core::size::common::GridSize).
+    ///
+    /// Returns `None` if the step is not possible.
+    ///
+    /// # Examples
+    /// ```
+    /// use grid_forge::two_d::{GridPosition2D, GridSize2D, Direction2D};
+    ///
+    /// let size = GridSize2D::new(10, 10);
+    /// let mut pos = GridPosition2D::new(5, 5);
+    ///
+    /// for dir in [Direction2D::Up, Direction2D::Left] {
+    ///     pos = dir.march_step(&pos, &size).unwrap();
+    /// }
+    /// assert_eq!(pos, GridPosition2D::new(4, 4));
+    ///
+    /// // Size is not enough to march in that direction.
+    /// let not_valid = Direction2D::Right.march_step(
+    ///     &GridPosition2D::new(9,9),
+    ///     &size
+    /// );
+    /// assert_eq!(not_valid, None);
+    /// ```
+    pub fn march_step(&self, from: &GridPosition2D, size: &GridSize2D) -> Option<GridPosition2D> {
         let (x_dif, y_dif) = match self {
             Self::Up => {
                 if from.y() == 0 {
@@ -61,8 +90,9 @@ impl Direction<TwoDim> for Direction2D {
         Some(GridPosition2D::new(x, y))
     }
 
+    /// Returns the opposite direction.
     #[inline]
-    fn opposite(&self) -> Self {
+    pub fn opposite(&self) -> Self {
         match self {
             Self::Up => Self::Down,
             Self::Down => Self::Up,
@@ -71,145 +101,105 @@ impl Direction<TwoDim> for Direction2D {
         }
     }
 
+    /// Returns the usize index for specific direction.
     #[inline]
-    fn as_idx(&self) -> usize {
+    pub fn as_idx(&self) -> usize {
         *self as usize
     }
 
+    /// Returns the [`Direction2D`] from the given index.
     #[inline]
-    fn primary() -> &'static [Self] {
-        &[Self::Left, Self::Up]
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct DirectionTable2D<T> {
-    table: [T; 4],
-}
-
-impl<T> DirectionTable2D<T> {
-    pub const fn new(table: [T; 4]) -> Self {
-        Self { table }
-    }
-}
-
-impl<T> Sealed for DirectionTable2D<T> {}
-impl<T> DirectionTable<TwoDim, T> for DirectionTable2D<T> {
-    type Inner = [T; 4];
-
-    fn new_array(values: [T; 4]) -> Self {
-        Self { table: values }
-    }
-
-    fn inner(&self) -> &[T; 4] {
-        &self.table
-    }
-
-    fn from_slice(slice: &[T]) -> Self
-    where
-        T: Copy,
-    {
-        let table = [slice[0], slice[1], slice[2], slice[3]];
-        Self { table }
-    }
-}
-
-impl<T: Default> Default for DirectionTable2D<T> {
-    fn default() -> Self {
-        Self {
-            table: [T::default(), T::default(), T::default(), T::default()],
+    pub fn from_idx(idx: usize) -> Option<Self> {
+        match idx {
+            0 => Some(Self::Up),
+            1 => Some(Self::Down),
+            2 => Some(Self::Left),
+            3 => Some(Self::Right),
+            _ => None,
         }
     }
 }
 
-impl<T> Index<Direction2D> for DirectionTable2D<T> {
-    type Output = T;
-
-    fn index(&self, index: Direction2D) -> &Self::Output {
-        &self.table[index.as_idx()]
-    }
-}
-
-impl<T> IndexMut<Direction2D> for DirectionTable2D<T> {
-    fn index_mut(&mut self, index: Direction2D) -> &mut Self::Output {
-        &mut self.table[index.as_idx()]
-    }
-}
-
-impl<T> AsRef<[T]> for DirectionTable2D<T> {
-    fn as_ref(&self) -> &[T] {
-        self.table.as_ref()
-    }
-}
-
-impl<T> AsMut<[T]> for DirectionTable2D<T> {
-    fn as_mut(&mut self) -> &mut [T] {
-        self.table.as_mut()
-    }
+__impl_direction_table! {
+    direction_table: DirectionTable2D,
+    direction: Direction2D,
+    direction_count: 4,
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::core::direction::tests::*;
-    use crate::core::two_d::*;
+    use crate::core::direction::macros::__impl_direction_tests;
+
+    use super::*;
+
+    __impl_direction_tests! {
+        direction: Direction2D,
+        direction_table: DirectionTable2D,
+        dimension_count: 2,
+        position_type: GridPosition2D,
+        size_type: GridSize2D,
+    }
 
     #[test]
-    fn test_2d_march_step() {
-        const CASES: &[MarchStepTestCase<2, TwoDim>] = &[
-            MarchStepTestCase {
-                grid_size: [10, 10],
-                from_coords: [5, 5],
-                dirs: &[
+    fn test_2d_march_step_10x10() {
+        const CASES: &[MarchStepTestCase] = &[
+            MarchStepTestCase::new(
+                GridPosition2D::new(5, 5),
+                &[
                     Direction2D::Up,
                     Direction2D::Down,
                     Direction2D::Left,
                     Direction2D::Right,
                 ],
-                expected_coords: [5, 5],
-                converged: true,
-            },
-            MarchStepTestCase {
-                grid_size: [10, 10],
-                from_coords: [5, 5],
-                dirs: &[
+                GridPosition2D::new(5, 5),
+                true,
+            ),
+            MarchStepTestCase::new(
+                GridPosition2D::new(5, 5),
+                &[
                     Direction2D::Up,
                     Direction2D::Up,
                     Direction2D::Up,
                     Direction2D::Up,
                 ],
-                expected_coords: [5, 1],
-                converged: true,
-            },
-            MarchStepTestCase {
-                grid_size: [2, 2],
-                from_coords: [1, 1],
-                dirs: &[Direction2D::Up, Direction2D::Left],
-                expected_coords: [0, 0],
-                converged: true,
-            },
-            MarchStepTestCase {
-                grid_size: [2, 2],
-                from_coords: [0, 0],
-                dirs: &[Direction2D::Up],
-                expected_coords: [0, 0],
-                converged: false,
-            },
+                GridPosition2D::new(5, 1),
+                true,
+            ),
         ];
-        march_step_test::<2, TwoDim>(CASES);
+        march_step_test(GridSize2D::new(10, 10), CASES);
+    }
+
+    #[test]
+    fn test_2d_march_step_2x2() {
+        const CASES: &[MarchStepTestCase] = &[
+            MarchStepTestCase::new(
+                GridPosition2D::new(1, 1),
+                &[Direction2D::Up, Direction2D::Left],
+                GridPosition2D::new(0, 0),
+                true,
+            ),
+            MarchStepTestCase::new(
+                GridPosition2D::new(0, 0),
+                &[Direction2D::Up],
+                GridPosition2D::new(0, 0),
+                false,
+            ),
+        ];
+        march_step_test(GridSize2D::new(2, 2), CASES);
     }
 
     #[test]
     fn test_2d_direction_table() {
-        const CASES: &[DirectionTableTestCase<4, TwoDim>] = &[
-            DirectionTableTestCase(&[
+        const CASES: &[DirectionTableTestCase] = &[
+            DirectionTableTestCase::new(&[
                 (Direction2D::Up, 22),
                 (Direction2D::Down, 33),
                 (Direction2D::Left, 44),
                 (Direction2D::Right, 55),
             ]),
-            DirectionTableTestCase(&[(Direction2D::Up, 66), (Direction2D::Down, 77)]),
+            DirectionTableTestCase::new(&[(Direction2D::Up, 66), (Direction2D::Down, 77)]),
         ];
 
-        direction_table_test::<4, TwoDim, DirectionTable2D<u32>>(CASES);
+        direction_table_test(CASES);
     }
 }

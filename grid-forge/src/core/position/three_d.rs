@@ -1,11 +1,4 @@
-use std::cmp::Ordering;
-use std::hash::Hash;
-use std::ops::Add;
-use std::ops::AddAssign;
-use std::ops::Sub;
-
-use crate::core::three_d::*;
-use crate::core::common::{GridPosition, Dimensionality};
+use std::ops::{Add, AddAssign, Sub};
 
 /// Position of the tile in 3D rectangular grid.
 #[derive(Debug, Copy, Clone)]
@@ -13,42 +6,6 @@ pub struct GridPosition3D {
     x: u32,
     y: u32,
     z: u32,
-}
-impl super::private::Sealed for GridPosition3D {}
-
-impl GridPosition<ThreeDim> for GridPosition3D {
-    type Coords = [u32; 3];
-
-    #[inline]
-    fn coords(&self) -> Self::Coords {
-        [self.x, self.y, self.z]
-    }
-
-    #[inline]
-    fn from_coords(coords: Self::Coords) -> Self {
-        let [x, y, z] = coords;
-        Self { x, y, z }
-    }
-
-    fn from_slice(slice: &[u32]) -> Self {
-        let [x, y, z] = slice else {
-            panic!("slice should have length 3")
-        };
-        Self::new(*x, *y, *z)
-    }
-
-    fn generate_rect_area(a: &Self, b: &Self) -> Vec<Self> {
-        let mut out = Vec::new();
-
-        for x in a.x.min(b.x)..a.x.max(b.x) + 1 {
-            for y in a.y.min(b.y)..a.y.max(b.y) + 1 {
-                for z in a.z.min(b.z)..a.z.max(b.z) + 1 {
-                    out.push(Self { x, y, z });
-                }
-            }
-        }
-        out
-    }
 }
 
 impl GridPosition3D {
@@ -71,23 +28,34 @@ impl GridPosition3D {
     pub fn z(&self) -> u32 {
         self.z
     }
-}
 
-impl Ord for GridPosition3D {
-    fn cmp(&self, other: &Self) -> Ordering {
-        for i in 0..ThreeDim::N {
-            let cmp = self.coords()[i].cmp(&other.coords()[i]);
-            if cmp != Ordering::Equal {
-                return cmp;
-            };
-        }
-        Ordering::Equal
+    #[inline]
+    pub fn coords(&self) -> [u32; 3] {
+        [self.x, self.y, self.z]
     }
-}
 
-impl PartialOrd for GridPosition3D {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+    #[inline]
+    pub fn from_coords(coords: [u32; 3]) -> Self {
+        let [x, y, z] = coords;
+        Self { x, y, z }
+    }
+
+    #[inline]
+    fn coords_sum(&self) -> u32 {
+        self.x + self.y + self.z
+    }
+
+    pub fn generate_rect_area(a: &Self, b: &Self) -> Vec<Self> {
+        let mut out = Vec::new();
+
+        for x in a.x.min(b.x)..a.x.max(b.x) + 1 {
+            for y in a.y.min(b.y)..a.y.max(b.y) + 1 {
+                for z in a.z.min(b.z)..a.z.max(b.z) + 1 {
+                    out.push(Self { x, y, z });
+                }
+            }
+        }
+        out
     }
 }
 
@@ -123,111 +91,175 @@ impl AddAssign for GridPosition3D {
     }
 }
 
-impl PartialEq for GridPosition3D {
-    fn eq(&self, other: &Self) -> bool {
-        for i in 0..ThreeDim::N {
-            if self.coords()[i] != other.coords()[i] {
-                return false;
-            }
-        }
-        true
-    }
-}
-
-impl Eq for GridPosition3D {}
-
-impl Hash for GridPosition3D {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.coords().hash(state);
-    }
-}
+crate::core::position::macros::__impl_position!(
+    position_type: GridPosition3D,
+    coord_count: 3,
+);
 
 #[cfg(test)]
 mod tests {
-    use std::cmp::Ordering;
-
-    use crate::core::position::tests::*;
-    use crate::core::three_d::*;
+    use super::*;
+    crate::core::position::macros::__impl_position_tests! {
+        position_type: GridPosition3D,
+        coord_count: 3,
+    }
 
     #[test]
     fn test_3d_compare() {
-        const CASES: &[ComparisonTestCase<3>] = &[
-            ([0, 0, 0], [0, 0, 0], Ordering::Equal),
-            ([0, 0, 0], [1, 0, 0], Ordering::Less),
-            ([0, 0, 0], [0, 1, 0], Ordering::Less),
-            ([0, 0, 0], [0, 0, 1], Ordering::Less),
-            ([1, 0, 0], [0, 0, 0], Ordering::Greater),
-            ([0, 1, 0], [0, 0, 0], Ordering::Greater),
-            ([0, 0, 1], [0, 0, 0], Ordering::Greater),
-            ([1, 1, 1], [1, 1, 1], Ordering::Equal),
+        const CASES: &[ComparisonTestCase] = &[
+            ComparisonTestCase::new(
+                GridPosition3D::new(0, 0, 0),
+                GridPosition3D::new(0, 0, 0),
+                Ordering::Equal,
+            ),
+            ComparisonTestCase::new(
+                GridPosition3D::new(0, 0, 0),
+                GridPosition3D::new(1, 0, 0),
+                Ordering::Less,
+            ),
+            ComparisonTestCase::new(
+                GridPosition3D::new(0, 0, 0),
+                GridPosition3D::new(0, 1, 0),
+                Ordering::Less,
+            ),
+            ComparisonTestCase::new(
+                GridPosition3D::new(0, 0, 0),
+                GridPosition3D::new(0, 0, 1),
+                Ordering::Less,
+            ),
+            ComparisonTestCase::new(
+                GridPosition3D::new(1, 0, 0),
+                GridPosition3D::new(0, 0, 0),
+                Ordering::Greater,
+            ),
+            ComparisonTestCase::new(
+                GridPosition3D::new(0, 1, 0),
+                GridPosition3D::new(0, 0, 0),
+                Ordering::Greater,
+            ),
+            ComparisonTestCase::new(
+                GridPosition3D::new(0, 0, 1),
+                GridPosition3D::new(0, 0, 0),
+                Ordering::Greater,
+            ),
+            ComparisonTestCase::new(
+                GridPosition3D::new(1, 1, 1),
+                GridPosition3D::new(1, 1, 1),
+                Ordering::Equal,
+            ),
         ];
-
-        compare_test::<3, ThreeDim>(CASES);
+        compare_test(CASES);
     }
 
     #[test]
     fn test_3d_order() {
-        const CASES: &[OrderingTestCase<3>] = &[&[
-            [0, 0, 0],
-            [2, 0, 0],
-            [0, 2, 0],
-            [1, 1, 0],
-            [1, 2, 0],
-            [33, 33, 33],
-            [2, 2, 2],
-            [12, 12, 12],
-            [12, 2, 2],
-            [2, 12, 2],
-        ]];
+        const CASES: &[OrderingTestCase] = &[OrderingTestCase::new(&[
+            GridPosition3D::new(0, 0, 0),
+            GridPosition3D::new(1, 1, 0),
+            GridPosition3D::new(2, 0, 0),
+            GridPosition3D::new(0, 2, 0),
+            GridPosition3D::new(1, 2, 0),
+            GridPosition3D::new(2, 2, 2),
+            GridPosition3D::new(2, 12, 2),
+            GridPosition3D::new(12, 2, 2),
+            GridPosition3D::new(12, 12, 12),
+            GridPosition3D::new(33, 33, 33),
+        ])];
 
-        order_test::<3, ThreeDim>(CASES);
+        order_test(CASES);
     }
 
     #[test]
     fn test_3d_add() {
-        const CASES: &[MathOpTestCase<3>] = &[
-            (&[[0, 0, 0], [1, 1, 1]], [1, 1, 1]),
-            (&[[1, 1, 1], [1, 1, 1]], [2, 2, 2]),
-            (&[[1, 0, 0], [1, 1, 1]], [2, 1, 1]),
-            (&[[0, 1, 0], [1, 1, 1]], [1, 2, 1]),
+        const CASES: &[MathOpTestCase] = &[
+            MathOpTestCase::new(
+                &[GridPosition3D::new(0, 0, 0), GridPosition3D::new(1, 1, 1)],
+                GridPosition3D::new(1, 1, 1),
+            ),
+            MathOpTestCase::new(
+                &[GridPosition3D::new(0, 0, 0), GridPosition3D::new(1, 1, 1)],
+                GridPosition3D::new(1, 1, 1),
+            ),
+            MathOpTestCase::new(
+                &[GridPosition3D::new(1, 1, 1), GridPosition3D::new(1, 1, 1)],
+                GridPosition3D::new(2, 2, 2),
+            ),
+            MathOpTestCase::new(
+                &[GridPosition3D::new(1, 0, 0), GridPosition3D::new(1, 1, 1)],
+                GridPosition3D::new(2, 1, 1),
+            ),
+            MathOpTestCase::new(
+                &[GridPosition3D::new(0, 1, 0), GridPosition3D::new(1, 1, 1)],
+                GridPosition3D::new(1, 2, 1),
+            ),
         ];
 
-        add_test::<3, ThreeDim>(CASES);
+        add_test(CASES);
     }
 
     #[test]
     fn test_3d_add_assign() {
-        const CASES: &[MathOpTestCase<3>] = &[
-            (&[[0, 0, 0], [1, 1, 1]], [1, 1, 1]),
-            (&[[1, 1, 1], [1, 1, 1]], [2, 2, 2]),
-            (&[[1, 0, 0], [1, 1, 1]], [2, 1, 1]),
-            (&[[0, 1, 0], [1, 1, 1]], [1, 2, 1]),
+        const CASES: &[MathOpTestCase] = &[
+            MathOpTestCase::new(
+                &[GridPosition3D::new(0, 0, 0), GridPosition3D::new(1, 1, 1)],
+                GridPosition3D::new(1, 1, 1),
+            ),
+            MathOpTestCase::new(
+                &[GridPosition3D::new(1, 1, 1), GridPosition3D::new(1, 1, 1)],
+                GridPosition3D::new(2, 2, 2),
+            ),
+            MathOpTestCase::new(
+                &[GridPosition3D::new(1, 0, 0), GridPosition3D::new(1, 1, 1)],
+                GridPosition3D::new(2, 1, 1),
+            ),
+            MathOpTestCase::new(
+                &[GridPosition3D::new(0, 1, 0), GridPosition3D::new(1, 1, 1)],
+                GridPosition3D::new(1, 2, 1),
+            ),
         ];
 
-        add_assign_test::<3, ThreeDim>(CASES);
+        add_assign_test(CASES);
     }
 
     #[test]
     fn test_3d_sub() {
-        const CASES: &[MathOpTestCase<3>] = &[
-            (&[[0, 0, 0], [1, 1, 1]], [1, 1, 1]),
-            (&[[1, 1, 1], [1, 1, 1]], [0, 0, 0]),
-            (&[[1, 0, 0], [1, 1, 1]], [0, 1, 1]),
-            (&[[2, 2, 2], [1, 0, 0]], [1, 2, 2]),
+        const CASES: &[MathOpTestCase] = &[
+            MathOpTestCase::new(
+                &[GridPosition3D::new(0, 0, 0), GridPosition3D::new(1, 1, 1)],
+                GridPosition3D::new(1, 1, 1),
+            ),
+            MathOpTestCase::new(
+                &[GridPosition3D::new(1, 1, 1), GridPosition3D::new(1, 1, 1)],
+                GridPosition3D::new(0, 0, 0),
+            ),
+            MathOpTestCase::new(
+                &[GridPosition3D::new(1, 0, 0), GridPosition3D::new(1, 1, 1)],
+                GridPosition3D::new(0, 1, 1),
+            ),
+            MathOpTestCase::new(
+                &[GridPosition3D::new(2, 2, 2), GridPosition3D::new(1, 0, 0)],
+                GridPosition3D::new(1, 2, 2),
+            ),
         ];
 
-        sub_test::<3, ThreeDim>(CASES);
+        sub_test(CASES);
     }
 
     #[test]
     fn test_3d_generate_rect_area() {
-        const CASES: &[GenerateRectTestCase<3>] = &[
-            ([0, 0, 0], [1, 1, 1]),
-            ([1, 1, 1], [10, 15, 20]),
-            ([10, 15, 20], [1, 1, 1]),
-            ([0, 0, 0], [0, 0, 0]),
+        const CASES: &[GenerateRectTestCase] = &[
+            GenerateRectTestCase::new(GridPosition3D::new(0, 0, 0), GridPosition3D::new(1, 1, 1)),
+            GenerateRectTestCase::new(
+                GridPosition3D::new(1, 1, 1),
+                GridPosition3D::new(10, 15, 20),
+            ),
+            GenerateRectTestCase::new(
+                GridPosition3D::new(10, 15, 20),
+                GridPosition3D::new(1, 1, 1),
+            ),
+            GenerateRectTestCase::new(GridPosition3D::new(0, 0, 0), GridPosition3D::new(0, 0, 0)),
         ];
 
-        generate_rect_area_test::<3, ThreeDim>(CASES);
+        generate_rect_area_test(CASES);
     }
 }

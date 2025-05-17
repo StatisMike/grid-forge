@@ -3,7 +3,14 @@
 mod gif_subscribers;
 
 use grid_forge::{
-    r#gen::collapse::{error::CollapseError, grid::CollapsibleGrid, two_d::{CollapsedGrid2D, CollapsibleTileGrid2D}}, id::{BasicTypedData, IdentTileDefaultBuilder, TypedData}, two_d::{GridMap2D, TwoDim}, vis::{collection::VisCollection, ops::load_gridmap_identifiable_auto, DefaultVisPixel}
+    id::{BasicTypedData, IdentTileDefaultBuilder, TypedData},
+    r#gen::collapse::{
+        error::CollapseError,
+        grid::CollapsibleGrid,
+        two_d::{CollapsedGrid2D, CollapsibleTileGrid2D},
+    },
+    two_d::{GridMap2D, TwoDim},
+    vis::{collection::VisCollection, ops::load_gridmap_identifiable_auto, DefaultVisPixel},
 };
 use image::{ImageBuffer, Rgb};
 use rand::SeedableRng;

@@ -1,127 +1,86 @@
 use crate::two_d::*;
-use crate::core::common::*;
 
-use super::private::*;
+crate::core::map::macros::__impl_grid! {
 
-/// [`GridMap`] in [`TwoDim`] dimensionality.
-/// 
-/// 
-pub struct GridMap2D<Data: TileData> {
+    pub struct GridMap2D;
+
+    module: two_d,
+    direction: Direction2D,
+    direction_table: DirectionTable2D,
     size: GridSize2D,
-    tiles: Vec<Option<Data>>,
-}
-
-impl<Data: TileData> SealedGrid<Data, TwoDim> for GridMap2D<Data> {
-    fn tiles(&self) -> &[Option<Data>] {
-        &self.tiles
-    }
-
-    fn tiles_mut(&mut self) -> &mut [Option<Data>] {
-        &mut self.tiles
-    }
-
-    #[inline(always)]
-    unsafe fn get_unchecked(&self, index: usize) -> &Option<Data> {
-        self.tiles.get_unchecked(index)
-    }
-
-    #[inline(always)]
-    unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut Option<Data> {
-        self.tiles.get_unchecked_mut(index)
-    }
-}
-
-impl<Data: TileData> GridMap<TwoDim, Data> for GridMap2D<Data> {
-
-    type Tile = Tile2D<Data>;
-    type TileRef<'a> = TileRef2D<'a, Data> where Data: 'a;
-    type TileMut<'a> = TileMut2D<'a, Data> where Data: 'a;
-
-    fn new(size: GridSize2D) -> Self {
-        let count = size.max_tile_count();
-        let mut tiles = Vec::with_capacity(count);
-        for _ in 0..count {
-            tiles.push(None);
-        }
-        Self { size, tiles }
-    }
-
-    fn size(&self) -> &GridSize2D {
-        &self.size
-    }
+    position: GridPosition2D,
+    tile: Tile2D,
+    tile_ref: TileRef2D,
+    tile_mut: TileMut2D,
+    neighbours_count: 4,
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::core::map::tests::*;
     use crate::two_d::*;
 
-    #[test]
-    fn test_2d_grid_read_access() {
-        test_grid_read_access::<2, TwoDim, GridMap2D<TestData<TwoDim>>>();
-    }
-
-    #[test]
-    fn test_2d_grid_write_access() {
-        test_grid_write_access::<2, TwoDim, GridMap2D<TestData<TwoDim>>>();
-    }
-
-    #[test]
-    fn test_2d_remapped() {
-        test_remapped::<2, TwoDim, GridMap2D<TestData<TwoDim>>>(GridPosition2D::new(5, 5));
-    }
+    crate::core::map::macros::__impl_grid_tests!(
+        grid: GridMap2D,
+        size: GridSize2D,
+        position: GridPosition2D,
+        direction: Direction2D,
+        direction_table: DirectionTable2D,
+        dimension_count: 2,
+    );
 
     #[test]
     fn test_2_neighbours() {
-        test_neighbours::<TwoDim, GridMap2D<TestData<TwoDim>>>(
+        test_neigbhours(
             GridSize2D::new(10, 10),
             &[
-                NeighbourTestCase {
-                    pos: GridPosition2D::new(0, 0),
-                    direction: Direction2D::Down,
-                    expected: Some(GridPosition2D::new(0, 1)),
-                },
-                NeighbourTestCase {
-                    pos: GridPosition2D::new(0, 0),
-                    direction: Direction2D::Left,
-                    expected: None,
-                },
-                NeighbourTestCase {
-                    pos: GridPosition2D::new(9, 9),
-                    direction: Direction2D::Up,
-                    expected: Some(GridPosition2D::new(9, 8)),
-                },
-                NeighbourTestCase {
-                    pos: GridPosition2D::new(9, 9),
-                    direction: Direction2D::Right,
-                    expected: None,
-                },
+                NeighbourTestCase::new(
+                    GridPosition2D::new(0, 0),
+                    Direction2D::Down,
+                    Some(GridPosition2D::new(0, 1)),
+                ),
+                NeighbourTestCase::new(GridPosition2D::new(0, 0), Direction2D::Left, None),
+                NeighbourTestCase::new(
+                    GridPosition2D::new(9, 9),
+                    Direction2D::Up,
+                    Some(GridPosition2D::new(9, 8)),
+                ),
+                NeighbourTestCase::new(GridPosition2D::new(9, 9), Direction2D::Right, None),
             ],
         );
     }
 
     #[test]
     fn test_2_all_neighbours() {
-        test_all_neighbours::<TwoDim, GridMap2D<TestData<TwoDim>>>(
+        test_all_neigbhours(
             GridSize2D::new(10, 10),
             &[
-                AllNeighboursTestCase {
-                    pos: GridPosition2D::new(0, 0),
-                    expected: vec![GridPosition2D::new(0, 1), GridPosition2D::new(1, 0)],
-                },
-                AllNeighboursTestCase {
-                    pos: GridPosition2D::new(5, 5),
-                    expected: vec![
-                        GridPosition2D::new(4, 5),
-                        GridPosition2D::new(5, 4),
-                        GridPosition2D::new(6, 5),
-                        GridPosition2D::new(5, 6),
-                    ],
-                },
-                AllNeighboursTestCase {
-                    pos: GridPosition2D::new(9, 9),
-                    expected: vec![GridPosition2D::new(8, 9), GridPosition2D::new(9, 8)],
-                },
+                AllNeighboursTestCase::new(
+                    GridPosition2D::new(0, 0),
+                    DirectionTable2D::new([
+                        None,
+                        Some(GridPosition2D::new(0, 1)),
+                        None,
+                        Some(GridPosition2D::new(1, 0)),
+                    ]),
+                ),
+                AllNeighboursTestCase::new(
+                    GridPosition2D::new(5, 5),
+                    DirectionTable2D::new([
+                        Some(GridPosition2D::new(5, 4)),
+                        Some(GridPosition2D::new(5, 6)),
+                        Some(GridPosition2D::new(4, 5)),
+                        Some(GridPosition2D::new(6, 5)),
+                    ]),
+                ),
+                AllNeighboursTestCase::new(
+                    GridPosition2D::new(9, 9),
+                    DirectionTable2D::new([
+                        Some(GridPosition2D::new(9, 8)),
+                        None,
+                        Some(GridPosition2D::new(8, 9)),
+                        None,
+                    ]),
+                ),
             ],
         );
     }

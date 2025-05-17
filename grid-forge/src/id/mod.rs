@@ -1,4 +1,4 @@
-use crate::core::common::TileData;
+use crate::core::TileData;
 
 mod builders;
 mod collection;
@@ -7,38 +7,38 @@ pub use builders::*;
 pub use collection::*;
 
 /// Identifiable tile data trait.
-/// 
+///
 /// Its implementation makes the specific [`TileData`] identifiable and discernable from other tile instances in regards to *tile
 /// type*. Some exemplar tile types could be :
 /// - terrain type: grass, dirt, rock, etc.
 /// - specific underlying visual representation: 2D sprite, 3D mesh, etc.
-/// 
+///
 /// General rules of tile types when implementing this trait should be:
 ///
-/// - its [`GridPosition`](crate::common::GridPosition) **should not be ever taken into account**. Tile of these same type could 
+/// - its [`GridPosition`](crate::common::GridPosition) **should not be ever taken into account**. Tile of these same type could
 ///   be placed on different positions on the [`GridMap`](crate::common::GridMap).
 /// - other properties of the tile (such as visual representation) *can* be taken into account depending on your specific
 ///   needs.
-/// 
+///
 /// Procedural generation algorithms rely on this trait to identify the tiles to be placed on the generated map.
-/// 
+///
 /// # Example
 /// ```
 /// use grid_forge::common::TileData;
 /// use grid_forge::id::TypedData;
-/// 
+///
 /// enum TileType {
 ///     Grass,
 ///     Dirt,
 ///     Rock,
 /// }
-/// 
+///
 /// struct TerrainTile {
 ///     tile_type: TileType,
 /// }
-/// 
+///
 /// impl TileData for TerrainTile {}
-/// 
+///
 /// impl TypedData for TerrainTile {
 ///     fn tile_type_id(&self) -> u64 {
 ///         match self.tile_type {
@@ -77,6 +77,6 @@ impl TypedData for BasicTypedData {
 
 impl IdDefault for BasicTypedData {
     fn tile_type_default(tile_type_id: u64) -> Self {
-        BasicTypedData(tile_type_id) 
+        BasicTypedData(tile_type_id)
     }
 }
