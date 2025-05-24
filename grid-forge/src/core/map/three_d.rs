@@ -9,9 +9,8 @@ use super::two_d::GridMap2D;
 
 crate::core::map::macros::__impl_grid! {
 
-    pub struct GridMap3D;
+    pub struct GridMap3D {}
 
-    module: three_d,
     direction: Direction3D,
     direction_table: DirectionTable3D,
     size: GridSize3D,
@@ -20,6 +19,9 @@ crate::core::map::macros::__impl_grid! {
     tile_ref: TileRef3D,
     tile_mut: TileMut3D,
     neighbours_count: 6,
+
+    generic_params: [Data],
+    where_clause: [Data: crate::TileData],
 }
 
 impl<Data: TileData> GridMap3D<Data> {

@@ -4,8 +4,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 
 use image::{ImageBuffer, Luma, LumaA, Pixel, Rgb, Rgba};
 
-use crate::common::{GridPosition, TileContainer, TileData};
-use crate::two_d::{GridPosition2D, TwoDim};
+use crate::{two_d::GridPosition2D, TileData, TileContainer};
 
 use self::error::VisError;
 
@@ -169,7 +168,7 @@ where
 
 pub trait VisTile<Data, P, const WIDTH: usize, const HEIGHT: usize>
 where
-    Self: TileContainer<TwoDim> + AsRef<Data>,
+    Self: AsRef<Data>,
     Data: VisTileData<P, WIDTH, HEIGHT>,
     P: Pixel,
 {
@@ -185,7 +184,7 @@ impl<Data, P, const WIDTH: usize, const HEIGHT: usize, Tile> VisTile<Data, P, WI
 where
     Data: VisTileData<P, WIDTH, HEIGHT>,
     P: Pixel,
-    Tile: TileContainer<TwoDim> + AsRef<Data>,
+    Tile: AsRef<Data>,
 {
     fn vis_to_buffer(
         &self,

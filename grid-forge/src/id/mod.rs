@@ -2,9 +2,11 @@ use crate::core::TileData;
 
 mod builders;
 mod collection;
+mod shared_data;
 
 pub use builders::*;
 pub use collection::*;
+pub use shared_data::*;
 
 /// Identifiable tile data trait.
 ///

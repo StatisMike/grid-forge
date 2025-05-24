@@ -1,26 +1,23 @@
-//! 3D rectangular tile dimension.
+//! 3D cubic tile dimension.
 //!
 //! # Overview
 //!
-//! [`ThreeDim`] is its [`Dimensionality`](crate::common::Dimensionality) implementation.
-//!
-//! - it has three dimensions, x, y and z. The [`GridPosition3D`] contains address to the cel in the grid
+//! - it has three dimensions, x, y and z. The [`GridPosition3D`] contains address to the cell in the grid
 //! with x, y and z coordinates, and [`GridSize3D`] holds the size of the grid in x, y, z dimensions.
 //! - [`Direction3D`] is a direction in 3D space, with six possible variants in three dimensional space.
 //! - [`DirectionTable3D`] is fast lookup table for the data bound to the specific direction.
 //! - [`GridMap3D`] is a [`GridMap`](crate::common::GridMap) implementation for 3D space.
 //!
-//! There are three types of [`TileContainer`](crate::common::TileContainer) implemented for 3D space, containing
-//! both the data and the position of the tile:
+//! There are three types implementing [`TileContainer`](crate::TileContainer) 3D space, containing both the data and the position of the tile: 
 //! - [`Tile3D`] - container owning the data for a tile.
 //! - [`TileRef3D`] - container with reference to the data for a tile.
 //! - [`TileMut3D`] - container with mutable reference to the data for a tile.
 //!
 //! # Examples
 //! ```
-//! // You can import whole `common` module for trait visibility and `three_d` for implementations.
 //! use grid_forge::three_d::*;
 //! use grid_forge::TileData;
+//! use grid_forge::TileContainer as _;
 //! use std::collections::HashMap;
 //!
 //! // Create a custom tile data.
@@ -70,7 +67,7 @@
 //! for tile in tile_vec {
 //!     // Tile holds both the position and the data.
 //!     let pos = tile.grid_position();
-//!     let data = tile.into_data();
+//!     let data = tile.data();
 //!
 //!     // Alternatively, the Tile3D can be also inserted into the grid.
 //!     assert!(map.insert_tile(Tile3D::new(pos, data)), "failed to insert tile");

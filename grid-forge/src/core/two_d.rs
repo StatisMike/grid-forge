@@ -96,5 +96,5 @@ pub use crate::core::{
     map::two_d::GridMap2D,
     position::two_d::GridPosition2D,
     size::two_d::GridSize2D,
-    tile::two_d::{Tile2D, TileMut2D, TileRef2D},
+    tile::two_d::{Tile2D, TileMut2D, TileRef2D, TileRefShared2D, TileMutShared2D},
 };

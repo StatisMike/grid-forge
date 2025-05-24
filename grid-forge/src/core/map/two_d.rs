@@ -2,9 +2,8 @@ use crate::two_d::*;
 
 crate::core::map::macros::__impl_grid! {
 
-    pub struct GridMap2D;
+    pub struct GridMap2D {}
 
-    module: two_d,
     direction: Direction2D,
     direction_table: DirectionTable2D,
     size: GridSize2D,
@@ -13,6 +12,28 @@ crate::core::map::macros::__impl_grid! {
     tile_ref: TileRef2D,
     tile_mut: TileMut2D,
     neighbours_count: 4,
+
+    generic_params: [Data],
+    where_clause: [Data: crate::TileData],
+}
+
+crate::core::map::macros::__impl_grid_with_shared! {
+    pub struct GridMapShared2D {}
+
+    direction: Direction2D,
+    direction_table: DirectionTable2D,
+    size: GridSize2D,
+    position: GridPosition2D,
+    tile: Tile2D,
+    tile_ref: TileRef2D,
+    tile_mut: TileMut2D,
+    neighbours_count: 4,
+
+    tile_ref_shared: TileRefShared2D,
+    tile_mut_shared: TileMutShared2D,
+
+    generic_params: [Data],
+    where_clause: [Data: crate::id::TypedData],
 }
 
 #[cfg(test)]
@@ -27,6 +48,13 @@ mod tests {
         direction_table: DirectionTable2D,
         dimension_count: 2,
     );
+
+    // fn test() {
+        // use super::GridMapShared2D;
+    //     let mut grid = GridMapShared2D::new(GridSize2D::new(10, 10));
+    //     grid.get_tile_at_position(position);
+    //     grid.get_neighbours(position)
+    // }
 
     #[test]
     fn test_2_neighbours() {

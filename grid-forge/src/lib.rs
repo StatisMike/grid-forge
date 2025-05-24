@@ -220,7 +220,7 @@ mod utils;
 // pub mod gen;
 
 #[doc(inline)]
-pub use core::TileData;
+pub use core::{TileData, TileContainer};
 
 pub mod id;
 
@@ -243,5 +243,5 @@ pub use core::three_d;
 //     pub use ext::godot::*;
 // }
 
-// #[cfg(feature = "vis")]
-// pub mod vis;
+#[cfg(feature = "vis")]
+pub mod vis;

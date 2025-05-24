@@ -3,8 +3,6 @@ use std::collections::HashMap;
 
 use image::{ImageBuffer, Pixel};
 
-use crate::common::GridMap;
-use crate::common::TileContainer;
 use crate::id::*;
 use crate::two_d::*;
 
@@ -173,7 +171,7 @@ where
         buffer: &ImageBuffer<P, Vec<P::Subpixel>>,
     ) -> VisCollectionResult<P, WIDTH, HEIGHT>
     where
-        Tile: AsRef<Data> + TileContainer<TwoDim>,
+        Tile: AsRef<Data>,
         Data: TypedData,
     {
         if let Entry::Vacant(e) = self.inner.entry(tile.as_ref().tile_type_id()) {
@@ -197,7 +195,7 @@ where
         buffer: &ImageBuffer<P, Vec<P::Subpixel>>,
     ) -> VisCollectionResult<P, WIDTH, HEIGHT>
     where
-        Tile: TileContainer<TwoDim> + AsRef<Data>,
+        Tile: AsRef<Data>,
         Data: TypedData,
     {
         if Self::check_empty_id(&self.empty, tile.as_ref().tile_type_id()) {
@@ -280,7 +278,7 @@ where
         buffer: &mut ImageBuffer<P, Vec<P::Subpixel>>,
     ) -> Result<(), VisError<WIDTH, HEIGHT>>
     where
-        Tile: TileContainer<TwoDim> + AsRef<Data>,
+        Tile: AsRef<Data>,
         Data: TypedData,
     {
         if let Some(pixels) = self.inner.get(&tile.as_ref().tile_type_id()) {
