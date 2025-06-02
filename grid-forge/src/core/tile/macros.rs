@@ -138,12 +138,20 @@ macro_rules! __impl_tile {
 
         impl<'a , D: TileData> Sealed for $tile_mut_type<'a, D> {}
 
+        /// Container for the reference to the [`TileData`] with [`SharedData`].
+        /// 
+        /// Keeps the reference to the tile data and its type shared data, as well as the position of the tile.
+        /// Can be retrieved from the grid types containing [`SharedData`].
+        /// 
+        #[doc = concat!("For similiar structure with mutable reference to the [`TileData`] see: [`", stringify!($tile_mut_shared_type), "`].\n")]
         pub struct $tile_ref_shared_type<'a, Data: TileData, Shared: SharedData>(pub $position, pub &'a Data, pub &'a Shared);
 
         impl<'a, Data: TileData, Shared: SharedData> $tile_ref_shared_type<'a, Data, Shared> {
             pub(crate) fn new(grid_position: $position, data: &'a Data, shared: &'a Shared) -> Self {
                 Self(grid_position, data, shared)
             }
+
+            /// Returns a reference to the underlying data.
             pub fn data(&self) -> &Data {
                 &self.1
             }
@@ -175,12 +183,23 @@ macro_rules! __impl_tile {
 
         impl<'a, D: TileData, Shared: SharedData> Sealed for $tile_ref_shared_type<'a, D, Shared> {}
 
+        /// Container for the mutable reference to the [`TileData`] with [`SharedData`].
+        /// 
+        /// Keeps the reference to the tile data and its type shared data, as well as the position of the tile.
+        /// Can be retrieved from the grid types containing [`SharedData`].
+        /// 
+        /// It is the only way to retrieve and keept both mutable reference to the [`TileData`] and its type shared data
+        /// at the same time.
+        /// 
+        #[doc = concat!("For similiar structure with immutable reference to the [`TileData`] see: [`", stringify!($tile_ref_shared_type), "`].\n")]
         pub struct $tile_mut_shared_type<'a, Data: TileData, Shared: SharedData>(pub $position, pub &'a mut Data, pub &'a Shared);
 
         impl<'a, Data: TileData, Shared: SharedData> $tile_mut_shared_type<'a, Data, Shared> {
             pub(crate) fn new(grid_position: $position, data: &'a mut Data, shared: &'a Shared) -> Self {
                 Self(grid_position, data, shared)
             }
+
+            /// Returns a mutable reference to the underlying data.
             pub fn data(&mut self) -> &mut Data {
                 &mut self.1
             }

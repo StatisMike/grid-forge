@@ -93,7 +93,7 @@
 #[doc(inline)]
 pub use crate::core::{
     direction::two_d::{Direction2D, DirectionTable2D},
-    map::two_d::GridMap2D,
+    map::two_d::{GridMap2D, GridMapShared2D},
     position::two_d::GridPosition2D,
     size::two_d::GridSize2D,
     tile::two_d::{Tile2D, TileMut2D, TileRef2D, TileRefShared2D, TileMutShared2D},
