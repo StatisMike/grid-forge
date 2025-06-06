@@ -12,6 +12,6 @@ mod position;
 mod size;
 mod tile;
 
-pub use tile::common::{TileData, TileContainer};
+pub use tile::common::{TileContainer, TileData};
 pub mod three_d;
 pub mod two_d;

@@ -3,11 +3,11 @@ use std::collections::{HashMap, HashSet};
 use crate::core::TileData;
 
 mod builders;
-mod collection;
+// mod collection;
 mod shared_data;
 
 pub use builders::*;
-pub use collection::*;
+// pub use collection::*;
 use nohash_hasher::NoHashHasher;
 pub use shared_data::*;
 

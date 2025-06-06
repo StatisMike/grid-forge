@@ -8,7 +8,7 @@
 //! - [`DirectionTable3D`] is fast lookup table for the data bound to the specific direction.
 //! - [`GridMap3D`] is a [`GridMap`](crate::common::GridMap) implementation for 3D space.
 //!
-//! There are three types implementing [`TileContainer`](crate::TileContainer) 3D space, containing both the data and the position of the tile: 
+//! There are three types implementing [`TileContainer`](crate::TileContainer) 3D space, containing both the data and the position of the tile:
 //! - [`Tile3D`] - container owning the data for a tile.
 //! - [`TileRef3D`] - container with reference to the data for a tile.
 //! - [`TileMut3D`] - container with mutable reference to the data for a tile.

@@ -12,10 +12,10 @@ macro_rules! __impl_tile {
         use crate::core::tile::private::Sealed;
 
         /// Container for the owned [`TileData`].
-        /// 
+        ///
         /// For usage outside of the grid context - be it before inserting the data into
         /// the grid or after removing specific positions or draining the grid completely.
-        /// 
+        ///
         /// Most of the time, you will want to use the reference types instead:
         #[doc = concat!("- [`", stringify!($tile_ref_type), "`]\n")]
         #[doc = concat!("- [`", stringify!($tile_mut_type), "`]\n")]
@@ -64,7 +64,7 @@ macro_rules! __impl_tile {
         /// Keeps the reference to the data as well as the position of the tile coupled,
         /// allowing to keep track of what the data references. Useful especially in scenarios
         /// where the data is retrieved from the grid in batches for further use.
-        /// 
+        ///
         #[doc = concat!("For mutable operations, see [`", stringify!($tile_mut_type), "`].\n")]
         pub struct $tile_ref_type<'a, Data: TileData>(pub $position, pub &'a Data);
 
@@ -103,7 +103,7 @@ macro_rules! __impl_tile {
         ///
         /// Keeps the reference to the data as well as the position of the tile coupled,
         /// allowing to keep track of what the data references.
-        /// 
+        ///
         #[doc = concat!("For immutable operations, see [`", stringify!($tile_ref_type), "`].\n")]
         pub struct $tile_mut_type<'a, Data: TileData>(pub $position, pub &'a mut Data);
 
@@ -139,10 +139,10 @@ macro_rules! __impl_tile {
         impl<'a , D: TileData> Sealed for $tile_mut_type<'a, D> {}
 
         /// Container for the reference to the [`TileData`] with [`SharedData`].
-        /// 
+        ///
         /// Keeps the reference to the tile data and its type shared data, as well as the position of the tile.
         /// Can be retrieved from the grid types containing [`SharedData`].
-        /// 
+        ///
         #[doc = concat!("For similiar structure with mutable reference to the [`TileData`] see: [`", stringify!($tile_mut_shared_type), "`].\n")]
         pub struct $tile_ref_shared_type<'a, Data: TileData, Shared: SharedData>(pub $position, pub &'a Data, pub &'a Shared);
 
@@ -184,13 +184,13 @@ macro_rules! __impl_tile {
         impl<'a, D: TileData, Shared: SharedData> Sealed for $tile_ref_shared_type<'a, D, Shared> {}
 
         /// Container for the mutable reference to the [`TileData`] with [`SharedData`].
-        /// 
+        ///
         /// Keeps the reference to the tile data and its type shared data, as well as the position of the tile.
         /// Can be retrieved from the grid types containing [`SharedData`].
-        /// 
+        ///
         /// It is the only way to retrieve and keept both mutable reference to the [`TileData`] and its type shared data
         /// at the same time.
-        /// 
+        ///
         #[doc = concat!("For similiar structure with immutable reference to the [`TileData`] see: [`", stringify!($tile_ref_shared_type), "`].\n")]
         pub struct $tile_mut_shared_type<'a, Data: TileData, Shared: SharedData>(pub $position, pub &'a mut Data, pub &'a Shared);
 

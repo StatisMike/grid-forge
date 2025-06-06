@@ -3,7 +3,7 @@ use std::collections::{hash_map::Entry, HashMap, HashSet};
 use super::{TileIdSet, TypeIdMap};
 
 /// Marker trait for data shared between tiles of the same type.
-/// 
+///
 /// With tiles implementing [`TypedData`](crate::id::TypedData) trait, you can use this trait
 /// to store data shared between tiles of the same type. With this implemented, you can use
 /// the [`TypedData`](crate::id::TypedData) to store a *state* of the tile, and the shared data
@@ -16,13 +16,12 @@ pub trait WithSharedData<Shared: SharedData> {
     fn shared_data(&self) -> &Shared;
 }
 
-pub (crate) struct SharedDataContainer<Shared: SharedData> {
+pub(crate) struct SharedDataContainer<Shared: SharedData> {
     inner: TypeIdMap<Shared>,
     pub mut_accessed: Option<TileIdSet>,
 }
 
-impl <Shared: SharedData> SharedDataContainer<Shared> {
-
+impl<Shared: SharedData> SharedDataContainer<Shared> {
     pub fn mut_access_tracking(&mut self, enabled: bool) {
         self.mut_accessed = if enabled {
             Some(TileIdSet::default())
@@ -63,9 +62,11 @@ impl <Shared: SharedData> SharedDataContainer<Shared> {
     }
 }
 
-impl <Shared: SharedData> Default for SharedDataContainer<Shared> {
+impl<Shared: SharedData> Default for SharedDataContainer<Shared> {
     fn default() -> Self {
-        Self { inner: TypeIdMap::default(), mut_accessed: None }
+        Self {
+            inner: TypeIdMap::default(),
+            mut_accessed: None,
+        }
     }
 }
-

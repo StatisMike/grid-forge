@@ -72,7 +72,7 @@ pub(crate) mod private {
 
     use crate::r#gen::collapse::option::OptionWeights;
     use crate::{
-        gen::collapse::option::{PerOptionData, WaysToBeOption},
+        r#gen::collapse::option::{PerOptionData, WaysToBeOption},
         map::{GridDir, GridMap2D},
         tile::{self, GridPosition, GridTile},
     };

@@ -1,206 +1,498 @@
-use std::{collections::{hash_map::Entry, HashMap}, fmt::Display};
+use std::{
+    collections::hash_map::Entry,
+    fmt::Display,
+};
 
 use image::{ImageBuffer, Pixel};
-use nohash_hasher::{BuildNoHashHasher, NoHashHasher};
 
-use crate::{id::{IdDefault, IdentTileBuilder, SharedData, TypeIdMap, TileIdSet, TypedData}, two_d::{GridMap2D, GridMapShared2D, GridPosition2D, GridSize2D}, TileData};
+use crate::{
+    id::{IdentTileBuilder, SharedData, TypeIdMap, TypedData},
+    two_d::{GridMap2D, GridMapShared2D, GridPosition2D, GridSize2D},
+    TileData,
+};
 
-use super::{tile::{TilePixConst, TilePixels}, PixelWithDefault};
+use super::{
+    tile::{TilePixConst, TilePixVar, TilePixels, WithPixels},
+    PixelWithDefault,
+};
 
-impl <T: TileData> GridMap2D<T> {
-    /// Load [`GridMap2D`] with TileData implementing [`TilePixels`] from provided image buffer.
-    /// 
-    /// Use this function if the tile itself implements [`TilePixels`]. If the tile struct implements [`TypedData`](crate::id::TypedData) and 
-    /// the pixels data is separate from the tile, only corresponding to some `tile_type_id`, you can use [`load_from_image_typed`]
-    /// or [`load_from_image_typed_auto`] functions.
+impl<T: TileData> GridMap2D<T> {
+    /// Load [`GridMap2D`] with [`TileData`] containing [`TilePixConst`] data from provided image buffer.
     ///
-    /// # Arguments
-    /// - `pix_size` - tuple of the pixel width and height in pixels.
-    /// - `image` - an [`ImageBuffer`] containing the source image data.
-    /// 
+    ///
+    /// Use this function if the tile itself implements [`WithPixels`], using [`TilePixConst`] as its pixel container. If the tile
+    /// struct implements [`TypedData`](crate::id::TypedData) and the pixels data is separate from the tile and corresponds to some
+    /// `tile_type_id`, you can use [`load_from_image_const_typed()`](Self::load_from_image_const_typed) or
+    /// [`load_from_image_const_typed_auto()`](Self::load_from_image_const_typed_auto()) functions.
+    ///
+    /// For non-compile time known pixel representation size, use [`load_from_image_var()`](Self::load_from_image_var) function.
+    ///
     /// # Returns
     /// - [`GridMap2D`] if successful
     /// - [`VisError2D`] on errors.
-    pub fn load_from_image<P>(pix_size: (usize, usize), image: &image::ImageBuffer<P, Vec<P::Subpixel>>) -> Result<Self, VisError2D>
-    where T: TilePixels<P>, P: PixelWithDefault + 'static,
+    pub fn load_from_image_const<const WIDTH: usize, const HEIGHT: usize, P>(
+        image: &image::ImageBuffer<P, Vec<P::Subpixel>>,
+    ) -> Result<Self, VisError2D>
+    where
+        T: WithPixels<TilePixConst<WIDTH, HEIGHT, P>, P> + Default,
+        P: PixelWithDefault + 'static,
     {
-        let size = check_grid_vis_size(image, pix_size)?;
+        let size = check_grid_vis_size(image, (WIDTH, HEIGHT))?;
         let mut grid = Self::new(size);
         for (pos, pix) in grid.indexed_iter_mut() {
-            let mut pix_tile = T::new_empty(pix_size.0, pix_size.1);
-            check_tile_vis_size(pix_size, &pix_tile)?;
+            let mut pix_tile = TilePixConst::<WIDTH, HEIGHT, P>::default();
             read_tile(&mut pix_tile, image, &pos)?;
-            pix.replace(pix_tile);
+            match pix {
+                Some(ref mut existing_pix) => {
+                    *existing_pix.tile_pixels_mut() = pix_tile;
+                }
+                None => {
+                    *pix = Some(T::default());
+                    if let Some(ref mut existing_pix) = pix {
+                        *existing_pix.tile_pixels_mut() = pix_tile;
+                    }
+                }
+            }
         }
         Ok(grid)
     }
 
-    /// Load [`GridMap2D`] with [`TypedData`](crate::id::TypedData) from provided image buffer and [`TilePixels`] for each tile type.
-    /// 
+    /// Load [`GridMap2D`] with [`TileData`] containing [`TilePixVar`] data from provided image buffer.
+    ///
+    /// Use this function if the tile itself implements [`WithPixels`], using [`TilePixVar`] as its pixel container. If the tile
+    /// struct implements [`TypedData`](crate::id::TypedData) and the pixels data is separate from the tile and corresponds to some
+    /// `tile_type_id`, you can use [`load_from_image_var_typed()`](Self::load_from_image_var_typed) or
+    /// [`load_from_image_var_typed_auto()`](Self::load_from_image_var_typed_auto()) functions.
+    ///
+    /// For non-compile time known pixel representation size, use [`load_from_image_var()`](Self::load_from_image_var) function.
+    ///
+    /// # Returns
+    /// - [`GridMap2D`] if successful
+    /// - [`VisError2D`] on errors.
+    pub fn load_from_image_var<P>(
+        image: &image::ImageBuffer<P, Vec<P::Subpixel>>,
+        pixel_size: (usize, usize),
+    ) -> Result<Self, VisError2D>
+    where
+        T: WithPixels<TilePixVar<P>, P> + Default,
+        P: PixelWithDefault + 'static,
+    {
+        let size = check_grid_vis_size(image, pixel_size)?;
+        let mut grid = Self::new(size);
+        let mut checked = false;
+        for (pos, pix) in grid.indexed_iter_mut() {
+            let mut pix_tile = TilePixVar::<P>::new_empty(pixel_size.0, pixel_size.1);
+
+            if !checked {
+                check_tile_vis_size(pixel_size, &pix_tile)?;
+                checked = true;
+            }
+
+            read_tile(&mut pix_tile, image, &pos)?;
+            match pix {
+                Some(ref mut existing_pix) => {
+                    *existing_pix.tile_pixels_mut() = pix_tile;
+                }
+                None => {
+                    *pix = Some(T::default());
+                    if let Some(ref mut existing_pix) = pix {
+                        *existing_pix.tile_pixels_mut() = pix_tile;
+                    }
+                }
+            }
+        }
+        Ok(grid)
+    }
+
+    /// Load [`GridMap2D`] with [`TypedData`](crate::id::TypedData) from provided image buffer
+    /// and [`TilePixConst`] mapped to each tile type.
+    ///
+    /// Loads the grid map using the [`TypeIdMap`] to map visual representation of the tile
+    /// to the corresponding `tile_type_id`. Interprets the pixels as [`TilePixConst`], so the
+    /// pixel size of tile needs to be known at compile time.
+    ///
+    /// For non-compile time known pixel representation size, use
+    /// [`load_from_image_var_typed`](Self::load_from_image_var_typed) function.
+    ///
     /// Use this loading function, if:
-    /// - the tile struct doesn't contain the [`TilePixels`] in its data itself. Otherwise, you can use [`load_from_image`] instead.
-    /// - the tile type id and it's corresponding pixels are known while loading the map. Otherwise, if the specific `tile_type_id` is not 
-    /// known or is not necessary to be fixed to some value, you can use [`load_from_image_typed_auto`] instead.
-    /// 
-    /// # Arguments
-    /// - `pix_size` - tuple of the pixel width and height in pixels.
-    /// - `image` - an [`ImageBuffer`] containing the source image data.
-    /// - `builder` - a struct which can be used to construct new tiles on basis of their `tile_id`. One of [`IdentTileBuilder`]
-    ///   implementing objects. For [`IdDefault`]-implementors, you can use [`IdentTileDefaultBuilder`](crate::id::IdentTileDefaultBuilder).
-    /// - `id_pixel_map` - a slice of tuples of the form `(tile_type_id, tile_pixels)`. The `tile_type_id` **must** be constructable
-    ///   by the builder.
-    /// 
+    /// - the tile struct doesn't contain the [`TilePixels`] in its data itself. Otherwise,
+    ///   you can use [`load_from_image_const`](Self::load_from_image_const) instead.
+    /// - the tile type id and its corresponding pixels are known while loading the map.
+    ///   Otherwise, if the specific `tile_type_id` is not known or is not necessary to be fixed
+    ///   to some value, you can use
+    ///   [`load_from_image_const_typed_auto`](Self::load_from_image_const_typed_auto) instead.
+    ///
     /// # Errors
     /// Function can throw an error if:
     /// - the given [`TilePixels`] are not present in the `id_pixel_map`.
     /// - the given [`TilePixels`] are not compatible with the provided `pix_size`.
     /// - the provided `image` size don't allow the creation of the map with the given `pix_size`.
     /// - the provided `builder` does not have possibility to construct tile of given `tile_type_id`.
-    /// 
+    ///
     /// # Returns
     /// - [`GridMap2D`] if successful
     /// - [`VisError2D`] on errors.
-    pub fn load_from_image_typed<TP, B, P>(
-        pix_size: (usize, usize),
+    pub fn load_from_image_const_typed<const WIDTH: usize, const HEIGHT: usize, WP, P, B>(
         image: &image::ImageBuffer<P, Vec<P::Subpixel>>,
         builder: &B,
-        id_pixel_map: &TypeIdMap<TP>,
+        id_pixel_map: &TypeIdMap<WP>,
     ) -> Result<GridMap2D<T>, VisError2D>
     where
         T: TypedData,
+        WP: WithPixels<TilePixConst<WIDTH, HEIGHT, P>, P>,
         B: IdentTileBuilder<T>,
-        TP: TilePixels<P>,
         P: PixelWithDefault + 'static,
     {
-        builder.check_missing_ids(&id_pixel_map.keys().copied().collect::<Vec<_>>()).map_err(|e| {
-            return VisError2D::new_nopix(e.get_missing_tile_type_ids(), pix_size)
-        })?;
+        builder
+            .check_missing_ids(&id_pixel_map.keys().copied().collect::<Vec<_>>())
+            .map_err(|e| {
+                return VisError2D::new_nopix(e.get_missing_tile_type_ids(), (WIDTH, HEIGHT));
+            })?;
 
-        let size = check_grid_vis_size(image, pix_size)?;
+        let size = check_grid_vis_size(image, (WIDTH, HEIGHT))?;
         let mut grid = Self::new(size);
 
         let mut pix_id_map = TypeIdMap::<u64>::default();
         for (id, pix) in id_pixel_map.iter() {
-            check_tile_vis_size(pix_size, pix)?;
-            pix_id_map.insert(pix.pix_hash(), *id);
+            pix_id_map.insert(pix.tile_pixels().pix_hash(), *id);
         }
-        
+
         for (pos, tile_slot) in grid.indexed_iter_mut() {
-            let mut pix_tile = TP::new_empty(pix_size.0, pix_size.1);
+            let mut pix_tile = TilePixConst::<WIDTH, HEIGHT, P>::default();
             read_tile(&mut pix_tile, image, &pos)?;
             match pix_id_map.get(&pix_tile.pix_hash()) {
                 Some(id) => tile_slot.replace(builder.build_tile_unchecked(*id)),
-                None => return Err(VisError2D::new_nonexist(pos, pix_size)),
+                None => return Err(VisError2D::new_nonexist(pos, (WIDTH, HEIGHT))),
             };
-    
         }
 
         Ok(grid)
     }
 
     /// Load [`GridMap2D`] with [`TypedData`](crate::id::TypedData) from provided image buffer.
-    /// 
+    ///
+    /// Loads the map from the image buffer automatically computing the `tile_type_id` on basis
+    /// of pixel representation of the tile. Interpretes the pixels as [`TilePixConst`], so the
+    /// pixel size of tile needs to be known at compile time.
+    ///
+    /// For non-compile time known pixel representation size, use
+    /// [`load_from_image_var_typed_auto`](Self::load_from_image_var_typed_auto) function.
+    ///
     /// Use this loading function, if:
-    /// - the tile struct doesn't contain the [`TilePixels`] in its data itself. Otherwise, you can use [`load_from_image`] instead.
-    /// - the tile type id and it's corresponding pixels are not strictly known while loading the map. Otherwise, if the `tile_type_id`s
-    /// are fixed and their visual representation is known, you can use [`load_from_image_typed`] instead.
-    /// 
-    /// # Arguments
-    /// - `pix_size` - tuple of the pixel width and height in pixels.
-    /// - `image` - an [`ImageBuffer`] containing the source image data.
-    /// - `builder` - a struct which can be used to construct new tiles on basis of their `tile_id`. One of [`IdentTileBuilder`]
-    ///   implementing objects. 
-    /// 
-    /// As the `tile_type_id` **is automatically calculated** with this function on basis of pixels, 
-    /// it won't work if the builder needs to known the `tile_type_id` beforehand - it is recommended to use 
-    /// [`IdentTileDefaultBuilder`](crate::id::IdentTileDefaultBuilder) and implement [`IdDefault`] for the tile struct. 
-    /// 
+    /// - the tile struct doesn't contain the [`TilePixels`] in its data itself. Otherwise, you
+    ///   can use [`load_from_image_const`](Self::load_from_image_const) instead.
+    /// - the tile type id and its corresponding pixels are not strictly known while loading the map.
+    ///   Otherwise, if the `tile_type_id`s are fixed and their visual representation is known, you
+    ///   can use [`load_from_image_const_typed`](Self::load_from_image_const_typed) instead.
+    ///
+    /// As the `tile_type_id` **is automatically calculated** with this function on basis of pixels,
+    /// it won't work if the builder needs to known the `tile_type_id` beforehand - it is recommended to use
+    /// [`IdentTileDefaultBuilder`](crate::id::IdentTileDefaultBuilder) and implement [`IdDefault`]
+    /// for the tile struct.
+    ///
     /// # Errors
     /// Function can throw an error if:
     /// - the given [`TilePixels`] type is not compatible with the provided `pix_size`.
     /// - the provided `image` size don't allow the creation of the map with the given `pix_size`.
     /// - the provided `builder` does not have possibility to construct tile of given `tile_type_id`.
-    /// 
+    ///
     /// # Returns
-    /// - [`GridMap2D`] if successful
+    /// - tuple of [`GridMap2D`] and [`TypeIdMap`] containing the pixel data per `tile_type_id` if successful
     /// - [`VisError2D`] on errors.
-    pub fn load_from_image_typed_auto<TP, B, P>(
-        pix_size: (usize, usize),
+    pub fn load_from_image_const_typed_auto<const WIDTH: usize, const HEIGHT: usize, B, P>(
         image: &image::ImageBuffer<P, Vec<P::Subpixel>>,
         builder: &B,
-    ) -> Result<(GridMap2D<T>, TypeIdMap<TP>), VisError2D>
+    ) -> Result<(GridMap2D<T>, TypeIdMap<TilePixConst<WIDTH, HEIGHT, P>>), VisError2D>
     where
         T: TypedData,
         B: IdentTileBuilder<T>,
-        TP: TilePixels<P>,
         P: PixelWithDefault + 'static,
     {
-        let mut id_pixel_map = TypeIdMap::<TP>::default();
+        let mut id_pixel_map = TypeIdMap::<TilePixConst<WIDTH, HEIGHT, P>>::default();
 
-        let size = check_grid_vis_size(image, pix_size)?;
+        let size = check_grid_vis_size(image, (WIDTH, HEIGHT))?;
         let mut grid = GridMap2D::new(size);
-        
+
         for (pos, tile_slot) in grid.indexed_iter_mut() {
-            let mut pix_tile = TP::new_empty(pix_size.0, pix_size.1);
-            check_tile_vis_size(pix_size, &pix_tile)?;
+            let mut pix_tile = TilePixConst::<WIDTH, HEIGHT, P>::default();
             read_tile(&mut pix_tile, image, &pos)?;
             let tile_id = pix_tile.pix_hash();
             match id_pixel_map.entry(tile_id) {
-                Entry::Occupied(_) => {},
+                Entry::Occupied(_) => {}
                 Entry::Vacant(e) => {
                     e.insert(pix_tile);
                 }
             }
-            let tile = builder.build_tile(tile_id).map_err(|e| VisError2D::new_nopix(e.get_missing_tile_type_ids(), pix_size))?;
+            let tile = builder.build_tile(tile_id).map_err(|e| {
+                VisError2D::new_nopix(e.get_missing_tile_type_ids(), (WIDTH, HEIGHT))
+            })?;
             tile_slot.replace(tile);
         }
-        
+
+        Ok((grid, id_pixel_map))
+    }
+
+    /// Load [`GridMap2D`] with [`TypedData`](crate::id::TypedData) from provided image buffer
+    /// and [`TilePixVar`] mapped to each tile type.
+    ///
+    /// Loads the grid map using the [`TypeIdMap`] to map visual representation of the tile
+    /// to the corresponding `tile_type_id`. Interprets the pixels as [`TilePixVar`], so the
+    /// pixel size of tile doesn't need to be known at compile time.
+    ///
+    /// For compile-time known pixel representation size, use
+    /// [`load_from_image_const_typed`](Self::load_from_image_const_typed) function.
+    ///
+    /// Use this loading function, if:
+    /// - the tile struct doesn't contain the [`TilePixels`] in its data itself. Otherwise,
+    ///   you can use [`load_from_image_var`](Self::load_from_image_var) instead. 
+    /// - the tile type id and its corresponding pixels are known while loading the map.
+    ///   Otherwise, if the specific `tile_type_id` is not known or is not necessary to be fixed
+    ///   to some value, you can use
+    ///   [`load_from_image_var_typed_auto`](Self::load_from_image_var_typed_auto) instead.
+    ///
+    /// # Errors
+    /// Function can throw an error if:
+    /// - the given [`TilePixels`] are not present in the `id_pixel_map`.
+    /// - the given [`TilePixels`] are not compatible with the provided `pix_size`.
+    /// - the provided `image` size don't allow the creation of the map with the given `pix_size`.
+    /// - the provided `builder` does not have possibility to construct tile of given `tile_type_id`.
+    ///
+    /// # Returns
+    /// - [`GridMap2D`] if successful
+    /// - [`VisError2D`] on errors.
+    pub fn load_from_image_var_typed<B, WP, P>(
+        image: &image::ImageBuffer<P, Vec<P::Subpixel>>,
+        id_pixel_map: &TypeIdMap<WP>,
+        builder: &B,
+        pix_size: (usize, usize),
+    ) -> Result<GridMap2D<T>, VisError2D>
+    where
+        T: TypedData,
+        WP: WithPixels<TilePixVar<P>, P>,
+        B: IdentTileBuilder<T>,
+        P: PixelWithDefault + 'static,
+    {
+        builder
+            .check_missing_ids(&id_pixel_map.keys().copied().collect::<Vec<_>>())
+            .map_err(|e| return VisError2D::new_nopix(e.get_missing_tile_type_ids(), pix_size))?;
+
+        let size = check_grid_vis_size(image, pix_size)?;
+        let mut grid = Self::new(size);
+
+        let mut pix_id_map = TypeIdMap::<u64>::default();
+        for (id, pix) in id_pixel_map.iter() {
+            check_tile_vis_size(pix_size, pix.tile_pixels())?;
+            pix_id_map.insert(pix.tile_pixels().pix_hash(), *id);
+        }
+
+        for (pos, tile_slot) in grid.indexed_iter_mut() {
+            let mut pix_tile = TilePixVar::<P>::new_empty(pix_size.0, pix_size.1);
+            read_tile(&mut pix_tile, image, &pos)?;
+            match pix_id_map.get(&pix_tile.pix_hash()) {
+                Some(id) => tile_slot.replace(builder.build_tile_unchecked(*id)),
+                None => return Err(VisError2D::new_nonexist(pos, pix_size)),
+            };
+        }
+
+        Ok(grid)
+    }
+
+    /// Load [`GridMap2D`] with [`TypedData`](crate::id::TypedData) from provided image buffer.
+    ///
+    /// Loads the map from the image buffer automatically computing the `tile_type_id` on basis
+    /// of pixel representation of the tile. Interpretes the pixels as [`TilePixVar`], so the
+    /// pixel size of the tile don't need to be known at compile time.
+    ///
+    /// For compile time known pixel representation size, use
+    /// [`load_from_image_var_typed_auto`](Self::load_from_image_var_typed_auto) function.
+    ///
+    /// Use this loading function, if:
+    /// - the tile struct doesn't contain the [`TilePixels`] in its data itself. Otherwise, you
+    ///   can use [`load_from_image_var`](Self::load_from_image_var) instead. 
+    /// - the tile type id and its corresponding pixels are not strictly known while loading the map.
+    ///   Otherwise, if the `tile_type_id`s are fixed and their visual representation is known, you
+    ///   can use [`load_from_image_var_typed`](Self::load_from_image_var_typed) instead.
+    ///
+    /// As the `tile_type_id` **is automatically calculated** with this function on basis of pixels,
+    /// it won't work if the builder needs to known the `tile_type_id` beforehand - it is recommended to use
+    /// [`IdentTileDefaultBuilder`](crate::id::IdentTileDefaultBuilder) and implement [`IdDefault`]
+    /// for the tile struct.
+    ///
+    /// # Errors
+    /// Function can throw an error if:
+    /// - the given [`TilePixels`] type is not compatible with the provided `pix_size`.
+    /// - the provided `image` size don't allow the creation of the map with the given `pix_size`.
+    /// - the provided `builder` does not have possibility to construct tile of given `tile_type_id`.
+    ///
+    /// # Returns
+    /// - tuple of [`GridMap2D`] and [`TypeIdMap`] containing the pixel data per `tile_type_id` if successful
+    /// - [`VisError2D`] on errors.
+    pub fn load_from_image_var_typed_auto<B, P>(
+        image: &image::ImageBuffer<P, Vec<P::Subpixel>>,
+        builder: &B,
+        pix_size: (usize, usize),
+    ) -> Result<(GridMap2D<T>, TypeIdMap<TilePixVar<P>>), VisError2D>
+    where
+        T: TypedData,
+        B: IdentTileBuilder<T>,
+        P: PixelWithDefault + 'static,
+    {
+        let mut id_pixel_map = TypeIdMap::<TilePixVar<P>>::default();
+
+        let size = check_grid_vis_size(image, pix_size)?;
+        let mut grid = GridMap2D::new(size);
+
+        let mut checked = false;
+
+        for (pos, tile_slot) in grid.indexed_iter_mut() {
+            let mut pix_tile = TilePixVar::new_empty(pix_size.0, pix_size.1);
+
+            if !checked {
+                check_tile_vis_size(pix_size, &pix_tile)?;
+                checked = true;
+            }
+
+            read_tile(&mut pix_tile, image, &pos)?;
+            let tile_id = pix_tile.pix_hash();
+            match id_pixel_map.entry(tile_id) {
+                Entry::Occupied(_) => {}
+                Entry::Vacant(e) => {
+                    e.insert(pix_tile);
+                }
+            }
+            let tile = builder
+                .build_tile(tile_id)
+                .map_err(|e| VisError2D::new_nopix(e.get_missing_tile_type_ids(), pix_size))?;
+            tile_slot.replace(tile);
+        }
+
         Ok((grid, id_pixel_map))
     }
 
     /// Writes [`GridMap2D`] comprised of tiles containing [`TilePixels`] into provided [`ImageBuffer`].
-    /// 
-    /// To create a new image buffer with the correct size, 
-    /// 
+    ///
+    /// To create a new image buffer with the correct size,
+    ///
     /// For maps with tiles not implementing [`TilePixels`] themselves, use [`write_to_image_typed`](Self::write_to_image_typed).
-    pub fn write_to_image<P>(
+    pub fn write_to_image_const<const WIDTH: usize, const HEIGHT: usize, P>(
+        &self,
+        image: &mut ImageBuffer<P, Vec<P::Subpixel>>,
+    ) -> Result<(), VisError2D>
+    where
+        T: WithPixels<TilePixConst<WIDTH, HEIGHT, P>, P>,
+        P: PixelWithDefault + 'static,
+    {
+        check_grid_image_size(image, (WIDTH, HEIGHT), self.size())?;
+        for (pos, slot) in self.indexed_iter() {
+            let Some(tile) = slot else { continue };
+            write_tile(image, pos, tile.tile_pixels())?;
+        }
+        Ok(())
+    }
+
+    pub fn write_to_image_var<P>(
         &self,
         image: &mut ImageBuffer<P, Vec<P::Subpixel>>,
         pix_size: (usize, usize),
     ) -> Result<(), VisError2D>
     where
-        T: TilePixels<P> + TileData,
+        T: WithPixels<TilePixVar<P>, P> + Default,
         P: PixelWithDefault + 'static,
     {
         check_grid_image_size(image, pix_size, self.size())?;
         for (pos, slot) in self.indexed_iter() {
             let Some(tile) = slot else { continue };
-            check_tile_vis_size(pix_size, tile)?;
-            write_tile(image, pos, tile)?;
+            write_tile(image, pos, tile.tile_pixels())?;
         }
         Ok(())
     }
-    
-    pub fn write_to_image_typed<TP, P>(
+
+    pub fn write_to_image_const_typed<const WIDTH: usize, const HEIGHT: usize, WP, P>(
         &self,
         image: &mut ImageBuffer<P, Vec<P::Subpixel>>,
-        tile_pixels: &TypeIdMap<TP>,
+        tile_pixels: &TypeIdMap<WP>,
+    ) -> Result<(), VisError2D>
+    where
+        T: TypedData,
+        WP: WithPixels<TilePixConst<WIDTH, HEIGHT, P>, P>,
+        P: PixelWithDefault + 'static,
+    {
+        check_grid_image_size(image, (WIDTH, HEIGHT), self.size())?;
+        for (pos, slot) in self.indexed_iter() {
+            let Some(tile) = slot else { continue };
+            let tile_id = tile.tile_type_id();
+            let Some(tile_pix) = tile_pixels.get(&tile_id) else {
+                return Err(VisError2D::new_nopix(&[tile_id], (WIDTH, HEIGHT)));
+            };
+            write_tile(image, pos, tile_pix.tile_pixels())?;
+        }
+        Ok(())
+    }
+
+    pub fn write_to_image_var_typed<WP, P>(
+        &self,
+        image: &mut ImageBuffer<P, Vec<P::Subpixel>>,
+        tile_pixels: &TypeIdMap<WP>,
         pix_size: (usize, usize),
     ) -> Result<(), VisError2D>
     where
         T: TypedData,
-        TP: TilePixels<P>,
+        WP: WithPixels<TilePixVar<P>, P>,
         P: PixelWithDefault + 'static,
     {
         check_grid_image_size(image, pix_size, self.size())?;
         for (pos, slot) in self.indexed_iter() {
             let Some(tile) = slot else { continue };
             let tile_id = tile.tile_type_id();
-            let Some(tile_pix) = tile_pixels.get(&tile_id) else { 
+            let Some(tile_pix) = tile_pixels.get(&tile_id) else {
                 return Err(VisError2D::new_nopix(&[tile_id], pix_size));
             };
-            check_tile_vis_size(pix_size, tile_pix)?;
-            write_tile(image, pos, tile_pix)?;
+            check_tile_vis_size(pix_size, tile_pix.tile_pixels())?;
+            write_tile(image, pos, tile_pix.tile_pixels())?;
+        }
+        Ok(())
+    }
+}
+
+impl<T, S> GridMapShared2D<T, S>
+where
+    T: TypedData,
+    S: SharedData,
+{
+    pub fn write_to_image_const_shared<const WIDTH: usize, const HEIGHT: usize, P>(
+        &self,
+        image: &mut ImageBuffer<P, Vec<P::Subpixel>>,
+    ) -> Result<(), VisError2D>
+    where
+        S: SharedData + WithPixels<TilePixConst<WIDTH, HEIGHT, P>, P>,
+        P: PixelWithDefault + 'static,
+    {
+        check_grid_image_size(image, (WIDTH, HEIGHT), self.size())?;
+        for position in self.iter_all_positions() {
+            let Some(tile_pix) = self.get_shared_data_at_position(&position) else {
+                continue;
+            };
+            write_tile(image, position, tile_pix.tile_pixels())?;
+        }
+        Ok(())
+    }
+
+    pub fn write_to_image_var_shared<P>(
+        &self,
+        image: &mut ImageBuffer<P, Vec<P::Subpixel>>,
+        pix_size: (usize, usize),
+    ) -> Result<(), VisError2D>
+    where
+        S: SharedData + WithPixels<TilePixVar<P>, P>,
+        P: PixelWithDefault + 'static,
+    {
+        check_grid_image_size(image, pix_size, self.size())?;
+        for position in self.iter_all_positions() {
+            let Some(tile_pix) = self.get_shared_data_at_position(&position) else {
+                continue;
+            };
+            check_tile_vis_size(pix_size, tile_pix.tile_pixels())?;
+            write_tile(image, position, tile_pix.tile_pixels())?;
         }
         Ok(())
     }
@@ -215,26 +507,6 @@ where
     P: PixelWithDefault,
 {
     ImageBuffer::new(grid_size.x() * pixel_size.0, grid_size.y() * pixel_size.1)
-}
-
-impl <T, S> GridMapShared2D<T, S>
-where
-    T: TypedData,
-    S: SharedData,
-{
-    pub fn write_to_image<P>(&self, image: &mut ImageBuffer<P, Vec<P::Subpixel>>, pix_size: (usize, usize)) -> Result<(), VisError2D>
-    where S: SharedData + TilePixels<P>, P: PixelWithDefault + 'static,
-    {
-        check_grid_image_size(image, pix_size, self.size())?;
-        for position in self.iter_all_positions() {
-            let Some(tile_pix) = self.get_shared_data_at_position(&position) else {
-                continue;
-            };
-            check_tile_vis_size(pix_size, tile_pix)?;
-            write_tile(image, position, tile_pix)?;
-        }
-        Ok(())
-    }
 }
 
 /// Checks the size of the [`ImageBuffer`] before writing [`GridMap2D`] visual representation into it. Results in
@@ -262,10 +534,14 @@ fn check_grid_image_size<P: Pixel + 'static>(
 /// with provided tile size in pixels.
 pub fn check_grid_vis_size<P: Pixel + 'static>(
     image: &ImageBuffer<P, Vec<P::Subpixel>>,
-    pix_size: (usize, usize)
+    pix_size: (usize, usize),
 ) -> Result<GridSize2D, VisError2D> {
     if image.height() as usize % pix_size.0 != 0 || image.width() as usize % pix_size.1 != 0 {
-        Err(VisError2D::new_grid_load(image.width(), image.height(), pix_size))
+        Err(VisError2D::new_grid_load(
+            image.width(),
+            image.height(),
+            pix_size,
+        ))
     } else {
         Ok(GridSize2D::new(
             image.width() / pix_size.0 as u32,
@@ -280,7 +556,11 @@ fn check_tile_vis_size<P: PixelWithDefault, TP: TilePixels<P>>(
     tile: &TP,
 ) -> Result<(), VisError2D> {
     if tile.pix_width() != pix_size.0 || tile.pix_height() != pix_size.1 {
-        Err(VisError2D::new_tile_load(tile.pix_width(), tile.pix_height(), pix_size))
+        Err(VisError2D::new_tile_load(
+            tile.pix_width(),
+            tile.pix_height(),
+            pix_size,
+        ))
     } else {
         Ok(())
     }
@@ -296,12 +576,13 @@ where
     P: PixelWithDefault,
 {
     let [mut x_pos, mut y_pos] = pos.coords();
-    x_pos *= tile_pix.pix_width()as u32;
+    x_pos *= tile_pix.pix_width() as u32;
     y_pos *= tile_pix.pix_height() as u32;
 
     for y in 0..tile_pix.pix_height() {
         for x in 0..tile_pix.pix_width() {
-            if let Some(pixel) = image_buffer.get_pixel_checked(x_pos + x as u32, y_pos + y as u32) {
+            if let Some(pixel) = image_buffer.get_pixel_checked(x_pos + x as u32, y_pos + y as u32)
+            {
                 tile_pix.set_pixel(x, y, *pixel);
             } else {
                 return Err(VisError2D::new_io(
@@ -331,7 +612,9 @@ where
 
     for y in 0..tile_pix.pix_height() {
         for x in 0..tile_pix.pix_width() {
-            if let Some(pixel) = image_buffer.get_pixel_mut_checked(x_pos + x as u32, y_pos + y as u32) {
+            if let Some(pixel) =
+                image_buffer.get_pixel_mut_checked(x_pos + x as u32, y_pos + y as u32)
+            {
                 *pixel = tile_pix.pixel(x, y);
             } else {
                 return Err(VisError2D::new_io(
@@ -346,8 +629,7 @@ where
     Ok(())
 }
 
-
-/// Error returned by operations on image representations of [`GridMap2D`](crate::map::GridMap2D).
+/// Error returned by operations on image representations of two dimensional grids.
 #[derive(Debug, Clone)]
 pub struct VisError2D {
     pix_size: (usize, usize),
@@ -369,13 +651,17 @@ impl VisError2D {
         }
     }
 
-    pub(crate) fn new_grid_save(expected: (u32, u32), actual: (u32, u32), pix_size: (usize, usize)) -> Self {
+    pub(crate) fn new_grid_save(
+        expected: (u32, u32),
+        actual: (u32, u32),
+        pix_size: (usize, usize),
+    ) -> Self {
         Self {
             pix_size,
             kind: VisErrorKind::WrongSizeGridSave { expected, actual },
         }
     }
-    
+
     pub(crate) fn new_tile_load(width: usize, height: usize, pix_size: (usize, usize)) -> Self {
         Self {
             pix_size,
@@ -390,7 +676,12 @@ impl VisError2D {
         }
     }
 
-    pub(crate) fn new_io(read: bool, tile_pos: GridPosition2D, pixel_pos: (u32, u32), pix_size: (usize, usize)) -> Self {
+    pub(crate) fn new_io(
+        read: bool,
+        tile_pos: GridPosition2D,
+        pixel_pos: (u32, u32),
+        pix_size: (usize, usize),
+    ) -> Self {
         if read {
             Self {
                 pix_size,

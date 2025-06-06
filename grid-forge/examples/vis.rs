@@ -4,12 +4,9 @@
 //!
 //! Most examples use the `vis` feature to present visual representation of two dimensional [GridMap].
 
-use grid_forge::common::{GridMap as _, GridSize as _, TileData};
-use grid_forge::two_d::*;
-use grid_forge::vis::ops::{init_map_image_buffer, write_gridmap_vis};
-use grid_forge::vis::{DefaultVisPixel, VisTileData};
+use grid_forge::{two_d::*, vis::{grid::init_map_image_buffer, tile::{TilePixConst, WithPixels}}, TileData};
 
-use image::imageops;
+use image::{imageops, Rgb};
 use rand::{Rng, SeedableRng};
 
 // Enum holding the easily discernable colors for the resulting tiles.
@@ -19,25 +16,38 @@ enum TileColor {
 }
 
 impl TileColor {
-    fn rgb(&self) -> DefaultVisPixel {
+
+    fn rgb(&self) -> Rgb::<u8> {
         match self {
-            TileColor::Blue => DefaultVisPixel::from([52, 119, 235]),
-            TileColor::Green => DefaultVisPixel::from([128, 235, 52]),
+            TileColor::Blue => Rgb::<u8>::from([52, 119, 235]),
+            TileColor::Green => Rgb::<u8>::from([128, 235, 52]),
         }
     }
 }
 
 // GridTile struct besides required GridPos2D holds also the created enum.
 struct TwoColoredTile {
-    color: TileColor,
+    pixels: TilePixConst<1 ,1, Rgb<u8>>,
+}
+
+impl TwoColoredTile {
+    fn new(color: TileColor) -> Self {
+        Self {
+            pixels: TilePixConst::from_slice(&[color.rgb()]),
+        }
+    }
 }
 
 impl TileData for TwoColoredTile {}
 
 // Trait necessary
-impl VisTileData<DefaultVisPixel, 1, 1> for TwoColoredTile {
-    fn vis_pixels(&self) -> [[DefaultVisPixel; 1]; 1] {
-        [[self.color.rgb()]]
+impl WithPixels<TilePixConst<1 ,1, Rgb<u8>>, Rgb<u8>> for TwoColoredTile {
+    fn tile_pixels(&self) -> &TilePixConst<1 ,1, Rgb<u8>> {
+        &self.pixels
+    }
+
+    fn tile_pixels_mut(&mut self) -> &mut TilePixConst<1 ,1, Rgb<u8>> {
+        &mut self.pixels
     }
 }
 
@@ -63,12 +73,13 @@ fn main() {
         } else {
             TileColor::Green
         };
-        map.insert_data(&pos, TwoColoredTile { color });
+        map.insert_data(&pos, TwoColoredTile::new(color));
     }
 
     // Create image and save it in examples dir.
-    let mut image = init_map_image_buffer::<DefaultVisPixel, 1, 1>(&size);
-    write_gridmap_vis(&mut image, &map).unwrap();
+    let mut image = init_map_image_buffer::<Rgb<u8>>(&size, (1,1));
+    map.write_to_image_const(&mut image).unwrap();
+
     let image = imageops::resize(
         &image,
         map.size().x() * 5,

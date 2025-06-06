@@ -29,8 +29,8 @@ macro_rules! __impl_grid {
         macro_rules! __tile_mut_type { () => { $tile_mut_type<'a, Data> }; }
 
         $(#[$struct_meta])*
-        $vis struct $struct_name<$($($generic_param)*)?> 
-        $(where $($where_clause)*)? 
+        $vis struct $struct_name<$($($generic_param)*)?>
+        $(where $($where_clause)*)?
         {
             size: $size_type,
             tiles: Vec<Option<Data>>,
@@ -38,8 +38,8 @@ macro_rules! __impl_grid {
             $($additional_field: $additional_type),*
         }
 
-        impl<$($($generic_param)*)?> $struct_name<$($($generic_param)*)?> 
-        $(where $($where_clause)*)? 
+        impl<$($($generic_param)*)?> $struct_name<$($($generic_param)*)?>
+        $(where $($where_clause)*)?
         {
 
             /// Creates a new empty grid with the specified dimensions.
@@ -95,7 +95,7 @@ macro_rules! __impl_grid {
             }
 
             /// Gets a direct mutable reference to data at a position if present and valid.
-            /// 
+            ///
             /// # Returns
             /// - `Some(&mut Data)` if position is valid and contains data
             /// - `None` otherwise
@@ -137,7 +137,7 @@ macro_rules! __impl_grid {
             }
 
             /// Gets multiple tile references containing both position and data.
-            /// 
+            ///
             /// # Returns
             #[doc = "Vec of [`TileRef`]]"]
             #[doc = concat!("(", stringify!($tile_ref_type), ")")]
@@ -232,7 +232,7 @@ macro_rules! __impl_grid {
             }
 
             /// Retrieve neighbour in given direction of the provided position.
-            /// 
+            ///
             /// # Returns
             #[doc = "- [`Some(TileRef)`]"]
             #[doc = concat!("(", stringify!($tile_ref_type), ")")]
@@ -250,7 +250,7 @@ macro_rules! __impl_grid {
             }
 
             /// Retrieve mutable neighbour in given direction of the provided position.
-            /// 
+            ///
             /// # Returns
             #[doc = "- [`Some(TileMut)`]"]
             #[doc = concat!("(", stringify!($tile_mut_type), ")")]
@@ -284,8 +284,8 @@ macro_rules! __impl_grid {
             }
 
             /// Returns all positions containing data of the specified [`tile_type_id`] in the grid map.
-            pub fn get_all_positions_with_type(&self, tile_type_id: &u64) -> Vec<$position_type> 
-            where Data: crate::id::TypedData 
+            pub fn get_all_positions_with_type(&self, tile_type_id: &u64) -> Vec<$position_type>
+            where Data: crate::id::TypedData
             {
                 self.indexed_iter()
                     .filter_map(|(pos, t)| {
@@ -319,7 +319,7 @@ macro_rules! __impl_grid {
             }
 
             /// Returns iterator over all tile slots in the grid map (mutable).
-            /// 
+            ///
             /// This method is not tracked even with [`mut_access_tracking`](Self::mut_access_tracking) enabled.
             pub fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = &'a mut Option<Data>>
             where
@@ -338,7 +338,7 @@ macro_rules! __impl_grid {
             }
 
             /// Returns iterator over all tiles in the grid map (mutable).
-            /// 
+            ///
             /// This method is not tracked even with [`mut_access_tracking`](Self::mut_access_tracking) enabled.
             pub fn iter_mut_tiles<'a>(&'a mut self) -> impl Iterator<Item = __tile_mut_type!()>
             where
@@ -360,7 +360,7 @@ macro_rules! __impl_grid {
             }
 
             /// Returns iterator over tuples of position and tile slot data (mutable).
-            /// 
+            ///
             /// This method is not tracked even with [`mut_access_tracking`](Self::mut_access_tracking) enabled.
             pub fn indexed_iter_mut<'a>(
                 &'a mut self,
@@ -376,10 +376,10 @@ macro_rules! __impl_grid {
             }
 
             /// Drains all tiles in the grid map, remapping their positions.
-            /// 
+            ///
             /// This method consumes the grid map and returns all tiles as a vector. Their positions will be
             /// remapped, so that the tile at first position will be set at the specified `anchor_pos`.
-            /// 
+            ///
             /// To retrieve the remapped tiles without consuming the grid map, you can use [`cloned_remapped`](Self::cloned_remapped)
             /// method if the tile data implements [`Clone`](Clone).
             pub fn drain_remapped(mut self, anchor_pos: $position_type) -> Vec<__tile_type!()> {
@@ -395,10 +395,10 @@ macro_rules! __impl_grid {
             }
 
             /// Retrieves all tiles in the grid map, remapping their positions.
-            /// 
+            ///
             /// This method returns all tiles cloned as a vector. Their positions will be remapped,
             /// so that the tile at first position will be set at the specified `anchor_pos`.
-            /// 
+            ///
             /// To drain the grid map while remapping, you can use [`drain_remapped`](Self::drain_remapped).
             pub fn cloned_remapped(&self, anchor_pos: $position_type) -> Vec<__tile_type!()>
             where
@@ -415,7 +415,7 @@ macro_rules! __impl_grid {
                     .collect()
             }
 
-            /// Retrieves all tiles consuming the map. 
+            /// Retrieves all tiles consuming the map.
             pub fn drain(mut self) -> Vec<__tile_type!()> {
                 self.indexed_iter_mut()
                     .filter_map(|(pos, t)| {
@@ -459,12 +459,12 @@ macro_rules! __impl_grid {
             }
 
             /// Enables or disables tracking of mutable accesses.
-            /// 
+            ///
             /// If enabled, the [`GridMap`] will track which positions are accessed and will
             /// store their positions for the later retrieval with [`get_mut_accessed`](Self::get_mut_accessed())
             /// or [`drain_mut_accessed`](Self::drain_mut_accessed()).
-            /// 
-            /// **WARNINGS**: 
+            ///
+            /// **WARNINGS**:
             /// - Enabling this feature will make the mutable access slower.
             /// - Mutable access is not tracked with iterator methods - it is implied that all tiles will be modified.
             /// - Other methods which won't track mutable access even with this enabled are specified as such in their
@@ -482,10 +482,10 @@ macro_rules! __impl_grid {
             }
 
             /// Gets all positions that were accessed mutably.
-            /// 
+            ///
             /// When [`mut_access_tracking`](Self::mut_access_tracking) is enabled, many mutable accesses to the grid
             /// will be tracked (see method documentation for details). This methods returns all positions that were accessed mutably.
-            /// 
+            ///
             /// This method does not drain the mutable accessed positions. If you want to clear the internal tracker,
             /// use [`drain_mut_accessed`](Self::drain_mut_accessed).
             pub fn get_mut_accessed(&self) -> Vec<$position_type> {
@@ -499,7 +499,7 @@ macro_rules! __impl_grid {
                         )*
                         let mut_accessed = combined;
                     )?
-                    
+
                     let mut result = mut_accessed.iter().copied().collect::<Vec<_>>();
                     result.sort();
                     result
@@ -509,10 +509,10 @@ macro_rules! __impl_grid {
             }
 
             /// Drains all positions that were accessed mutably.
-            /// 
+            ///
             /// When [`mut_access_tracking`](Self::mut_access_tracking) is enabled, many mutable accesses to the grid
             /// will be tracked (see method documentation for details). This methods drains all positions that were accessed mutably.
-            /// 
+            ///
             /// It will clear the internal tracker. If you want to keep the positions mutably accessed, use [`get_mut_accessed`](Self::get_mut_accessed)
             /// instead.
             pub fn drain_mut_accessed(&mut self) -> Vec<$position_type> {
@@ -526,7 +526,7 @@ macro_rules! __impl_grid {
                         )*
                         let mut_accessed = combined;
                     )?
-                    
+
                     let mut result = mut_accessed.iter().copied().collect::<Vec<_>>();
                     result.sort();
                     result
@@ -571,7 +571,7 @@ macro_rules! __impl_grid_with_shared {
     ) => {
         crate::core::map::macros::__impl_grid! {
             $(#[$struct_meta])*
-            $vis struct $struct_name 
+            $vis struct $struct_name
             {
                 shared_data: crate::id::SharedDataContainer<Shared>,
                 $($additional_field: $additional_type),*
@@ -604,16 +604,16 @@ macro_rules! __impl_grid_with_shared {
         macro_rules! __tile_mut_shared_type { () => { $tile_mut_shared<'a, Data, Shared> }; }
 
         impl <$($($generic_param)*)?, Shared> $struct_name<$($($generic_param)*)?, Shared>
-        where 
+        where
             $($($where_clause)*, )?
             Shared: crate::id::SharedData,
         {
             /// Imports shared data to the grid.
-            /// 
+            ///
             /// If there were some shared data already present with the same `type_id`, it will be overwritten.
             /// Non-matched `type_id`s will be ignored. To make sure that they are wiped out, you can use
             /// [`export_shared_data`](Self::export_shared_data) to drain existing shared data..
-            /// 
+            ///
             /// While importing shared data, even if `mut_access_tracking` is enabled, the shared data inclusion
             /// will not be tracked. In these scenarios it is implied that all tiles were modified and all
             /// objects dependent on the shared data should be updated.
@@ -625,11 +625,11 @@ macro_rules! __impl_grid_with_shared {
             }
 
             /// Exports shared data from the grid.
-            /// 
+            ///
             /// This method will drain all shared data from the grid and return it as a [`TypeIdMap`](crate::id::TypeIdMap).
             /// If you would rather keep the shared data, you can use [`clone_shared_data`](Self::clone_shared_data) instead
             /// if the shared data struct implements [`Clone`](Clone).
-            /// 
+            ///
             /// While exporting shared data, even if `mut_access_tracking` is enabled, the shared data mut access
             /// will not be tracked. In these scenarios it is implied that all tiles were modified and all
             /// objects dependent on the shared data should be updated.
@@ -638,7 +638,7 @@ macro_rules! __impl_grid_with_shared {
             }
 
             /// Check if shared data for tiles in the grid is present.
-            /// 
+            ///
             /// Returns vector of all tile_type_ids present in the grid which don't have
             /// corresponding shared data registered.
             pub fn check_shared_data(&self) -> Vec<u64> {
@@ -659,7 +659,7 @@ macro_rules! __impl_grid_with_shared {
             }
 
             /// Clones shared data from the grid.
-            /// 
+            ///
             /// This method will export all shared data by cloning them, keeping existing shared data intact.
             pub fn clone_shared_data(&self) -> crate::id::TypeIdMap<Shared>
             where Shared: Clone {
@@ -667,7 +667,7 @@ macro_rules! __impl_grid_with_shared {
             }
 
             /// Inserts shared data into the grid for specified `type_id`.
-            /// 
+            ///
             /// If there were some shared data already present with the same `type_id`, it will be overwritten.
             /// When `mut_access_tracking` is enabled, the shared data inclusion will be tracked.
             pub fn insert_shared_data(&mut self, type_id: u64, data: Shared) {
@@ -675,23 +675,23 @@ macro_rules! __impl_grid_with_shared {
             }
 
             /// Removes shared data from the grid for the specified `type_id`.
-            /// 
+            ///
             /// When `mut_access_tracking` is enabled, the shared data removal will be tracked.
             pub fn remove_shared_data(&mut self, type_id: u64) {
                 self.shared_data.replace_shared_data(type_id, None, true);
             }
 
             /// Gets mutable reference to the shared data for the specified `type_id`.
-            /// 
-            /// When `mut_access_tracking` is enabled, the shared data mutable access will be tracked. 
-            /// 
+            ///
+            /// When `mut_access_tracking` is enabled, the shared data mutable access will be tracked.
+            ///
             /// Returns `None` if there is no shared data with the specified `type_id`.
             pub fn get_mut_shared_data(&mut self, type_id: u64) -> Option<&mut Shared> {
                 self.shared_data.get_shared_data_mut(&type_id)
             }
 
             /// Gets shared data for the specified position.
-            /// 
+            ///
             /// Returns `None` if there is no shared data for the tile type at the specified position.
             pub fn get_shared_data_at_position(&self, position: &$position) -> Option<&Shared> {
                 let Some(tile) = self.get_tile_at_position(position) else { return None };
@@ -700,9 +700,9 @@ macro_rules! __impl_grid_with_shared {
             }
 
             /// Gets [`TileContainer`] including tile shared data.
-            /// 
+            ///
             /// Returns a composite struct containing the tile position and immutable references to the tile and shared data.
-            /// 
+            ///
             /// Returns `None` if there is no tile at the specified position or no shared data for its tile type.
             pub fn get_tile_with_shared_at_position<'a>(&'a self, position: &$position) -> Option<__tile_ref_shared_type!()> {
                 let Some(tile) = self.get_tile_at_position(position) else { return None };
@@ -711,15 +711,15 @@ macro_rules! __impl_grid_with_shared {
             }
 
             /// Gets mutable [`TileContainer`] including tile shared data.
-            /// 
+            ///
             /// Returns a composite struct containing the tile position, mutable reference to the tile data and immutable
             /// reference to the shared data.
-            /// 
+            ///
             /// Its exclusive way to retrieve reference to the shared data alongside mutable reference to the tile data
             /// at the same time.
-            /// 
+            ///
             /// If `mut_access_tracking` is enabled, the position will be tracked as mutably accessed.
-            /// 
+            ///
             /// Returns `None` if there is no tile at the specified position or no shared data for its tile type.
             pub fn get_mut_tile_with_shared_at_position<'a>(&'a mut self, position: &$position) -> Option<__tile_mut_shared_type!()> {
                 if !self.size.is_position_valid(position) {
@@ -733,7 +733,7 @@ macro_rules! __impl_grid_with_shared {
                         .get_unchecked_mut(self.size.offset(&position))
                         .as_mut()
                 }) else { return None };
-                
+
                 let Some(shared) = self
                     .shared_data
                     .get_shared_data(&data.tile_type_id())
@@ -744,15 +744,15 @@ macro_rules! __impl_grid_with_shared {
             }
 
             fn shared_data_mut_access_translate(
-                &self, 
-                mut_accessed_tiles: &mut std::collections::HashSet<$position>, 
+                &self,
+                mut_accessed_tiles: &mut std::collections::HashSet<$position>,
                 mut_accessed_types: &crate::id::TileIdSet
             ) {
                 use crate::TileContainer as _;
                 for tile in self.iter_tiles() {
                     if mut_accessed_types.contains(&tile.data().tile_type_id()) {
                         mut_accessed_tiles.insert(tile.grid_position());
-                    } 
+                    }
                 }
             }
         }
@@ -761,14 +761,13 @@ macro_rules! __impl_grid_with_shared {
 
 macro_rules! __impl_shared_from_regular {
     ($grid_shared_type:ident, $grid_type:ident) => {
-        impl <Data, Shared> $grid_shared_type<Data, Shared>
-        where 
+        impl<Data, Shared> $grid_shared_type<Data, Shared>
+        where
             Data: crate::id::TypedData,
             Shared: crate::id::SharedData,
         {
-
             /// Creates shared data grid from regular grid.
-            /// 
+            ///
             /// The source grid will be consumed, and new grid will be created. Its internal shared data container
             /// will be created as empty - you can use [`import_shared_data`](Self::import_shared_data) to populate it.
             pub fn from_regular(regular: $grid_type<Data>) -> Self {
@@ -779,10 +778,8 @@ macro_rules! __impl_shared_from_regular {
                 shared
             }
         }
-    }
+    };
 }
-
-
 
 /// Provides a starter for test suite for a given grid type.
 ///
@@ -1061,15 +1058,14 @@ macro_rules! __impl_shared_grid_tests {
         direction_table: $direction_table_type:ident,
         dimension_count: $dimension_count:literal,
     ) => {
-
-        use crate::TileData;
-        use crate::TileContainer as _;
-        use crate::id::TypedData;
-        use crate::id::SharedData;
         use crate::id::BasicTypedData;
-        use crate::id::TypeIdMap;
         use crate::id::IdDefault;
+        use crate::id::SharedData;
+        use crate::id::TypeIdMap;
+        use crate::id::TypedData;
         use crate::id::WithSharedData;
+        use crate::TileContainer as _;
+        use crate::TileData;
 
         /// Test data.
         ///
@@ -1084,10 +1080,7 @@ macro_rules! __impl_shared_grid_tests {
         impl TestData {
             /// Creates a new test data with the specified offset. The `varia` field is initialized to 0.
             pub fn new(type_id: u64) -> Self {
-                Self {
-                    type_id,
-                    varia: 0,
-                }
+                Self { type_id, varia: 0 }
             }
         }
 
@@ -1096,7 +1089,7 @@ macro_rules! __impl_shared_grid_tests {
         fn calc_type_id(grid_position: $position_type) -> u64 {
             grid_position.coords().into_iter().map(|x| x as u64).sum()
         }
-        
+
         fn set_up_grid(grid: &mut $grid_type<BasicTypedData, TestData>) {
             let size = *grid.size();
             let mut ids = TypeIdMap::<TestData>::default();
@@ -1121,7 +1114,8 @@ macro_rules! __impl_shared_grid_tests {
             for pos in size.get_all_possible_positions() {
                 let tile = grid.get_tile_with_shared_at_position(&pos).unwrap();
                 assert_eq!(
-                    tile.grid_position(), pos,
+                    tile.grid_position(),
+                    pos,
                     "wrong position on position: {pos:?}; simple access"
                 );
                 assert_eq!(
@@ -1191,7 +1185,7 @@ macro_rules! __impl_shared_grid_tests {
         //         );
         //     }
         // }
-    }
+    };
 }
 
 pub(crate) use __impl_grid;

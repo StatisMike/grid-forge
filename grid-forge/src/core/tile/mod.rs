@@ -14,7 +14,7 @@ pub(crate) mod common {
     /// Tile data inserted into the map can be retrieved as a direct reference, or as one of the
     /// [`TileContainer`] types. Each one is implemented for grids of specific dimensions.
     /// - `Tile` - holding owned data. For operations outside of the grid context.
-    /// - `TileRef` - holding reference to the data. 
+    /// - `TileRef` - holding reference to the data.
     /// - `TileMut` - holding mutable reference to the data.
     ///
     /// # Example in 2D
@@ -42,6 +42,6 @@ pub(crate) mod common {
     }
 }
 
-pub (crate) mod private {
+pub(crate) mod private {
     pub trait Sealed {}
 }

@@ -220,7 +220,7 @@ mod utils;
 // pub mod gen;
 
 #[doc(inline)]
-pub use core::{TileData, TileContainer};
+pub use core::{TileContainer, TileData};
 
 pub mod id;
 
