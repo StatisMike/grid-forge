@@ -2,7 +2,12 @@
 resolver="2"
 
 members = [
-  "grid-forge",
+  # Core library
+  "grid_forge_core",
+
+  # Dimensionalities
+  "grid_forge_2d",
+  "grid_forge_3d",
 
   # Integration example
   #"example_godot/gf-rust",

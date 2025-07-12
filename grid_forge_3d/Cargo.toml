@@ -1,0 +1,22 @@
+[package]
+name = "grid_forge_3d"
+version = "0.2.0"
+edition = "2021"
+
+[lib]
+bench = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[profile.release]
+debug = true
+
+[features]
+default = ['image', 'procgen']
+image = ["grid_forge_core/vis"]
+procgen = ["grid_forge_core/gen"]
+
+[dependencies]
+grid_forge_core = { path = "../grid_forge_core" }
+
+[dev-dependencies]
+criterion = { version = "0.4", features = ["html_reports"] }
