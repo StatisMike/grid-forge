@@ -1,12 +1,12 @@
-//! Allows operating on image representations of [`GridMap2D`](crate::map::GridMap2D)
+//! Allows operating on image representations of grid maps.
 
 use std::hash::Hash;
 
 use image::{Luma, LumaA, Pixel, Rgb, Rgba};
 
-pub mod grid;
-pub mod tile;
-pub mod io;
+// pub mod grid;
+// pub mod tile;
+// pub mod io;
 
 /// Trait for retrieving default value for pixels.
 ///

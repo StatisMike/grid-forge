@@ -1,6 +1,4 @@
-use std::collections::{hash_map::Entry, HashMap, HashSet};
-
-use super::{TileIdSet, TypeIdMap};
+use super::{TypeIdSet, TypeIdMap};
 
 /// Marker trait for data shared between tiles of the same type.
 ///
@@ -11,7 +9,7 @@ use super::{TileIdSet, TypeIdMap};
 pub trait SharedData {}
 
 /// Marker trait for [`TileContainer`](crate::TileContainer) types containing
-/// the [`TileData`](crate::TileData) and [`SharedData`](crate::id::SharedData) at the same time.
+/// the [`SharedData`](crate::id::SharedData).
 pub trait WithSharedData<Shared: SharedData> {
     fn shared_data(&self) -> &Shared;
 }
@@ -19,16 +17,24 @@ pub trait WithSharedData<Shared: SharedData> {
 #[doc(hidden)]
 pub struct SharedDataContainer<Shared: SharedData> {
     inner: TypeIdMap<Shared>,
-    pub mut_accessed: Option<TileIdSet>,
+    mut_accessed: Option<TypeIdSet>,
 }
 
 impl<Shared: SharedData> SharedDataContainer<Shared> {
     pub fn mut_access_tracking(&mut self, enabled: bool) {
         self.mut_accessed = if enabled {
-            Some(TileIdSet::default())
+            Some(TypeIdSet::default())
         } else {
             None
         };
+    }
+
+    pub fn get_mut_accessed(&self) -> Option<&TypeIdSet> {
+        self.mut_accessed.as_ref()
+    }
+
+    pub fn take_mut_accessed(&mut self) -> Option<TypeIdSet> {
+        self.mut_accessed.take()
     }
 
     pub fn get_shared_data(&self, tile_type_id: &u64) -> Option<&Shared> {

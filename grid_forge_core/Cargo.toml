@@ -1,33 +1,32 @@
 [package]
 name = "grid_forge_core"
-version = "0.2.0"
-edition = "2021"
+description = "Dimensionality - independent functionality of grid_forge"
+version.workspace = true  # Inherit from workspace
+edition.workspace = true  # Inherit from workspace
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [lib]
 bench = false
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[profile.release]
-debug = true
-
 [features]
-default = ['vis', 'gen', 'godot']
-vis = ["dep:image"]
-gen = ["dep:rand"]
+image = ["dep:image"]
+procgen = ["dep:rand"]
 godot = ["dep:godot"]
 
 [dependencies]
+image = { workspace = true, optional = true }
 num-traits = "*"
 grid = { version = "0.13.*" }
-image = { version = "0.25.*", optional = true, default-features = false }
 rand = { version = "0.8.*", optional = true }
 godot = { version = "^0.2.4", optional = true }
 nohash-hasher = "0.2.0"
 
 [dev-dependencies]
-criterion = { version = "0.4", features = ["html_reports"] }
+criterion = { workspace = true }
 rand_chacha = "0.3.*"
-image = { version = "0.25.*", features = ["png"]}
+image = { workspace = true, features = ["png"]}
 gif = { version ="^0.13.*" }
 
 #[[bench]]

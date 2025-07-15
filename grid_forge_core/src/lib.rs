@@ -235,8 +235,8 @@ pub trait TileData: Sized {}
 //     pub use ext::godot::*;
 // }
 
-// #[cfg(feature = "vis")]
-// pub mod vis;
+#[cfg(feature = "image")]
+pub mod image;
 
 #[doc(hidden)]
 pub mod macros;

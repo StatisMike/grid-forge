@@ -1,5 +1,145 @@
 #[doc(hidden)]
 #[macro_export]
+macro_rules! __impl_grid_trait {
+    (
+        grid_map_trait: $grid_map_trait:ident,
+
+        direction: $direction_type:ty,
+        direction_table: $direction_table:ident,
+        size: $size_type:ty,
+        position: $position_type:ty,
+        tile: $tile_type:ident,
+        tile_ref: $tile_ref_type:ident,
+        tile_mut: $tile_mut_type:ident,
+        tile_container_trait: $tile_container_trait:ident,
+        neighbours_count: $neighbour_size:literal,
+
+        $(generic_params: [$($generic_param:tt)*],)?
+        $(where_clause: [$($where_clause:tt)*],)?
+        $(other_mut_access: [$($other_mut_access:tt => $other_mut_access_translate:tt)*],)?
+    )
+    => {
+
+        #[allow(unused_imports)]
+        use crate::core::$tile_container_trait as _;
+        #[allow(unused_imports)]
+        use std::default::Default as _;
+
+        macro_rules! __tile_type { () => { $tile_type<Data> }; }
+        macro_rules! __tile_ref_type { () => { $tile_ref_type<'a, Data> }; }
+        macro_rules! __tile_mut_type { () => { $tile_mut_type<'a, Data> }; }
+
+        /// Trait for basic grid map operations.
+        /// 
+        /// Encapsulates all operations on the grid map and data stored in its tiles.
+        /// 
+        /// For documentation of each method, refer to the documentation on the concrete type implementing this trait.
+        pub trait $grid_map_trait<$($($generic_param)*)?>
+        $(where $($where_clause)*)?
+        {
+            fn size(&self) -> &$size_type;
+
+            fn get_data_at_position(&self, position: &$position_type) -> Option<&Data>;
+
+            fn get_tile_at_position<'a>(&'a self, position: &$position_type) -> Option<__tile_ref_type!()>;
+
+            fn get_mut_data_at_position(&mut self, position: &$position_type) -> Option<&mut Data>;
+
+            fn get_mut_tile_at_position<'a>(&'a mut self, position: &$position_type) -> Option<__tile_mut_type!()>;
+
+            fn get_tiles_at_positions<'a>(&'a self, positions: &[$position_type]) -> Vec<__tile_ref_type!()>;
+
+            fn insert_tile(&mut self, tile: __tile_type!()) -> bool;
+
+            fn insert_data(&mut self, position: &$position_type, data: Data) -> bool;
+
+            fn remove_tile_at_position(&mut self, position: &$position_type) -> Option<__tile_type!()>;
+
+            fn get_neighbours<'a>(&'a self, position: &$position_type) -> $direction_table<Option<__tile_ref_type!()>>;
+
+             fn get_neighbour_at<'a>(
+                &'a self,
+                position: &$position_type,
+                direction: &$direction_type,
+            ) -> Option<__tile_ref_type!()>;
+
+           fn get_mut_neighbour_at<'a>(
+                &'a mut self,
+                position: &$position_type,
+                direction: &$direction_type,
+            ) -> Option<__tile_mut_type!()>;
+
+            fn get_all_positions(&self) -> Vec<$position_type>;
+
+            fn iter_all_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + 'a
+            where
+                Data: 'a;
+
+            fn get_all_positions_with_type(&self, tile_type_id: &u64) -> Vec<$position_type>
+            where Data: grid_forge_core::id::TypedData;
+
+            fn get_all_empty_positions(&self) -> Vec<$position_type>;
+
+            fn iter_all_empty_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + 'a
+            where
+                Data: 'a;
+
+           fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = &'a mut Option<Data>>
+            where
+                Data: 'a;
+
+            fn iter_tiles<'a>(&'a self) -> impl Iterator<Item = __tile_ref_type!()>
+            where
+                Data: 'a;
+
+            fn iter_mut_tiles<'a>(&'a mut self) -> impl Iterator<Item = __tile_mut_type!()>
+            where
+                Data: 'a;
+
+            fn indexed_iter<'a>(&'a self) -> impl Iterator<Item = ($position_type, &'a Option<Data>)>
+            where
+                Data: 'a;
+
+            fn indexed_iter_mut<'a>(
+                &'a mut self,
+            ) -> impl Iterator<Item = ($position_type, &'a mut Option<Data>)>
+            where
+                Data: 'a;
+
+            fn drain_remapped(self, anchor_pos: $position_type) -> Vec<__tile_type!()>;
+
+            fn cloned_remapped(&self, anchor_pos: $position_type) -> Vec<__tile_type!()>
+            where
+                Data: Clone;
+
+            fn drain(self) -> Vec<__tile_type!()>;
+
+            fn fill_empty_using(&mut self, func: fn($position_type) -> Data);
+
+            fn fill_empty_with_default(&mut self)
+            where
+                Data: Default;
+
+            fn fill_empty_with(&mut self, data: Data)
+            where
+                Data: Clone;
+
+            fn mut_access_tracking(&mut self, enabled: bool);
+
+            fn get_mut_accessed(&self) -> Vec<$position_type>;
+
+            fn drain_mut_accessed(&mut self) -> Vec<$position_type>;
+
+            fn len_taken(&self) -> usize;
+
+            fn first_data<'a>(&'a self) -> Option<__tile_ref_type!()>;
+        }
+    }
+}
+
+
+#[doc(hidden)]
+#[macro_export]
 macro_rules! __impl_grid {
     (
         $(#[$struct_meta:meta])*
@@ -16,6 +156,8 @@ macro_rules! __impl_grid {
         tile_mut: $tile_mut_type:ident,
         tile_container_trait: $tile_container_trait:ident,
         neighbours_count: $neighbour_size:literal,
+
+        grid_map_trait: $grid_map_trait:ident,
 
         $(generic_params: [$($generic_param:tt)*],)?
         $(where_clause: [$($where_clause:tt)*],)?
@@ -57,9 +199,13 @@ macro_rules! __impl_grid {
                 tiles.shrink_to_fit();
                 Self { size, tiles, mut_accessed: None, $($additional_field: <$additional_type>::default()),* }
             }
+        }
 
+        impl<$($($generic_param)*)?> $grid_map_trait<Data> for $struct_name<$($($generic_param)*)?>
+        $(where $($where_clause)*)?
+        {
             #[inline]
-            pub fn size(&self) -> &$size_type {
+            fn size(&self) -> &$size_type {
                 &self.size
             }
 
@@ -70,7 +216,7 @@ macro_rules! __impl_grid {
             /// - `None` otherwise
             ///
             /// For a version that returns position and data together, see [`get_mut_tile_at_position`](Self::get_tile_at_position()).
-            pub fn get_data_at_position(&self, position: &$position_type) -> Option<&Data> {
+            fn get_data_at_position(&self, position: &$position_type) -> Option<&Data> {
                 if !self.size.is_position_valid(position) {
                     return None;
                 }
@@ -86,7 +232,7 @@ macro_rules! __impl_grid {
             /// - `None` otherwise
             ///
             /// For direct data access without position, see [`get_data_at_position`](Self::get_data_at_position()).
-            pub fn get_tile_at_position<'a>(&'a self, position: &$position_type) -> Option<__tile_ref_type!()> {
+            fn get_tile_at_position<'a>(&'a self, position: &$position_type) -> Option<__tile_ref_type!()> {
                 if !self.size.is_position_valid(position) {
                     return None;
                 }
@@ -104,7 +250,7 @@ macro_rules! __impl_grid {
             /// - `None` otherwise
             ///
             /// For a version that returns position and data together, see [`get_tile_mut_at_position`](Self::get_tile_mut_at_position()).
-            pub fn get_mut_data_at_position(&mut self, position: &$position_type) -> Option<&mut Data> {
+            fn get_mut_data_at_position(&mut self, position: &$position_type) -> Option<&mut Data> {
                 if !self.size.is_position_valid(position) {
                     return None;
                 }
@@ -123,7 +269,7 @@ macro_rules! __impl_grid {
             /// - `None` otherwise
             ///
             /// For direct data access without position, see [`get_mut_data_at_position`](Self::get_mut_data_at_position()).
-            pub fn get_mut_tile_at_position<'a>(&'a mut self, position: &$position_type) -> Option<__tile_mut_type!()> {
+            fn get_mut_tile_at_position<'a>(&'a mut self, position: &$position_type) -> Option<__tile_mut_type!()> {
                 if !self.size.is_position_valid(position) {
                     return None;
                 }
@@ -145,7 +291,7 @@ macro_rules! __impl_grid {
             #[doc = "Vec of [`TileRef`]]"]
             #[doc = concat!("(", stringify!($tile_ref_type), ")")]
             #[doc = " for each provided position containing data."]
-            pub fn get_tiles_at_positions<'a>(&'a self, positions: &[$position_type]) -> Vec<__tile_ref_type!()> {
+            fn get_tiles_at_positions<'a>(&'a self, positions: &[$position_type]) -> Vec<__tile_ref_type!()> {
                 positions
                     .iter()
                     .filter_map(|position| self.get_tile_at_position(position))
@@ -157,7 +303,7 @@ macro_rules! __impl_grid {
             /// # Returns
             /// - `true` if insertion succeeded (valid position)
             /// - `false` if position is out of bounds
-            pub fn insert_tile(&mut self, tile: __tile_type!()) -> bool
+            fn insert_tile(&mut self, tile: __tile_type!()) -> bool
             {
                 if !self.size.is_position_valid(&tile.grid_position()) {
                     return false;
@@ -178,7 +324,7 @@ macro_rules! __impl_grid {
             /// # Returns
             /// - `true` if insertion succeeded (valid position)
             /// - `false` if position is out of bounds
-            pub fn insert_data(&mut self, position: &$position_type, data: Data) -> bool {
+            fn insert_data(&mut self, position: &$position_type, data: Data) -> bool {
                 if !self.size.is_position_valid(position) {
                     return false;
                 }
@@ -198,7 +344,7 @@ macro_rules! __impl_grid {
             #[doc = concat!("(", stringify!($tile_type), ")")]
             #[doc = " if position was valid and contained data"]
             /// - `None` otherwise
-            pub fn remove_tile_at_position(&mut self, position: &$position_type) -> Option<__tile_type!()>
+            fn remove_tile_at_position(&mut self, position: &$position_type) -> Option<__tile_type!()>
             {
                 if !self.size.is_position_valid(position) {
                     return None;
@@ -222,7 +368,7 @@ macro_rules! __impl_grid {
             #[doc = " containing the [`Some(TileRef)`]"]
             #[doc = concat!("(", stringify!($tile_ref_type), ")")]
             #[doc = " for each direction if it contains data, or `None` otherwise."]
-            pub fn get_neighbours<'a>(&'a self, position: &$position_type) -> $direction_table<Option<__tile_ref_type!()>> {
+            fn get_neighbours<'a>(&'a self, position: &$position_type) -> $direction_table<Option<__tile_ref_type!()>> {
                 let mut result = $direction_table::new([const { None }; $neighbour_size]);
                 for direction in <$direction_type>::ALL {
                     if let Some(pos) = direction.march_step(position, &self.size) {
@@ -241,7 +387,7 @@ macro_rules! __impl_grid {
             #[doc = concat!("(", stringify!($tile_ref_type), ")")]
             #[doc = " if position is valid and contains data"]
             /// - `None` otherwise
-            pub fn get_neighbour_at<'a>(
+            fn get_neighbour_at<'a>(
                 &'a self,
                 position: &$position_type,
                 direction: &$direction_type,
@@ -259,7 +405,7 @@ macro_rules! __impl_grid {
             #[doc = concat!("(", stringify!($tile_mut_type), ")")]
             #[doc = " if position is valid and contains data"]
             /// - `None` otherwise
-            pub fn get_mut_neighbour_at<'a>(
+            fn get_mut_neighbour_at<'a>(
                 &'a mut self,
                 position: &$position_type,
                 direction: &$direction_type,
@@ -271,14 +417,14 @@ macro_rules! __impl_grid {
             }
 
             /// Returns all positions contactining data in the grid map..
-            pub fn get_all_positions(&self) -> Vec<$position_type> {
+            fn get_all_positions(&self) -> Vec<$position_type> {
                 self.indexed_iter()
                     .filter_map(|(pos, t)| if t.is_some() { Some(pos) } else { None })
                     .collect()
             }
 
             /// Returns iterator over all positions contactining data in the grid map.
-            pub fn iter_all_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + use<'a, $($($generic_param)*)?>
+            fn iter_all_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + 'a
             where
                 Data: 'a,
             {
@@ -287,7 +433,7 @@ macro_rules! __impl_grid {
             }
 
             /// Returns all positions containing data of the specified [`tile_type_id`] in the grid map.
-            pub fn get_all_positions_with_type(&self, tile_type_id: &u64) -> Vec<$position_type>
+            fn get_all_positions_with_type(&self, tile_type_id: &u64) -> Vec<$position_type>
             where Data: grid_forge_core::id::TypedData
             {
                 self.indexed_iter()
@@ -306,14 +452,14 @@ macro_rules! __impl_grid {
             }
 
             /// Returns all empty positions in the grid map.
-            pub fn get_all_empty_positions(&self) -> Vec<$position_type> {
+            fn get_all_empty_positions(&self) -> Vec<$position_type> {
                 self.indexed_iter()
                     .filter_map(|(pos, t)| if t.is_none() { Some(pos) } else { None })
                     .collect()
             }
 
             /// Returns iterator over all empty positions in the grid map.
-            pub fn iter_all_empty_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + use<'a, $($($generic_param)*)?>
+            fn iter_all_empty_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + 'a
             where
                 Data: 'a,
             {
@@ -324,7 +470,7 @@ macro_rules! __impl_grid {
             /// Returns iterator over all tile slots in the grid map (mutable).
             ///
             /// This method is not tracked even with [`mut_access_tracking`](Self::mut_access_tracking) enabled.
-            pub fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = &'a mut Option<Data>>
+            fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = &'a mut Option<Data>>
             where
                 Data: 'a,
             {
@@ -332,7 +478,7 @@ macro_rules! __impl_grid {
             }
 
             /// Returns iterator over all tiles in the grid map.
-            pub fn iter_tiles<'a>(&'a self) -> impl Iterator<Item = __tile_ref_type!()>
+            fn iter_tiles<'a>(&'a self) -> impl Iterator<Item = __tile_ref_type!()>
             where
                 Data: 'a,
             {
@@ -343,7 +489,7 @@ macro_rules! __impl_grid {
             /// Returns iterator over all tiles in the grid map (mutable).
             ///
             /// This method is not tracked even with [`mut_access_tracking`](Self::mut_access_tracking) enabled.
-            pub fn iter_mut_tiles<'a>(&'a mut self) -> impl Iterator<Item = __tile_mut_type!()>
+            fn iter_mut_tiles<'a>(&'a mut self) -> impl Iterator<Item = __tile_mut_type!()>
             where
                 Data: 'a,
             {
@@ -352,7 +498,7 @@ macro_rules! __impl_grid {
             }
 
             /// Returns iterator over tuples of position and tile slot data.
-            pub fn indexed_iter<'a>(&'a self) -> impl Iterator<Item = ($position_type, &'a Option<Data>)>
+            fn indexed_iter<'a>(&'a self) -> impl Iterator<Item = ($position_type, &'a Option<Data>)>
             where
                 Data: 'a,
             {
@@ -365,7 +511,7 @@ macro_rules! __impl_grid {
             /// Returns iterator over tuples of position and tile slot data (mutable).
             ///
             /// This method is not tracked even with [`mut_access_tracking`](Self::mut_access_tracking) enabled.
-            pub fn indexed_iter_mut<'a>(
+            fn indexed_iter_mut<'a>(
                 &'a mut self,
             ) -> impl Iterator<Item = ($position_type, &'a mut Option<Data>)>
             where
@@ -385,7 +531,7 @@ macro_rules! __impl_grid {
             ///
             /// To retrieve the remapped tiles without consuming the grid map, you can use [`cloned_remapped`](Self::cloned_remapped)
             /// method if the tile data implements [`Clone`](Clone).
-            pub fn drain_remapped(mut self, anchor_pos: $position_type) -> Vec<__tile_type!()> {
+            fn drain_remapped(mut self, anchor_pos: $position_type) -> Vec<__tile_type!()> {
                 self.indexed_iter_mut()
                     .filter_map(|(pos, t)| {
                         if t.is_none() {
@@ -403,7 +549,7 @@ macro_rules! __impl_grid {
             /// so that the tile at first position will be set at the specified `anchor_pos`.
             ///
             /// To drain the grid map while remapping, you can use [`drain_remapped`](Self::drain_remapped).
-            pub fn cloned_remapped(&self, anchor_pos: $position_type) -> Vec<__tile_type!()>
+            fn cloned_remapped(&self, anchor_pos: $position_type) -> Vec<__tile_type!()>
             where
                 Data: Clone,
             {
@@ -419,7 +565,7 @@ macro_rules! __impl_grid {
             }
 
             /// Retrieves all tiles consuming the map.
-            pub fn drain(mut self) -> Vec<__tile_type!()> {
+            fn drain(mut self) -> Vec<__tile_type!()> {
                 self.indexed_iter_mut()
                     .filter_map(|(pos, t)| {
                         if t.is_none() {
@@ -432,7 +578,7 @@ macro_rules! __impl_grid {
             }
 
             /// Fills empty positions in the grid map with the result of the provided function.
-            pub fn fill_empty_using(&mut self, func: fn($position_type) -> Data) {
+            fn fill_empty_using(&mut self, func: fn($position_type) -> Data) {
                 for (pos, t) in self.indexed_iter_mut() {
                     if t.is_none() {
                         t.replace(func(pos));
@@ -441,7 +587,7 @@ macro_rules! __impl_grid {
             }
 
             /// Fills empty positions in the grid map with the tile data default value.
-            pub fn fill_empty_with_default(&mut self)
+            fn fill_empty_with_default(&mut self)
             where
                 Data: Default,
             {
@@ -452,7 +598,7 @@ macro_rules! __impl_grid {
             }
 
             /// Fills empty positions in the grid map with the provided data.
-            pub fn fill_empty_with(&mut self, data: Data)
+            fn fill_empty_with(&mut self, data: Data)
             where
                 Data: Clone,
             {
@@ -472,7 +618,7 @@ macro_rules! __impl_grid {
             /// - Mutable access is not tracked with iterator methods - it is implied that all tiles will be modified.
             /// - Other methods which won't track mutable access even with this enabled are specified as such in their
             ///   documentation.
-            pub fn mut_access_tracking(&mut self, enabled: bool) {
+            fn mut_access_tracking(&mut self, enabled: bool) {
                 self.mut_accessed = if enabled {
                     Some(std::collections::HashSet::new())
                 } else {
@@ -491,12 +637,12 @@ macro_rules! __impl_grid {
             ///
             /// This method does not drain the mutable accessed positions. If you want to clear the internal tracker,
             /// use [`drain_mut_accessed`](Self::drain_mut_accessed).
-            pub fn get_mut_accessed(&self) -> Vec<$position_type> {
+            fn get_mut_accessed(&self) -> Vec<$position_type> {
                 if let Some(mut_accessed) = &self.mut_accessed {
                     $(
                         let mut combined = mut_accessed.clone();
                         $(
-                            if let Some(other) = &self.$other_mut_access.mut_accessed {
+                            if let Some(other) = &self.$other_mut_access.get_mut_accessed() {
                                 self.$other_mut_access_translate(&mut combined, other);
                             }
                         )*
@@ -518,12 +664,12 @@ macro_rules! __impl_grid {
             ///
             /// It will clear the internal tracker. If you want to keep the positions mutably accessed, use [`get_mut_accessed`](Self::get_mut_accessed)
             /// instead.
-            pub fn drain_mut_accessed(&mut self) -> Vec<$position_type> {
+            fn drain_mut_accessed(&mut self) -> Vec<$position_type> {
                 if let Some(mut_accessed) = &self.mut_accessed.take() {
                     $(
                         let mut combined = mut_accessed.clone();
                         $(
-                            if let Some(other) = &self.$other_mut_access.mut_accessed.take() {
+                            if let Some(other) = &self.$other_mut_access.take_mut_accessed().take() {
                                 self.$other_mut_access_translate(&mut combined, other);
                             }
                         )*
@@ -538,11 +684,11 @@ macro_rules! __impl_grid {
                 }
             }
 
-            pub fn len_taken(&self) -> usize {
+            fn len_taken(&self) -> usize {
                 self.iter_all_positions().count()
             }
 
-            pub fn first_data<'a>(&'a self) -> Option<__tile_ref_type!()> {
+            fn first_data<'a>(&'a self) -> Option<__tile_ref_type!()> {
                 self.iter_tiles().next()
             }
         }
@@ -568,6 +714,8 @@ macro_rules! __impl_grid_with_shared {
         tile_container_trait: $tile_container_trait:ident,
         neighbours_count: $neighbours_count:literal $(,)?
 
+        grid_map_trait: $grid_map_trait:ident,
+
         tile_ref_shared: $tile_ref_shared:ident,
         tile_mut_shared: $tile_mut_shared:ident,
 
@@ -592,6 +740,8 @@ macro_rules! __impl_grid_with_shared {
             tile_mut: $tile_mut,
             tile_container_trait: $tile_container_trait,
             neighbours_count: $neighbours_count,
+
+            grid_map_trait: $grid_map_trait,
 
             generic_params: [
                 $($($generic_param)*, )?
@@ -753,7 +903,7 @@ macro_rules! __impl_grid_with_shared {
             fn shared_data_mut_access_translate(
                 &self,
                 mut_accessed_tiles: &mut std::collections::HashSet<$position>,
-                mut_accessed_types: &grid_forge_core::id::TileIdSet
+                mut_accessed_types: &grid_forge_core::id::TypeIdSet,
             ) {
                 use crate::core::$tile_container_trait as _;
                 for tile in self.iter_tiles() {
@@ -820,7 +970,7 @@ macro_rules! __impl_grid_tests {
         dimension_count: $dimension_count:literal,
     ) => {
 
-        use grid_forge_core::TileData;
+        use grid_forge_core::TileData;        
 
         /// Test data.
         ///

@@ -1,13 +1,28 @@
-use crate::{
-    core::three_d::*,
-    core::two_d::{GridPosition2D, GridSize2D, Tile2D},
-};
+use super::*;
 
-use crate::TileData;
+#[cfg(feature = "2d")]
+use grid_forge_2d::core::{GridPosition2D, GridSize2D, Tile2D, GridMap2D, Grid2D as _};
 
-use super::two_d::GridMap2D;
+use grid_forge_core::TileData;
 
-crate::core::map::macros::__impl_grid! {
+grid_forge_core::__impl_grid_trait! {
+    grid_map_trait: Grid3D,
+
+    direction: Direction3D,
+    direction_table: DirectionTable3D,
+    size: GridSize3D,
+    position: GridPosition3D,
+    tile: Tile3D,
+    tile_ref: TileRef3D,
+    tile_mut: TileMut3D,
+    tile_container_trait: TileContainer3D,
+    neighbours_count: 6,
+
+    generic_params: [Data],
+    where_clause: [Data: grid_forge_core::TileData],
+}
+
+grid_forge_core::__impl_grid! {
 
     pub struct GridMap3D {}
 
@@ -18,14 +33,43 @@ crate::core::map::macros::__impl_grid! {
     tile: Tile3D,
     tile_ref: TileRef3D,
     tile_mut: TileMut3D,
+    tile_container_trait: TileContainer3D,
     neighbours_count: 6,
 
+    grid_map_trait: Grid3D,
+
     generic_params: [Data],
-    where_clause: [Data: crate::TileData],
+    where_clause: [Data: grid_forge_core::TileData],
 }
 
+grid_forge_core::__impl_grid_with_shared! {
+    pub struct GridMapShared3D {}
+
+    direction: Direction3D,
+    direction_table: DirectionTable3D,
+    size: GridSize3D,
+    position: GridPosition3D,
+    tile: Tile3D,
+    tile_ref: TileRef3D,
+    tile_mut: TileMut3D,
+    tile_container_trait: TileContainer3D,
+    neighbours_count: 6,
+
+    grid_map_trait: Grid3D,
+
+    tile_ref_shared: TileRefShared3D,
+    tile_mut_shared: TileMutShared3D,
+
+    generic_params: [Data],
+    where_clause: [Data: grid_forge_core::id::TypedData],
+}
+
+grid_forge_core::__impl_shared_from_regular!(GridMapShared3D, GridMap3D);
+
+#[cfg(feature = "2d")]
 impl<Data: TileData> GridMap3D<Data> {
     pub fn insert_layer(&mut self, z: u32, layer: GridMap2D<Data>) {
+        use grid_forge_2d::core::TileContainer2D as _;
         let layer_size = GridSize3D::from_2d(1, *layer.size());
         if !layer_size.is_contained_within(&self.size) {
             panic!("layer size is not contained within the grid size");
@@ -66,14 +110,16 @@ impl<Data: TileData> GridMap3D<Data> {
 
 #[cfg(test)]
 mod tests {
-    use crate::three_d::*;
+    use super::super::*;
+    use super::Grid3D as _;
 
-    crate::core::map::macros::__impl_grid_tests!(
+    grid_forge_core::__impl_grid_tests!(
         grid: GridMap3D,
         size: GridSize3D,
         position: GridPosition3D,
         direction: Direction3D,
         direction_table: DirectionTable3D,
+        tile_container_trait: TileContainer2D,
         dimension_count: 3,
     );
 

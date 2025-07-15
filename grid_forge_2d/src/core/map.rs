@@ -1,5 +1,22 @@
 use crate::core::*;
 
+grid_forge_core::__impl_grid_trait! {
+    grid_map_trait: Grid2D,
+
+    direction: Direction2D,
+    direction_table: DirectionTable2D,
+    size: GridSize2D,
+    position: GridPosition2D,
+    tile: Tile2D,
+    tile_ref: TileRef2D,
+    tile_mut: TileMut2D,
+    tile_container_trait: TileContainer2D,
+    neighbours_count: 4,
+
+    generic_params: [Data],
+    where_clause: [Data: grid_forge_core::TileData],
+}
+
 grid_forge_core::__impl_grid! {
 
     pub struct GridMap2D {}
@@ -13,6 +30,8 @@ grid_forge_core::__impl_grid! {
     tile_mut: TileMut2D,
     tile_container_trait: TileContainer2D,
     neighbours_count: 4,
+
+    grid_map_trait: Grid2D,
 
     generic_params: [Data],
     where_clause: [Data: grid_forge_core::TileData],
@@ -31,6 +50,8 @@ grid_forge_core::__impl_grid_with_shared! {
     tile_container_trait: TileContainer2D,
     neighbours_count: 4,
 
+    grid_map_trait: Grid2D,
+
     tile_ref_shared: TileRefShared2D,
     tile_mut_shared: TileMutShared2D,
 
@@ -44,6 +65,7 @@ grid_forge_core::__impl_shared_from_regular!(GridMapShared2D, GridMap2D);
 mod tests {
     mod regular {
         use crate::core::*;
+        use super::super::Grid2D as _;
 
         grid_forge_core::__impl_grid_tests!(
             grid: GridMap2D,
@@ -54,13 +76,6 @@ mod tests {
             tile_container_trait: TileContainer2D,
             dimension_count: 2,
         );
-
-        // fn test() {
-        // use super::GridMapShared2D;
-        //     let mut grid = GridMapShared2D::new(GridSize2D::new(10, 10));
-        //     grid.get_tile_at_position(position);
-        //     grid.get_neighbours(position)
-        // }
 
         #[test]
         fn test_2_neighbours() {
@@ -122,6 +137,7 @@ mod tests {
 
     mod shared {
         use crate::core::*;
+        use super::super::Grid2D as _;
 
         grid_forge_core::__impl_shared_grid_tests!(
             grid: GridMapShared2D,

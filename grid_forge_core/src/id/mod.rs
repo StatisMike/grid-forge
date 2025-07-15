@@ -3,13 +3,12 @@ use std::collections::{HashMap, HashSet};
 use crate::TileData;
 
 mod builders;
-// mod collection;
-mod shared_data;
-
 pub use builders::*;
-// pub use collection::*;
-use nohash_hasher::NoHashHasher;
+
+mod shared_data;
 pub use shared_data::*;
+
+use nohash_hasher::NoHashHasher;
 
 /// Identifiable tile data trait.
 ///
@@ -90,4 +89,4 @@ impl IdDefault for BasicTypedData {
 pub type TypeIdMap<T> = HashMap<u64, T, std::hash::BuildHasherDefault<NoHashHasher<u64>>>;
 
 /// Fast [`HashSet`] intended to be used for `tile_type_id` lookups.
-pub type TileIdSet = HashSet<u64, std::hash::BuildHasherDefault<NoHashHasher<u64>>>;
+pub type TypeIdSet = HashSet<u64, std::hash::BuildHasherDefault<NoHashHasher<u64>>>;

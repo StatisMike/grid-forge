@@ -1,14 +1,32 @@
 [workspace]
-resolver="2"
+resolver = "2"
 
 members = [
   # Core library
   "grid_forge_core",
 
-  # Dimensionalities
+  # Dimensionality implementations
   "grid_forge_2d",
   "grid_forge_3d",
 
-  # Integration example
-  #"example_godot/gf-rust",
+  # Integration examples (commented out as per your original)
+  # "example_godot/gf-rust",
+
+    # Main facade library
+  "grid_forge",
 ]
+
+[workspace.package]
+version = "0.2.0"
+edition = "2021"
+authors = ["Michał Kosiński <statismike@gmail.com>"]
+description = "Grid Map abstraction library"
+license = "MIT"
+repository = "https://github.com/statismike/grid_forge"
+
+[workspace.dependencies]
+criterion = { version = "0.4", features = ["html_reports"] }
+image = { version = "0.25.*", default-features = false }
+
+[profile.release]
+debug = true

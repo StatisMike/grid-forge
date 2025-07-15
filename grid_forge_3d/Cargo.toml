@@ -1,22 +1,27 @@
 [package]
 name = "grid_forge_3d"
-version = "0.2.0"
-edition = "2021"
+description = "3D cubic tile dimension"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [lib]
 bench = false
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[profile.release]
-debug = true
-
 [features]
-default = ['image', 'procgen']
-image = ["grid_forge_core/vis"]
-procgen = ["grid_forge_core/gen"]
+2d = ["grid_forge_2d"]
+default = ['procgen']
+procgen = ["grid_forge_core/procgen"]
 
 [dependencies]
 grid_forge_core = { path = "../grid_forge_core" }
+grid_forge_2d = { path = "../grid_forge_2d", optional = true }
 
 [dev-dependencies]
-criterion = { version = "0.4", features = ["html_reports"] }
+criterion = { workspace = true }
+
+[[bench]]
+name = "grid"
+harness = false

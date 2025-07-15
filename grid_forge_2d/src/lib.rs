@@ -93,4 +93,10 @@
 pub mod core;
 pub mod prelude {
     pub use crate::core::*;
+    pub use crate::core::Grid2D as _;
 }
+
+#[cfg(feature = "image")]
+pub mod image;
+
+pub (crate) mod utils;

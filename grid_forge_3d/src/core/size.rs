@@ -1,5 +1,8 @@
 use super::GridPosition3D;
 
+#[cfg(feature = "2d")]
+use grid_forge_2d::core::GridSize2D;
+
 #[derive(Debug, Clone, Copy)]
 pub struct GridSize3D {
     x: u32,
@@ -39,7 +42,8 @@ impl GridSize3D {
         self.z
     }
 
-    pub fn from_2d(z: u32, size: super::two_d::GridSize2D) -> Self {
+    #[cfg(feature = "2d")]
+    pub fn from_2d(z: u32, size: GridSize2D) -> Self {
         Self::new(size.x(), size.y(), z)
     }
 

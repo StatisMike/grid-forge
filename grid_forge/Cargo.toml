@@ -1,0 +1,19 @@
+[package]
+name = "grid_forge"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+grid_forge_core = { path = "../grid_forge_core" }
+grid_forge_2d = { path = "../grid_forge_2d", optional = true }
+grid_forge_3d = { path = "../grid_forge_3d", optional = true }
+
+[features]
+2d = ["grid_forge_2d"]
+3d = ["grid_forge_3d"]
+procgen = []
+image = []

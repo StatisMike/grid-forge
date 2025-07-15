@@ -1,26 +1,32 @@
 [package]
 name = "grid_forge_2d"
-version = "0.2.0"
-edition = "2021"
+description = "2D rectangular tile dimension"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [lib]
 bench = false
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[profile.release]
-debug = true
-
 [features]
 default = ['image', 'procgen']
-image = ["grid_forge_core/vis"]
-procgen = ["grid_forge_core/gen"]
+image = ["dep:image", "grid_forge_core/image"]
+procgen = ["grid_forge_core/procgen"]
 
 [dependencies]
 grid_forge_core = { path = "../grid_forge_core" }
+image = { workspace = true, optional = true }
 
 [dev-dependencies]
-criterion = { version = "0.4", features = ["html_reports"] }
+criterion = { workspace = true }
+image = { workspace = true, features = ["png"]}
 
 [[bench]]
 name = "grid"
+harness = false
+
+[[bench]]
+name = "image"
 harness = false
