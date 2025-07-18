@@ -238,5 +238,8 @@ pub trait TileData: Sized {}
 #[cfg(feature = "image")]
 pub mod image;
 
+#[cfg(feature = "procgen")]
+pub mod procgen_collapse;
+
 #[doc(hidden)]
 pub mod macros;

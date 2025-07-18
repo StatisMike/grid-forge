@@ -1,7 +1,6 @@
 //! Various IO operations transforming between [`GridMap2D`] and [`ImageBuffer`] representation of grid map.
 
 use std::collections::hash_map::Entry;
-use std::hash::{DefaultHasher, Hash, Hasher};
 
 use image::{ImageBuffer, Pixel};
 
@@ -18,11 +17,11 @@ use super::error::VisError2D;
 ///
 ///
 /// Use this function if the tile itself implements [`WithPixels`], using [`TilePixConst`] as its pixel container. If the tile
-/// struct implements [`TypedData`](crate::id::TypedData) and the pixels data is separate from the tile and corresponds to some
-/// `tile_type_id`, you can use [`load_from_image_const_typed()`](Self::load_from_image_const_typed) or
-/// [`load_from_image_const_typed_auto()`](Self::load_from_image_const_typed_auto()) functions.
+/// struct implements [`TypedData`] and the pixels data is separate from the tile and corresponds to some
+/// `tile_type_id`, you can use [`load_from_image_const_typed()`] or
+/// [`load_from_image_const_typed_auto()`] functions.
 ///
-/// For non-compile time known pixel representation size, use [`load_from_image_var()`](Self::load_from_image_var) function.
+/// For non-compile time known pixel representation size, use [`load_from_image_var()`] function.
 ///
 /// # Returns
 /// - [`GridMap2D`] if successful
@@ -101,7 +100,7 @@ where
     Ok(grid)
 }
 
-/// Load [`GridMap2D`] with [`TypedData`](crate::id::TypedData) from provided image buffer.
+/// Load [`GridMap2D`] with [`TypedData`] from provided image buffer.
 ///
 /// Loads the map from the image buffer automatically computing the `tile_type_id` on basis
 /// of pixel representation of the tile. Interpretes the pixels as [`TilePixConst`], so the
@@ -112,14 +111,14 @@ where
 ///
 /// Use this loading function, if:
 /// - the tile struct doesn't contain the [`TilePixels`] in its data itself. Otherwise, you
-///   can use [`load_from_image_const`](Self::load_from_image_const) instead.
+///   can use [`load_from_image_const`] instead.
 /// - the tile type id and its corresponding pixels are not strictly known while loading the map.
 ///   Otherwise, if the `tile_type_id`s are fixed and their visual representation is known, you
-///   can use [`load_from_image_const_typed`](Self::load_from_image_const_typed) instead.
+///   can use [`load_from_image_const_typed`] instead.
 ///
 /// As the `tile_type_id` **is automatically calculated** with this function on basis of pixels,
 /// it won't work if the builder needs to known the `tile_type_id` beforehand - it is recommended to use
-/// [`IdentTileDefaultBuilder`](crate::id::IdentTileDefaultBuilder) and implement [`IdDefault`]
+/// [`IdentTileDefaultBuilder`] and implement [`IdDefault`]
 /// for the tile struct.
 ///
 /// # Errors
@@ -164,7 +163,7 @@ where
     Ok(grid)
 }
 
-/// Load [`GridMap2D`] with [`TypedData`](crate::id::TypedData) from provided image buffer.
+/// Load [`GridMap2D`] with [`TypedData`] from provided image buffer.
 ///
 /// Loads the map from the image buffer automatically computing the `tile_type_id` on basis
 /// of pixel representation of the tile. Interpretes the pixels as [`TilePixVar`], so the
@@ -175,15 +174,14 @@ where
 ///
 /// Use this loading function, if:
 /// - the tile struct doesn't contain the [`TilePixels`] in its data itself. Otherwise, you
-///   can use [`load_from_image_var`](Self::load_from_image_var) instead. 
+///   can use [`load_from_image_var`] instead. 
 /// - the tile type id and its corresponding pixels are not strictly known while loading the map.
 ///   Otherwise, if the `tile_type_id`s are fixed and their visual representation is known, you
-///   can use [`load_from_image_var_typed`](Self::load_from_image_var_typed) instead.
+///   can use [`load_from_image_var_typed`] instead.
 ///
 /// As the `tile_type_id` **is automatically calculated** with this function on basis of pixels,
 /// it won't work if the builder needs to known the `tile_type_id` beforehand - it is recommended to use
-/// [`IdentTileDefaultBuilder`](crate::id::IdentTileDefaultBuilder) and implement [`IdDefault`]
-/// for the tile struct.
+/// [`IdentTileDefaultBuilder`] and implement [`IdDefault`] for the tile struct.
 ///
 /// # Errors
 /// Function can throw an error if:
@@ -622,17 +620,4 @@ fn check_tile_vis_size<P: PixelWithDefault, TP: TilePixels<P>>(
     } else {
         Ok(())
     }
-}
-
-#[inline]
-pub(crate) fn create_tile_id_from_pixels<
-    P: PixelWithDefault,
-    const WIDTH: usize,
-    const HEIGHT: usize,
->(
-    pixels: &[[P; WIDTH]; HEIGHT],
-) -> u64 {
-    let mut hasher = DefaultHasher::default();
-    pixels.hash(&mut hasher);
-    hasher.finish()
 }

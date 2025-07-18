@@ -24,6 +24,27 @@ macro_rules! __impl_direction_table {
             pub fn inner(&self) -> &[T; $direction_count] {
                 &self.inner
             }
+
+            // Immutable iterator
+            pub fn iter(&self) -> impl Iterator<Item = ($direction_type, &T)> {
+                $direction_type::ALL
+                    .into_iter()
+                    .zip(self.inner.iter())
+            }
+
+            // Mutable iterator
+            pub fn iter_mut(&mut self) -> impl Iterator<Item = ($direction_type, &mut T)> {
+                $direction_type::ALL
+                    .into_iter()
+                    .zip(self.inner.iter_mut())
+            }
+
+            // Consuming iterator
+            pub fn into_iter(self) -> impl Iterator<Item = ($direction_type, T)> {
+                $direction_type::ALL
+                    .into_iter()
+                    .zip(self.inner.into_iter())
+            }
         }
 
         impl<T: Default> Default for $direction_table_type<T> {

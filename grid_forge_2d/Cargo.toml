@@ -12,12 +12,13 @@ bench = false
 
 [features]
 default = ['image', 'procgen']
-image = ["dep:image", "grid_forge_core/image"]
-procgen = ["grid_forge_core/procgen"]
+image = ["grid_forge_core/image","dep:image"]
+procgen = ["grid_forge_core/procgen", "dep:rand"]
 
 [dependencies]
 grid_forge_core = { path = "../grid_forge_core" }
 image = { workspace = true, optional = true }
+rand = { workspace = true, optional = true }
 
 [dev-dependencies]
 criterion = { workspace = true }

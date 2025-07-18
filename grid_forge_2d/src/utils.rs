@@ -7,3 +7,5 @@ macro_rules! asset_path {
             .join($path)
     };
 }
+
+pub(crate) use asset_path;

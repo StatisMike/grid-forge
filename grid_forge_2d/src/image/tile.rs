@@ -6,11 +6,6 @@
 //! There are two main structs that should cover most of the use cases:
 //! - [`TilePixConst`] - for constant pixel array - faster, but requires the pixel size to be known at compile time.
 //! - [`TilePixVar`] - for variable pixel array - slower, but allows to have the pixel size to be known at runtime.
-//!
-//! Both of these structs implement [`TilePixels`] trait, which informs the logic behind IO operations on the tiles.
-//! If you need some other strategy for the pixel representation, you can implement your own struct implementing
-//! this trait. All IO operations for the grid maps are performed on the basis of this trait, instead of the
-//! specific structs.
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 
@@ -23,12 +18,6 @@ where P: PixelWithDefault {
     fn tile_pixels(&self) -> &TP;
     fn tile_pixels_mut(&mut self) -> &mut TP;
 }
-
-// pub trait WithPixelsMut<TP: TilePixelsMut<P>, P>
-// where P: PixelWithDefault {
-//     fn tile_pixels(&self) -> &TP;
-//     fn tile_pixels_mut(&mut self) -> &mut TP;
-// }
 
 /// Trait for the visual representation of the tile.
 ///
@@ -91,23 +80,6 @@ pub trait TilePixels<P: PixelWithDefault>: private::Sealed + Clone {
     }
 }
 
-// pub trait TilePixelsMut<P: PixelWithDefault>: TilePixels<P> {
-//     /// Sets a pixel at the specified position.
-//     ///
-//     /// # Panics
-//     /// Panics if the position is out of bounds.
-//     fn set_pixel(&mut self, x: usize, y: usize, pixel: P);
-
-//     fn try_set_pixel(&mut self, x: usize, y: usize, pixel: P) -> bool {
-//         if x < self.pix_width() && y < self.pix_height() {
-//             self.set_pixel(x, y, pixel);
-//             true
-//         } else {
-//             false
-//         }
-//     }
-// }
-
 /// Implementation of the [`TilePixels`] trait for constant pixel array.
 ///
 /// Faster than [`TilePixVar`], but needs to have the pixel size defined at the compile
@@ -142,7 +114,19 @@ pub struct TilePixConst<const WIDTH: usize, const HEIGHT: usize, P: PixelWithDef
 }
 
 impl<const WIDTH: usize, const HEIGHT: usize, P: PixelWithDefault> TilePixConst<WIDTH, HEIGHT, P> {
+
+    /// Creates a new `TilePixConst` from a slice of pixels.
+    ///
+    /// # Panics
+    /// Panics if the length of the slice is not equal to the `WIDTH` * `HEIGHT`.
     pub fn from_slice(pixels: &[P]) -> Self {
+        if pixels.len() != WIDTH * HEIGHT {
+            panic!(
+                "TilePixConst: incorrect pixel slice length: expected {} pixels, got {}",
+                WIDTH * HEIGHT,
+                pixels.len()
+            );
+        }
         match pixels
             .chunks_exact(WIDTH)
             .map(|chunk| chunk.try_into().unwrap())
@@ -150,7 +134,7 @@ impl<const WIDTH: usize, const HEIGHT: usize, P: PixelWithDefault> TilePixConst<
             .try_into()
         {
             Ok(pixels) => Self { pixels },
-            Err(_) => panic!("TilePixConst: pixels length is not divisible by WIDTH"),
+            Err(_) => panic!("TilePixConst: incorrect pixel slice length"),
         }
     }
 }
@@ -246,13 +230,27 @@ pub struct TilePixVar<P: PixelWithDefault> {
 }
 
 impl<P: PixelWithDefault> TilePixVar<P> {
+
+    /// Creates a new `TilePixVar` from a slice of pixels and specified width and height.
+    ///
+    /// # Panics
+    /// Panics if the length of the slice is not equal to `width` * `height`.
     pub fn from_slice(pixels: &[P], width: usize, height: usize) -> Self {
+        if pixels.len() != width * height {
+            panic!(
+                "TilePixVar: incorrect pixel slice length: expected {} pixels, got {}",
+                width * height,
+                pixels.len()
+            );
+        }
         Self {
             width,
             height,
             pixels: pixels.to_vec(),
         }
     }
+
+    /// Creates a new empty `TilePixVar` with specified width and height.
     pub fn new_empty(width: usize, height: usize) -> Self {
         let mut pixels = Vec::new();
         pixels.resize(width * height, P::pix_default());

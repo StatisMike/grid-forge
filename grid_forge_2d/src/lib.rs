@@ -99,4 +99,7 @@ pub mod prelude {
 #[cfg(feature = "image")]
 pub mod image;
 
+#[cfg(feature = "procgen")]
+pub mod procgen_collapse;
+
 pub (crate) mod utils;
