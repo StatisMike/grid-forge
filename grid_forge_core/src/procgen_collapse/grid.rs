@@ -1,40 +1,203 @@
 #[macro_export]
+macro_rules! __impl_collapsed_grid {
+    (
+        struct_name: $struct_name:ident,
+        grid: $grid_name:ident,
+        size: $size_type:ident,
+    ) => {
+
+        macro_rules! collapsed_grid {
+            () => { $grid_name<CollapsedTileData> };
+        }
+
+        #[derive(Debug, Clone)]
+        pub struct $struct_name {
+            pub (crate) grid: collapsed_grid!(),
+            pub (crate) tile_type_ids: TypeIdSet,
+        }
+
+        impl $struct_name {
+            
+            pub fn new(size: $size_type) -> Self {
+                Self {
+                    grid: <collapsed_grid!()>::new(size),
+                    tile_type_ids: TypeIdSet::default(),
+                }
+            }
+
+            #[inline]
+            pub fn grid(&self) -> &collapsed_grid!() {
+                &self.grid
+            }
+
+            #[inline]
+            pub fn tile_type_ids(&self) -> &TypeIdSet {
+                &self.tile_type_ids
+            }
+        }
+    };
+}
+
+
+#[macro_export]
 macro_rules! __impl_collapsible_grid {
     (
-        trait_name: $name:ident,
+        struct_name: $name:ident,
         collapsible_data: $collapsible_data:ident,
+        collapsed_grid: $collapsed_grid:ident,
         grid: $grid:ident,
         position: $position:ident,
         direction: $direction:ident,
         per_option_data: $per_option_data:ident,
+        error: $error:ident,
     ) => {
 
         macro_rules! collapsible_grid {
             () => { $grid<$collapsible_data> };
         }
+
         macro_rules! propagate_item {
             () => { PropagateItem<$position> };
         }
 
-        pub trait $name {       
-            #[doc(hidden)]
-            fn _grid(&self) -> &collapsible_grid!();
-    
-            #[doc(hidden)]
-            fn _grid_mut(&mut self) -> &mut collapsible_grid!();
-    
-            #[doc(hidden)]
-            fn _option_data(&self) -> &$per_option_data;
-    
-            #[doc(hidden)]
-            fn _get_initial_propagate_items(&self, to_collapse: &[$position]) -> Vec<propagate_item!()> {
+        pub struct $name<Tile: TypedData> {
+            grid: collapsible_grid!(),
+            option_data: $per_option_data,
+            tile_type: PhantomData<Tile>,
+        } 
+
+        impl <Tile: TypedData> $name<Tile> {
+
+            pub fn retrieve_collapsed(&self) -> $collapsed_grid {
+                let mut out = $collapsed_grid::new(self.grid.size().clone());
+        
+                for tile in self.grid.iter_tiles() {
+                    if !tile.data().is_collapsed() {
+                        continue;
+                    }
+        
+                    out.grid.insert_data(
+                        &tile.grid_position(),
+                        CollapsedTileData::new(
+                            self.option_data
+                                .get_tile_type_id(
+                                    &tile
+                                        .data()
+                                        .collapsed_idx()
+                                        .expect("cannot get `collapse_idx` for uncollapsed tile"),
+                                )
+                                .expect("cannot get `tile_type_id` for uncollapsed tile"),
+                        ),
+                    );
+                }
+        
+                out
+            }
+        
+            pub fn retrieve_ident<Builder: IdentTileBuilder<InputTile>, InputTile>(
+                &self,
+                builder: &Builder,
+            ) -> Result<$grid<InputTile>, $error> 
+            where
+                Builder: IdentTileBuilder<InputTile>,
+                InputTile: TypedData,
+            { 
+                let mut out = $grid::<InputTile>::new(*self.grid.size());
+        
+                for tile in self.grid.iter_tiles() {
+                    if !tile.data().is_collapsed() {
+                        continue;
+                    }
+                    out.insert_data(
+                        &tile.grid_position(),
+                        builder.build_tile_unchecked(
+                            self.option_data
+                                .get_tile_type_id(
+                                    &tile
+                                        .data()
+                                        .collapsed_idx()
+                                        .expect("cannot get `collapse_idx` for uncollapsed tile"),
+                                )
+                                .expect("cannot get `tile_type_id` for uncollapsed tile"),
+                        ),
+                    );
+                }
+        
+                Ok(out)
+            }
+        
+            pub fn retrieve_ident_default<InputTile>(&self) -> $grid<InputTile>
+            where
+                InputTile: TypedData + IdDefault,
+            {
+                let mut out = $grid::<InputTile>::new(*self.grid.size());
+        
+                for tile in self.grid.iter_tiles() {
+                    if !tile.data().is_collapsed() {
+                        continue;
+                    }
+                    out.insert_data(
+                        &tile.grid_position(),
+                        InputTile::tile_type_default(
+                            self.option_data
+                                .get_tile_type_id(
+                                    &tile
+                                        .data()
+                                        .collapsed_idx()
+                                        .expect("cannot get `collapse_idx` for uncollapsed tile"),
+                                )
+                                .expect("cannot get `tile_type_id` for uncollapsed tile"),
+                        ),
+                    );
+                }
+        
+                out
+            }
+        
+            /// Returns all empty positions in the internal grid.
+            pub fn empty_positions(&self) -> Vec<$position> {
+                self.grid.get_all_empty_positions()
+            }
+        
+            /// Returns all possitions in the internal grid holds collapsed or uncollapsed tiles are either collapsed.
+            pub fn retrieve_positions(&self, collapsed: bool) -> Vec<$position> {
+                let func: fn(&$collapsible_data) -> bool = if collapsed {
+                    |d| d.is_collapsed()
+                } else {
+                    |d| !d.is_collapsed()
+                };
+                self.grid
+                    .indexed_iter()
+                    .filter_map(|t| {
+                        if let Some(d) = t.1 {
+                            if func(d) {
+                                return Some(t.0);
+                            }
+                        }
+                        None
+                    })
+                    .collect()
+            }
+        
+            pub fn remove_uncollapsed(&mut self) {
+                for t in self.grid.iter_mut() {
+                    if let Some(d) = t {
+                        if d.is_collapsed() {
+                            continue;
+                        }
+                        t.take();
+                    }
+                }
+            }
+
+            pub (crate) fn get_initial_propagate_items(&self, to_collapse: &[$position]) -> Vec<propagate_item!()> {
                 let mut out = Vec::new();
                 let mut cache = HashMap::new();
                 let mut check_generated = HashSet::new();
                 let check_provided: HashSet<_> = HashSet::from_iter(to_collapse.iter());
     
                 for pos_to_collapse in to_collapse {
-                    for neighbour_tile in self._grid().get_neighbours(pos_to_collapse).inner().iter().flatten() {
+                    for neighbour_tile in self.grid.get_neighbours(pos_to_collapse).inner().iter().flatten() {
                         if !neighbour_tile.as_ref().is_collapsed()
                             || check_provided.contains(&neighbour_tile.grid_position())
                             || check_generated.contains(&neighbour_tile.grid_position())
@@ -44,7 +207,7 @@ macro_rules! __impl_collapsible_grid {
                         check_generated.insert(neighbour_tile.grid_position());
                         let collapsed_idx = neighbour_tile.as_ref().collapsed_idx().unwrap();
                         for opt_to_remove in cache.entry(collapsed_idx).or_insert_with(|| {
-                            (0..self._option_data().option_count)
+                            (0..self.option_data.option_count)
                                 .filter(|option_idx| option_idx != &collapsed_idx)
                                 .collect::<Vec<usize>>()
                         }) {

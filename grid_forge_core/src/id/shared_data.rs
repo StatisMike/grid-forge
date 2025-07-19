@@ -15,6 +15,7 @@ pub trait WithSharedData<Shared: SharedData> {
 }
 
 #[doc(hidden)]
+#[derive(Clone, Debug)]
 pub struct SharedDataContainer<Shared: SharedData> {
     inner: TypeIdMap<Shared>,
     mut_accessed: Option<TypeIdSet>,

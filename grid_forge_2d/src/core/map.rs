@@ -19,6 +19,7 @@ grid_forge_core::__impl_grid_trait! {
 
 grid_forge_core::__impl_grid! {
 
+    #[derive(Clone, Debug)]
     pub struct GridMap2D {}
 
     direction: Direction2D,
@@ -38,6 +39,7 @@ grid_forge_core::__impl_grid! {
 }
 
 grid_forge_core::__impl_grid_with_shared! {
+    #[derive(Clone, Debug)]
     pub struct GridMapShared2D {}
 
     direction: Direction2D,

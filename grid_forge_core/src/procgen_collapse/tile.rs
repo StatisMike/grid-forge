@@ -403,12 +403,22 @@ macro_rules! __impl_collapsible_tile_data {
                 let mut chosen = None;
                 for option_idx in self.ways_to_be_option.iter_possible() {
                     current_sum += options_data.get_weights(option_idx).0;
-                    if chosen.is_some() || random > current_sum {
+                    if random > current_sum {
                         continue;
                     }
                     chosen = Some(option_idx);
+                    break;
                 }
                 self.mark_collapsed(chosen.expect("options should always be chosen"));
+            }
+
+            pub fn calc_entrophy(&self) -> f32 {
+                Self::calc_entrophy_ext(self.weight.0, self.weight.1) + self.entrophy_noise
+            }
+
+            #[inline]
+            pub fn calc_entrophy_ext(weight_sum: u32, weight_log_sum: f32) -> f32 {
+                (weight_sum as f32).log2() - weight_log_sum / (weight_sum as f32)
             }
         }
     };

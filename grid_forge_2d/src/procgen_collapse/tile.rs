@@ -9,26 +9,9 @@ use grid_forge_core::TileData;
 
 use grid_forge_core::procgen_collapse::option::OptionWeights;
 
-// grid_forge_core::__impl_common_collapsible_tile_trait! {
-//     trait_name: CommonCollapsibleTile2D,
-//     position: GridPosition2D,
-//     ways_to_be_option: WaysToBeOption2D,
-//     per_option_data: PerOptionData2D,
-// }
-
-// grid_forge_core::__impl_collapsible_tile_data! {
-//     struct_name: CollapsibleTile2D,
-//     trait_name: CommonCollapsibleTile2D,
-//     ways_to_be_option: WaysToBeOption2D,
-// }
-
 grid_forge_core::__impl_collapsible_tile_data! {
     struct_name: CollapsibleTile2D,
     position: GridPosition2D,
     ways_to_be_option: WaysToBeOption2D,
     per_option_data: PerOptionData2D,
 }
-
-// pub (crate) mod private {
-//     pub trait Sealed {}
-// }
