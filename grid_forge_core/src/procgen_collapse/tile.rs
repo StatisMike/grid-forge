@@ -333,6 +333,10 @@ macro_rules! __impl_collapsible_tile_data {
                 self.num_options
             }
 
+            pub fn has_compatible_options(&self) -> bool {
+                self.num_options > 0
+            }
+
             pub fn ways_to_be_option(&self) -> &$ways_to_be_option {
                 &self.ways_to_be_option
             }

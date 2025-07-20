@@ -45,6 +45,7 @@ macro_rules! __impl_collapsible_grid {
         struct_name: $name:ident,
         collapsible_data: $collapsible_data:ident,
         collapsed_grid: $collapsed_grid:ident,
+        propagate_item: $propagate_item:ident,
         grid: $grid:ident,
         position: $position:ident,
         direction: $direction:ident,
@@ -54,10 +55,6 @@ macro_rules! __impl_collapsible_grid {
 
         macro_rules! collapsible_grid {
             () => { $grid<$collapsible_data> };
-        }
-
-        macro_rules! propagate_item {
-            () => { PropagateItem<$position> };
         }
 
         pub struct $name<Tile: TypedData> {
@@ -190,7 +187,7 @@ macro_rules! __impl_collapsible_grid {
                 }
             }
 
-            pub (crate) fn get_initial_propagate_items(&self, to_collapse: &[$position]) -> Vec<propagate_item!()> {
+            pub (crate) fn get_initial_propagate_items(&self, to_collapse: &[$position]) -> Vec<$propagate_item> {
                 let mut out = Vec::new();
                 let mut cache = HashMap::new();
                 let mut check_generated = HashSet::new();
@@ -211,7 +208,7 @@ macro_rules! __impl_collapsible_grid {
                                 .filter(|option_idx| option_idx != &collapsed_idx)
                                 .collect::<Vec<usize>>()
                         }) {
-                            out.push(<propagate_item!()>::new(
+                            out.push($propagate_item::new(
                                 neighbour_tile.grid_position(),
                                 *opt_to_remove,
                             ))

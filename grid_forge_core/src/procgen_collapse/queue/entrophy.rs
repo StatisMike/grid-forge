@@ -69,23 +69,21 @@ macro_rules! __impl_entrophy_queue {
         /// Select next position to collapse using smallest entrophy condition.
         ///
         /// Its state will be updated every time after tile entrophy changed by removing some of its options.
-        pub struct $name<$collapsible_tile_data> {
+        pub struct $name {
             by_entrophy: BTreeSet<$entrophy_item>,
             by_pos: HashMap<$position, OrderedFloat>,
-            phantom: PhantomData<$collapsible_tile_data>,
         }
 
-        impl Default for $name<$collapsible_tile_data> {
+        impl Default for $name {
             fn default() -> Self {
                 Self {
                     by_entrophy: BTreeSet::new(),
                     by_pos: HashMap::new(),
-                    phantom: PhantomData,
                 }
             }
         }
 
-        impl $name<$collapsible_tile_data> {
+        impl $name {
             pub (crate) fn get_next_position(&mut self) -> Option<$position> {
                 if let Some(item) = self.by_entrophy.pop_first() {
                     self.by_pos.remove(&item.pos);
