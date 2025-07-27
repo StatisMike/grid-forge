@@ -1,11 +1,9 @@
-use crate::core::{Direction2D, Grid2D, GridPosition2D, TileContainer2D as _}; 
+use crate::core::{Direction2D, Grid2D, GridPosition2D, TileContainer2D as _};
 use crate::procgen_collapse::option::PerOptionData2D;
+use crate::procgen_collapse::tile::CollapsibleTile2D;
 use grid_forge_core::utils::OrderedFloat;
 use std::cmp::Ordering;
 use std::collections::{BTreeSet, HashMap, HashSet};
-use crate::procgen_collapse::tile::CollapsibleTile2D;
-
-use rand::Rng;
 
 grid_forge_core::__impl_entrophy_item! {
     struct_name: EntrophyItem2D,
@@ -15,7 +13,6 @@ grid_forge_core::__impl_entrophy_item! {
 grid_forge_core::__impl_entrophy_queue! {
     struct_name: EntrophyQueue2D,
     entrophy_item: EntrophyItem2D,
-    collapsible_tile_data: CollapsibleTile2D,
     per_option_data: PerOptionData2D,
     grid: Grid2D,
     position: GridPosition2D,
@@ -39,7 +36,6 @@ grid_forge_core::__impl_propagator! {
 
 grid_forge_core::__impl_position_queue! {
     struct_name: PositionQueue2D,
-    collapsible_tile_data: CollapsibleTile2D,
     per_option_data: PerOptionData2D,
     queue_starting_point: CollapseStartingPoint2D,
     queue_direction: CollapseDirection2D,
@@ -48,7 +44,7 @@ grid_forge_core::__impl_position_queue! {
     grid: Grid2D,
 }
 
-/// Enum defining the starting point of the collapse wave.
+/// Enum defining the starting point of the collapse queue in the 2D grid.
 #[derive(Default, Eq, PartialEq)]
 pub enum CollapseStartingPoint2D {
     #[default]
@@ -62,7 +58,7 @@ pub enum CollapseStartingPoint2D {
     DownRight,
 }
 
-/// Enum defining the direction in which the tiles will be collapsed.
+/// Enum defining the direction in which the tiles will be collapsed in the 2D grid.
 #[derive(Default, Eq, PartialEq)]
 pub enum CollapseDirection2D {
     #[default]
@@ -76,7 +72,10 @@ pub struct CollapseOrdering2D;
 
 impl CollapseOrdering2D {
     fn cmp_fun_default() -> fn(&GridPosition2D, &GridPosition2D) -> Ordering {
-        CollapseOrdering2D::cmp_fun(CollapseStartingPoint2D::UpLeft, CollapseDirection2D::Rowwise)
+        CollapseOrdering2D::cmp_fun(
+            CollapseStartingPoint2D::UpLeft,
+            CollapseDirection2D::Rowwise,
+        )
     }
 
     fn cmp_fun(

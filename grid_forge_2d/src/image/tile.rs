@@ -10,11 +10,13 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use grid_forge_core::id::SharedData;
-use grid_forge_core::TileData;
 use grid_forge_core::image::PixelWithDefault;
+use grid_forge_core::TileData;
 
 pub trait WithPixels<TP: TilePixels<P>, P>
-where P: PixelWithDefault {
+where
+    P: PixelWithDefault,
+{
     fn tile_pixels(&self) -> &TP;
     fn tile_pixels_mut(&mut self) -> &mut TP;
 }
@@ -114,7 +116,6 @@ pub struct TilePixConst<const WIDTH: usize, const HEIGHT: usize, P: PixelWithDef
 }
 
 impl<const WIDTH: usize, const HEIGHT: usize, P: PixelWithDefault> TilePixConst<WIDTH, HEIGHT, P> {
-
     /// Creates a new `TilePixConst` from a slice of pixels.
     ///
     /// # Panics
@@ -230,7 +231,6 @@ pub struct TilePixVar<P: PixelWithDefault> {
 }
 
 impl<P: PixelWithDefault> TilePixVar<P> {
-
     /// Creates a new `TilePixVar` from a slice of pixels and specified width and height.
     ///
     /// # Panics

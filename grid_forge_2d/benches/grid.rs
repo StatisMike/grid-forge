@@ -146,8 +146,6 @@ pub fn grid_access_100x100_all_neighbours(c: &mut Criterion) {
     });
 }
 
-
-
 criterion_group!(
     name = grid_1000;
     config = Criterion::default().measurement_time(Duration::from_secs(10)).warm_up_time(Duration::from_secs(5));

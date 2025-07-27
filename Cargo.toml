@@ -25,9 +25,12 @@ license = "MIT"
 repository = "https://github.com/statismike/grid_forge"
 
 [workspace.dependencies]
-criterion = { version = "0.4", features = ["html_reports"] }
 image = { version = "0.25.*", default-features = false }
 rand = { version = "0.8.*" }
+
+## dev-dependencies
+rand_chacha = "0.3.*"
+criterion = { version = "0.4", features = ["html_reports"] }
 
 [profile.release]
 debug = true

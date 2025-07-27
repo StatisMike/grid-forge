@@ -261,6 +261,16 @@ macro_rules! __impl_collapsible_tile_data {
         impl TileData for $name {}
 
         impl $name {
+            pub (crate) fn new_collapsed_data(collapsed_idx: usize) -> Self {
+                Self {
+                    collapsed_option: Some(collapsed_idx),
+                    num_options: 0,
+                    ways_to_be_option: $ways_to_be_option::default(),
+                    weight: OptionWeights::default(),
+                    entrophy_noise: 0.,
+                }
+            }
+
             pub fn new_uncollapsed_tile(
                 num_options: usize,
                 ways_to_be_option: $ways_to_be_option,

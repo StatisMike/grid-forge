@@ -249,7 +249,7 @@ pub(crate) mod private {
         }
 
         /// Removes options from tile based of possible options for its neighbours.
-        fn purge_incompatible_options(
+        pub (crate) fn purge_incompatible_options(
             grid: &mut Self::CollapsibleGrid,
             position: &D::Pos,
             option_data: &D::PerOptionData,

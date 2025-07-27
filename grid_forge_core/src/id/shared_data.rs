@@ -4,8 +4,8 @@ use super::{TypeIdSet, TypeIdMap};
 ///
 /// With tiles implementing [`TypedData`](crate::id::TypedData) trait, you can use this trait
 /// to store data shared between tiles of the same type. With this implemented, you can use
-/// the [`TypedData`](crate::id::TypedData) to store a *state* of the tile, and the shared data
-/// to store the immutable information about the tile.
+/// the [`TypedData`](crate::id::TypedData) to store a _'state'_ of the tile, and the shared data 
+/// to store the immutable information about the tile, shared between all tiles of the same type.
 pub trait SharedData {}
 
 /// Marker trait for [`TileContainer`](crate::TileContainer) types containing

@@ -4,10 +4,10 @@ use std::collections::hash_map::Entry;
 
 use image::{ImageBuffer, Pixel};
 
-use grid_forge_core::TileData;
+use crate::core::{Grid2D, GridMap2D, GridMapShared2D, GridPosition2D, GridSize2D};
 use grid_forge_core::id::{IdentTileBuilder, SharedData, TypeIdMap, TypedData};
 use grid_forge_core::image::PixelWithDefault;
-use crate::core::{Grid2D, GridMap2D, GridMapShared2D, GridPosition2D, GridSize2D};
+use grid_forge_core::TileData;
 
 use super::{TilePixConst, TilePixVar, TilePixels, WithPixels};
 
@@ -140,7 +140,6 @@ where
     B: IdentTileBuilder<T>,
     P: PixelWithDefault + 'static,
 {
-
     let size = check_grid_vis_size(image, (WIDTH, HEIGHT))?;
     let mut grid = GridMap2D::new(size);
 
@@ -154,9 +153,9 @@ where
                 e.insert(pix_tile);
             }
         }
-        let tile = builder.build_tile(tile_id).map_err(|e| {
-            VisError2D::new_nopix(e.get_missing_tile_type_ids(), (WIDTH, HEIGHT))
-        })?;
+        let tile = builder
+            .build_tile(tile_id)
+            .map_err(|e| VisError2D::new_nopix(e.get_missing_tile_type_ids(), (WIDTH, HEIGHT)))?;
         tile_slot.replace(tile);
     }
 
@@ -174,7 +173,7 @@ where
 ///
 /// Use this loading function, if:
 /// - the tile struct doesn't contain the [`TilePixels`] in its data itself. Otherwise, you
-///   can use [`load_from_image_var`] instead. 
+///   can use [`load_from_image_var`] instead.
 /// - the tile type id and its corresponding pixels are not strictly known while loading the map.
 ///   Otherwise, if the `tile_type_id`s are fixed and their visual representation is known, you
 ///   can use [`load_from_image_var_typed`] instead.
@@ -310,7 +309,7 @@ where
 ///
 /// Use this loading function, if:
 /// - the tile struct doesn't contain the [`TilePixels`] in its data itself. Otherwise,
-///   you can use [`load_from_image_var`](Self::load_from_image_var) instead. 
+///   you can use [`load_from_image_var`](Self::load_from_image_var) instead.
 /// - the tile type id and its corresponding pixels are known while loading the map.
 ///   Otherwise, if the specific `tile_type_id` is not known or is not necessary to be fixed
 ///   to some value, you can use

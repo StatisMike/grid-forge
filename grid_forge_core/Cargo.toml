@@ -15,6 +15,9 @@ image = ["dep:image"]
 procgen = ["dep:rand"]
 godot = ["dep:godot"]
 
+# Utilities for benchmarks, tests and examples
+dev_utils = ["dep:rand_chacha"]
+
 [dependencies]
 image = { workspace = true, optional = true }
 rand = { workspace = true, optional = true }
@@ -22,10 +25,10 @@ num-traits = "*"
 grid = { version = "0.13.*" }
 godot = { version = "^0.2.4", optional = true }
 nohash-hasher = "0.2.0"
+rand_chacha = { workspace = true, optional = true }
 
 [dev-dependencies]
 criterion = { workspace = true }
-rand_chacha = "0.3.*"
 image = { workspace = true, features = ["png"]}
 gif = { version ="^0.13.*" }
 

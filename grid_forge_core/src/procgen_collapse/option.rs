@@ -232,7 +232,7 @@ macro_rules! __impl_per_option_data {
 
         #[derive(Debug, Clone, Default)]
         pub struct $struct_name {
-            option_map: TypeIdMap<usize>,
+            pub (crate) option_map: TypeIdMap<usize>,
             option_map_rev: TypeIdMap<u64>,
             adjacencies: Vec<$direction_table<Vec<usize>>>,
             pub (crate) ways_to_be_option: $ways,
@@ -249,10 +249,8 @@ macro_rules! __impl_per_option_data {
                 adjacencies: $adjacency_table,
             ) {
                 for (n, (option_id, option_weight)) in options_with_weights.iter().enumerate() {
-                    self.add_tile_data(*option_id, n);
-    
-                    self
-                        .opt_with_weight
+                    self.add_tile_offset(*option_id, n);
+                    self.opt_with_weight
                         .push(OptionWeights::new(*option_weight));
                 }
     
@@ -260,7 +258,7 @@ macro_rules! __impl_per_option_data {
                 self.possible_options_count = self.option_count;
     
                 for trans_id in 0..self.option_count {
-                    let original_id = self.get_tile_type_id(&trans_id).unwrap();
+                    let original_id = self.get_tile_type_id(trans_id).unwrap();
                     let translated_table = self.translate_adjacency_table(original_id, &adjacencies);
                     self.adjacencies.push(translated_table);
                 }
@@ -295,7 +293,7 @@ macro_rules! __impl_per_option_data {
                 let mut translated_table = $direction_table::default();
                 if let Some(adj) = adjacencies.inner.get(&original_id) {
                     for dir in $direction::ALL.iter() {
-                        translated_table[*dir] = adj[*dir].iter().map(|&id| self.option_map_rev[&id] as usize).collect();
+                        translated_table[*dir] = adj[*dir].iter().map(|&id| self.get_tile_offset(id).expect("cannot get mapped id")).collect();
                     }
                 }
                 translated_table
@@ -309,13 +307,17 @@ macro_rules! __impl_per_option_data {
                 self.opt_with_weight.iter().enumerate()
             }
 
-            pub (crate) fn add_tile_data(&mut self, option_id: u64, data: usize) {
-                self.option_map.insert(option_id, data);
-                self.option_map_rev.insert(data as u64, option_id);
+            pub (crate) fn add_tile_offset(&mut self, option_id: u64, offset: usize) {
+                self.option_map.insert(option_id, offset);
+                self.option_map_rev.insert(offset as u64, option_id);
             }
 
-            pub (crate) fn get_tile_type_id(&self, option_idx: &usize) -> Option<u64> {
-                self.option_map_rev.get(&(*option_idx as u64)).copied()
+            pub(crate) fn get_tile_offset(&self, option_id: u64) -> Option<usize> {
+                self.option_map.get(&option_id).copied()
+            }
+
+            pub (crate) fn get_tile_type_id(&self, offset: usize) -> Option<u64> {
+                self.option_map_rev.get(&(offset as u64)).copied()
             }
         }
     };

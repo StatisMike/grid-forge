@@ -1,9 +1,9 @@
-use crate::{procgen_collapse::option::{PerOptionData2D, WaysToBeOption2D}};
-use rand::Rng;
+use crate::procgen_collapse::option::{PerOptionData2D, WaysToBeOption2D};
 use rand::distributions::Distribution;
 use rand::distributions::Uniform;
+use rand::Rng;
 
-use crate::core::{GridPosition2D};
+use crate::core::GridPosition2D;
 
 use grid_forge_core::TileData;
 

@@ -11,9 +11,20 @@ repository.workspace = true
 grid_forge_core = { path = "../grid_forge_core" }
 grid_forge_2d = { path = "../grid_forge_2d", optional = true }
 grid_forge_3d = { path = "../grid_forge_3d", optional = true }
+image = { workspace = true, optional = true }
 
 [features]
 2d = ["grid_forge_2d"]
 3d = ["grid_forge_3d"]
 procgen = []
-image = []
+image = ["grid_forge_core/image", "dep:image"]
+
+[[example]]
+name = "2d_collapse_singular"
+path = "examples/2d/procgen/collapse_singular.rs"
+required-features = ["2d", "procgen", "image"]
+
+#[[example]]
+#name = "3d_collapse_singular"
+#path = "examples/3d/procgen/collapse_singular.rs"
+#required-features = ["3d", "procgen", "image"]

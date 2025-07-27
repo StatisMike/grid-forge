@@ -12,10 +12,11 @@ pub use grid_forge_2d::core::{
     // Grid map
     GridMap2D,
     GridMapShared2D,
-    Grid2D,
     // Tiles
     TileContainer2D,
     Tile2D, TileRef2D, TileMut2D, TileRefShared2D, TileMutShared2D,
+    // Traits
+    Grid2D as _,
 };
 
 #[cfg(feature = "3d")]
@@ -30,8 +31,9 @@ pub use grid_forge_3d::core::{
     // Grid map
     GridMap3D,
     GridMapShared3D,
-    Grid3D,
     // Tiles
     TileContainer3D,
     Tile3D, TileRef3D, TileMut3D, TileRefShared3D, TileMutShared3D,
+    // Traits
+    Grid3D as _,
 };

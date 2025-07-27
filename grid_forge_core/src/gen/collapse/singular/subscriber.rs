@@ -7,7 +7,7 @@ pub trait Subscriber<D: Dimensionality>: Any {
     /// Called when the generation process starts. No-op by default, should be overridden to clear the state of the subcscriber
     /// if it retains any state.
     fn on_generation_start(&mut self) {
-        // no-op
+        // no-op by default
     }
 
     /// Called when a tile is collapsed.

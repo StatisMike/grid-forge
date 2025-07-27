@@ -66,8 +66,8 @@ grid_forge_core::__impl_shared_from_regular!(GridMapShared2D, GridMap2D);
 #[cfg(test)]
 mod tests {
     mod regular {
-        use crate::core::*;
         use super::super::Grid2D as _;
+        use crate::core::*;
 
         grid_forge_core::__impl_grid_tests!(
             grid: GridMap2D,
@@ -138,8 +138,8 @@ mod tests {
     }
 
     mod shared {
-        use crate::core::*;
         use super::super::Grid2D as _;
+        use crate::core::*;
 
         grid_forge_core::__impl_shared_grid_tests!(
             grid: GridMapShared2D,

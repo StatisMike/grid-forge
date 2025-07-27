@@ -92,8 +92,8 @@
 
 pub mod core;
 pub mod prelude {
-    pub use crate::core::*;
     pub use crate::core::Grid2D as _;
+    pub use crate::core::*;
 }
 
 #[cfg(feature = "image")]
@@ -102,4 +102,4 @@ pub mod image;
 #[cfg(feature = "procgen")]
 pub mod procgen_collapse;
 
-pub (crate) mod utils;
+pub(crate) mod utils;

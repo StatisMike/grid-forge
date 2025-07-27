@@ -15,6 +15,8 @@ default = ['image', 'procgen']
 image = ["grid_forge_core/image","dep:image"]
 procgen = ["grid_forge_core/procgen", "dep:rand"]
 
+dev_utils = ["grid_forge_core/dev_utils"]
+
 [dependencies]
 grid_forge_core = { path = "../grid_forge_core" }
 image = { workspace = true, optional = true }
@@ -23,6 +25,7 @@ rand = { workspace = true, optional = true }
 [dev-dependencies]
 criterion = { workspace = true }
 image = { workspace = true, features = ["png"]}
+rand_chacha = { workspace = true }
 
 [[bench]]
 name = "grid"
@@ -31,3 +34,9 @@ harness = false
 [[bench]]
 name = "image"
 harness = false
+required-features = ["image"]
+
+[[bench]]
+name = "procgen_collapse_singular"
+harness = false
+required-features = ["procgen", "image", "dev_utils"]

@@ -92,7 +92,7 @@ macro_rules! __impl_propagator {
                 }
         
                 for pos in tiles_to_update {
-                    queue.update_queue((pos, &grid.get_data_at_position(&pos).unwrap()));
+                    queue.update_queue(pos, grid.get_data_at_position(&pos).unwrap().calc_entrophy());
                 }
         
                 Ok(())

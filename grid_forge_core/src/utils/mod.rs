@@ -1,5 +1,8 @@
 use std::ops::{Add, Div, Mul, Sub};
 
+#[cfg(feature = "dev_utils")]
+pub mod dev;
+
 /// Helper type used to compare floating point numbers.
 ///
 /// Uses [OrderedFloat::EPSILON] as the epsilon for comparisons.

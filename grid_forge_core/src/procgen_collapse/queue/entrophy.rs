@@ -60,7 +60,6 @@ macro_rules! __impl_entrophy_queue {
     (
         struct_name: $name:ident,
         entrophy_item: $entrophy_item:ident,
-        collapsible_tile_data: $collapsible_tile_data:ident,
         per_option_data: $per_option_data:ident,
         grid: $grid:ident,
         position: $position:ident,
@@ -92,8 +91,8 @@ macro_rules! __impl_entrophy_queue {
                 None
             }
 
-            pub (crate) fn update_queue(&mut self, tile: ($position, &$collapsible_tile_data)) {
-                let item = $entrophy_item::new(tile.0, tile.1.calc_entrophy());
+            pub (crate) fn update_queue(&mut self, position: $position, entrophy: f32) {
+                let item = $entrophy_item::new(position, entrophy);
                 if let Some(existing_entrophy) = self.by_pos.remove(&item.pos) {
                     self.by_entrophy
                         .remove(&$entrophy_item::new(item.pos, existing_entrophy.into()));
@@ -108,28 +107,6 @@ macro_rules! __impl_entrophy_queue {
 
             pub (crate) fn is_empty(&self) -> bool {
                 self.by_entrophy.is_empty()
-            }
-
-            pub (crate) fn initialize_queue(&mut self, tiles: &[($position, $collapsible_tile_data)]) {
-                for element in tiles {
-                    self.update_queue((element.0, &element.1))
-                }
-            }
-
-            pub (crate) fn populate_inner_grid<R: Rng>(
-                &mut self,
-                rng: &mut R,
-                grid: &mut impl $grid<$collapsible_tile_data>,
-                positions: &[$position],
-                options_data: &$per_option_data,
-            ) {
-                let tiles = $collapsible_tile_data::new_from_frequency_with_entrophy(rng, positions, options_data);
-
-                self.initialize_queue(&tiles);
-
-                for tile in tiles {
-                    grid.insert_data(&tile.0, tile.1);
-                }
             }
         }
     };
