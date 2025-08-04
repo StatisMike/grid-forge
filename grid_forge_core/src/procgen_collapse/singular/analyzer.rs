@@ -55,6 +55,10 @@ macro_rules! __impl_singular_adjacency_rules {
             pub (crate) fn inner(&self) -> &$adjacency_table {
                 &self.inner
             }
+
+            pub fn check_adjacency(&self, tile: &Data, adjacent: &Data, direction: $direction) -> bool {
+                self.inner.get_all_adjacencies_in_direction(&tile.tile_type_id(), &direction).any(|&id| id == adjacent.tile_type_id())
+            }
         }
     }
 }

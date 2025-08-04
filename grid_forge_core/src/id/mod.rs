@@ -69,7 +69,7 @@ pub trait IdDefault: TypedData {
 
 /// Basic tile struct that implements [`TypedData`], holding only the `tile_type_id`.
 #[derive(Clone, Copy, Debug)]
-pub struct BasicTypedData(u64);
+pub struct BasicTypedData(pub u64);
 
 impl TileData for BasicTypedData {}
 

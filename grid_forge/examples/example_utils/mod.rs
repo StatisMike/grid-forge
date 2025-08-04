@@ -1,3 +1,7 @@
+use grid_forge::{id::TypedData, procgen_collapse::{singular::CollapsibleTileGrid2D, CollapseError2D}};
+use rand::SeedableRng as _;
+use rand_chacha::ChaChaRng;
+
 #[cfg(feature = "procgen")]
 pub mod collapse;
 #[cfg(feature = "image")]
@@ -46,23 +50,5 @@ impl From<RngHelper> for ChaChaRng {
         }
 
         rng
-    }
-}
-
-pub fn try_n_times_2d<Tile: TypedData>(
-    n: u32,
-    mut f: impl FnMut() -> Result<CollapsibleTileGrid2D<Tile>, CollapseError<TwoDim>>,
-) -> Result<CollapsedGrid2D, CollapseError<TwoDim>> {
-    let mut current_iter = 0;
-    loop {
-        match f() {
-            Ok(grid) => return Ok(grid.retrieve_collapsed()),
-            Err(err) => {
-                if current_iter == n {
-                    return Err(err);
-                }
-                current_iter += 1;
-            }
-        }
     }
 }

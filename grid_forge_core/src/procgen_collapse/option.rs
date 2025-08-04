@@ -161,8 +161,7 @@ macro_rules! __impl_ways_to_be_option {
             /// Decrements number of ways to become option from given direction. If reaches
             /// 0, returns `true` and given option should be removed.
             pub (crate) fn decrement(&mut self, option_idx: usize, direction: $direction) -> bool {
-                // let num_ways_by_dir = self.table.index_mut(option_idx);
-                // let num_ways = num_ways_by_dir[direction];
+
                 if self.inner[option_idx][direction] == 0 {
                     return false;
                 }

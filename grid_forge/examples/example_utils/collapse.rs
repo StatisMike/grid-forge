@@ -1,3 +1,8 @@
+use std::fs::File;
+
+use grid_forge::{core::{GridPosition2D, GridSize2D}, id::{TypeIdMap, TypedData}, image::{ops::{init_map_image_buffer, write_tile}, TilePixConst}, procgen_collapse::{singular::{CollapsibleTileGrid2D, SingularSubscriber2D}, CollapseError2D, CollapsedGrid2D}};
+use image::{ImageBuffer, Rgb};
+
 #[derive(Debug)]
 pub struct ArgHelper {
     gif: bool,
@@ -46,5 +51,109 @@ impl ArgHelper {
 
     pub fn skip_entrophy(&self) -> bool {
         self.skip_entrophy
+    }
+}
+
+pub fn try_n_times_2d<Tile: TypedData>(
+    n: u32,
+    mut f: impl FnMut() -> Result<CollapsibleTileGrid2D<Tile>, CollapseError2D>,
+) -> Result<CollapsedGrid2D, CollapseError2D> {
+    let mut current_iter = 0;
+    loop {
+        match f() {
+            Ok(grid) => return Ok(grid.retrieve_collapsed()),
+            Err(err) => {
+                if current_iter == n {
+                    return Err(err);
+                }
+                current_iter += 1;
+            }
+        }
+    }
+}
+
+pub struct GifSingleSubscriber {
+    file: Option<File>,
+    frame: ImageBuffer<Rgb<u8>, Vec<u8>>,
+    encoder: Option<gif::Encoder<File>>,
+    collection: TypeIdMap<TilePixConst<4, 4, Rgb<u8>>>,
+    frame_size: (u16, u16),
+    resize: bool,
+    map_size: GridSize2D,
+}
+
+impl GifSingleSubscriber {
+    pub fn new(file: File, size: &GridSize2D, collection: TypeIdMap<TilePixConst<4, 4, Rgb<u8>>>) -> Self {
+        let frame = init_map_image_buffer(size, (4, 4));
+        let frame_size = (frame.width() as u16, frame.height() as u16);
+
+        Self {
+            file: Some(file),
+            frame,
+            encoder: None,
+            collection,
+            frame_size,
+            resize: false,
+            map_size: *size,
+        }
+    }
+
+    pub fn with_rescale(mut self, rescale: u8) -> Self {
+        self.frame_size = (
+            self.frame.width() as u16 * rescale as u16,
+            self.frame.height() as u16 * rescale as u16,
+        );
+        self.resize = true;
+
+        self
+    }
+
+    fn begin(&mut self) {
+        self.encoder = Some(
+            gif::Encoder::new(
+                self.file.take().unwrap(),
+                self.frame_size.0,
+                self.frame_size.1,
+                &[],
+            )
+            .unwrap(),
+        );
+        self.encoder
+            .as_mut()
+            .unwrap()
+            .set_repeat(gif::Repeat::Infinite)
+            .unwrap();
+        self.write_frame();
+    }
+
+    fn write_frame(&mut self) {
+        let mut buffer = self.frame.clone();
+        if self.resize {
+            buffer = image::imageops::resize(
+                &buffer,
+                self.frame_size.0 as u32,
+                self.frame_size.1 as u32,
+                image::imageops::FilterType::Nearest,
+            )
+        }
+        let mut frame =
+            gif::Frame::from_rgb_speed(self.frame_size.0, self.frame_size.1, &buffer, 15);
+        frame.delay = 5;
+        self.encoder.as_mut().unwrap().write_frame(&frame).unwrap();
+    }
+}
+
+impl SingularSubscriber2D for GifSingleSubscriber {
+    fn on_collapse(&mut self, position: &GridPosition2D, tile_type_id: u64) {
+        if self.encoder.is_none() {
+            self.begin()
+        }
+
+        write_tile(&mut self.frame, *position, self.collection.get(&tile_type_id).unwrap()).unwrap();
+        self.write_frame();
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }

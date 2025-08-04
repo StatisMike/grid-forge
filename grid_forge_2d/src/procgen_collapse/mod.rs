@@ -1,9 +1,10 @@
 pub mod option;
 pub mod tile;
-// pub mod grid;
-// pub mod error;
 pub mod queue;
 pub mod singular;
+
+#[cfg(test)]
+mod test;
 
 use crate::core::{GridMap2D, GridPosition2D, GridSize2D};
 use grid_forge_core::id::TypeIdSet;
