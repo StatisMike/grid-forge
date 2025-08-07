@@ -37,7 +37,6 @@ grid_forge_core::__impl_collapsible_grid! {
     collapsible_error: CollapsibleGridError2D,
 }
 
-
 grid_forge_core::__impl_singular_adjacency_rules! {
     struct_name: SingularAdjacencyRules2D,
     adjacency_table: AdjacencyTable2D,

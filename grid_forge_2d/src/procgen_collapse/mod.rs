@@ -2,6 +2,7 @@ pub mod option;
 pub mod tile;
 pub mod queue;
 pub mod singular;
+pub mod overlap;
 
 #[cfg(test)]
 mod test;

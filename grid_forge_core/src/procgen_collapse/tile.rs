@@ -421,6 +421,7 @@ macro_rules! __impl_collapsible_tile_data {
                         continue;
                     }
                     chosen = Some(option_idx);
+                    break;
                 }
                 self.mark_collapsed(chosen.expect("options should always be chosen"));
             }

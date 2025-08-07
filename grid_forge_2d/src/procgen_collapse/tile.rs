@@ -1,6 +1,5 @@
 use crate::procgen_collapse::option::{PerOptionData2D, WaysToBeOption2D};
-use rand::distributions::Distribution;
-use rand::distributions::Uniform;
+use rand::distributions::{Distribution, Uniform};
 use rand::Rng;
 
 use crate::core::GridPosition2D;

@@ -19,7 +19,8 @@ use utils::RngHelper;
 
 use crate::utils::collapse::GifSingleSubscriber;
 
-const MAP: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../assets/samples/overlap.png");
+const MAP_10X10: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../assets/samples/seas.png"); 
+const MAP_20X20: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../assets/samples/roads.png");
 
 const OUTPUTS_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/examples/2d/procgen/output/");
 
@@ -32,7 +33,7 @@ fn main() {
 
     // Load two sample maps with 90 deegrees rotation to increase variety of rules.
     let maps = VisGridLoaderHelper::new(&mut id_pixel_map)
-        .load_w_rotate(&[MAP], &[VisRotate::None, VisRotate::R90]);
+        .load_w_rotate(&[MAP_10X10, MAP_20X20], &[VisRotate::None, VisRotate::R90, VisRotate::R180]);
 
     // Create Identity (for `identity_entrophy`) and Border (for `border_position`) analyzers and FrequencyRules.
     let mut identity_analyzer = SingularIdentityAnalyzer2D::default();
@@ -77,7 +78,8 @@ fn main() {
             // Using propagating EntrophyQueue, we will use more restrictive `identity`
             // AdjacencyRules. It will help to keep high success rate, but is a little
             // slower than PositionQueue.
-            let mut rng: ChaChaRng = RngHelper::init_str("singular_identity", 1).into();
+            let mut rng: ChaChaRng = RngHelper::init_str("entrophy example", 6).into();
+
             let mut to_collapse = CollapsibleTileGrid2D::new_empty(
                 outputs_size,
                 &frequency_hints,

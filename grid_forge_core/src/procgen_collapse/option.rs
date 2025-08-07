@@ -83,6 +83,12 @@ macro_rules! __impl_collapse_adjacencies {
                 &self.inner[index]
             }
         }
+
+        impl AsRef<$direction_table<TypeIdSet>> for $struct_name {
+            fn as_ref(&self) -> &$direction_table<TypeIdSet> {
+                &self.inner
+            }
+        }
     };
 }
 
