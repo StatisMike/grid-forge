@@ -1,6 +1,7 @@
 use std::fs::File;
 
 use grid_forge::{core::{GridPosition2D, GridSize2D}, id::{TypeIdMap, TypedData}, image::{ops::{init_map_image_buffer, write_tile}, TilePixConst}, procgen_collapse::{singular::{CollapsibleTileGrid2D, SingularSubscriber2D}, CollapseError2D, CollapsedGrid2D}};
+use grid_forge_2d::procgen_collapse::pattern::{CollapsiblePatternGrid2D, OverlappingPattern2DSubscriber};
 use image::{ImageBuffer, Rgb};
 
 #[derive(Debug)]
@@ -72,7 +73,25 @@ pub fn try_n_times_2d<Tile: TypedData>(
     }
 }
 
-pub struct GifSingleSubscriber {
+pub fn try_n_times_2d_overlap<const SIZE_X: usize, const SIZE_Y: usize, Tile: TypedData>(
+    n: u32,
+    mut f: impl FnMut() -> Result<CollapsiblePatternGrid2D<SIZE_X, SIZE_Y, Tile>, CollapseError2D>,
+) -> Result<CollapsedGrid2D, CollapseError2D> {
+    let mut current_iter = 0;
+    loop {
+        match f() {
+            Ok(grid) => return Ok(grid.retrieve_collapsed()),
+            Err(err) => {
+                if current_iter == n {
+                    return Err(err);
+                }
+                current_iter += 1;
+            }
+        }
+    }
+}
+
+pub struct GifSubscriber {
     file: Option<File>,
     frame: ImageBuffer<Rgb<u8>, Vec<u8>>,
     encoder: Option<gif::Encoder<File>>,
@@ -82,7 +101,7 @@ pub struct GifSingleSubscriber {
     map_size: GridSize2D,
 }
 
-impl GifSingleSubscriber {
+impl GifSubscriber {
     pub fn new(file: File, size: &GridSize2D, collection: TypeIdMap<TilePixConst<4, 4, Rgb<u8>>>) -> Self {
         let frame = init_map_image_buffer(size, (4, 4));
         let frame_size = (frame.width() as u16, frame.height() as u16);
@@ -143,8 +162,23 @@ impl GifSingleSubscriber {
     }
 }
 
-impl SingularSubscriber2D for GifSingleSubscriber {
+impl SingularSubscriber2D for GifSubscriber {
     fn on_collapse(&mut self, position: &GridPosition2D, tile_type_id: u64) {
+        if self.encoder.is_none() {
+            self.begin()
+        }
+
+        write_tile(&mut self.frame, *position, self.collection.get(&tile_type_id).unwrap()).unwrap();
+        self.write_frame();
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+}
+
+impl OverlappingPattern2DSubscriber for GifSubscriber {
+    fn on_collapse(&mut self, position: &GridPosition2D, tile_type_id: u64, _pattern_id: u64) {
         if self.encoder.is_none() {
             self.begin()
         }

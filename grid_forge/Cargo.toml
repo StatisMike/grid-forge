@@ -12,6 +12,7 @@ grid_forge_core = { path = "../grid_forge_core" }
 grid_forge_2d = { path = "../grid_forge_2d", optional = true }
 grid_forge_3d = { path = "../grid_forge_3d", optional = true }
 image = { workspace = true, optional = true, features = ["png"] }
+serde = { workspace = true, optional = true }
 
 [dev-dependencies]
 rand = { workspace = true }
@@ -19,14 +20,39 @@ rand_chacha = { workspace = true }
 gif = { version ="^0.13.*" }
 
 [features]
+# Dimensionalities - at least one of them needs to be enabled
 2d = ["grid_forge_2d"]
 3d = ["grid_forge_3d"]
-procgen = []
-image = ["grid_forge_core/image", "dep:image"]
+
+# Procgen feature enables procedural generation algorithms.
+procgen = [
+    "grid_forge_2d?/procgen", 
+    "grid_forge_3d?/procgen"
+    ]
+
+# Image feature enables I/O operations with image crate.
+image = [
+    "dep:image", 
+    "grid_forge_core/image", 
+    "grid_forge_2d?/image"
+    ]
+
+# Serde feature enables serialization/deserialization with serde crate.
+serde = [
+    "dep:serde"
+#    , "grid_forge_core/serde"
+#    , "grid_forge_2d?/serde"
+#    , "grid_forge_3d?/serde"
+    ]
 
 [[example]]
 name = "2d_collapse_singular"
 path = "examples/2d/procgen/collapse_singular.rs"
+required-features = ["2d", "procgen", "image"]
+
+[[example]]
+name = "2d_collapse_overlap"
+path = "examples/2d/procgen/collapse_overlap.rs"
 required-features = ["2d", "procgen", "image"]
 
 #[[example]]

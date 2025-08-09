@@ -37,6 +37,11 @@ harness = false
 required-features = ["image"]
 
 [[bench]]
-name = "procgen_collapse_singular"
+name = "procgen_collapse_tile"
+harness = false
+required-features = ["procgen", "image", "dev_utils"]
+
+[[bench]]
+name = "procgen_collapse_pattern"
 harness = false
 required-features = ["procgen", "image", "dev_utils"]

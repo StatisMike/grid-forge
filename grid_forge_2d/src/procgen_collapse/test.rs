@@ -16,7 +16,7 @@ fn test_identity_analyzer_simple() {
         grid.insert_data(&position, data);
     }
 
-    let mut analyzer = singular::SingularIdentityAnalyzer2D::default();
+    let mut analyzer = tile::SingularIdentityAnalyzer2D::default();
     analyzer.analyze(&grid);
     let rules = analyzer.adjacency_rules();
 
@@ -48,7 +48,7 @@ fn test_identity_analyzer_diagonal_separation() {
         grid.insert_data(&position, data);
     }
 
-    let mut analyzer = singular::SingularIdentityAnalyzer2D::default();
+    let mut analyzer = tile::SingularIdentityAnalyzer2D::default();
     analyzer.analyze(&grid);
     let rules = analyzer.adjacency_rules();
  
@@ -79,7 +79,7 @@ fn test_identity_analyzer_checkerboard() {
         grid.insert_data(&position, data);
     }
 
-    let mut analyzer = singular::SingularIdentityAnalyzer2D::default();
+    let mut analyzer = tile::SingularIdentityAnalyzer2D::default();
     analyzer.analyze(&grid);
     let rules = analyzer.adjacency_rules();
 
@@ -105,7 +105,7 @@ fn test_border_analyzer_simple() {
         grid.insert_data(&position, data);
     }
 
-    let mut analyzer = singular::SingularBorderAnalyzer2D::default();
+    let mut analyzer = tile::SingularBorderAnalyzer2D::default();
     analyzer.analyze(&grid);
     let rules = analyzer.adjacency_rules();
 
@@ -136,7 +136,7 @@ fn test_border_analyzer_three_tile() {
         grid.insert_data(&position, data);
     }
 
-    let mut analyzer = singular::SingularBorderAnalyzer2D::default();
+    let mut analyzer = tile::SingularBorderAnalyzer2D::default();
     analyzer.analyze(&grid);
     let rules = analyzer.adjacency_rules();
 

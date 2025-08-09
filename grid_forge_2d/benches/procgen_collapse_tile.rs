@@ -6,7 +6,7 @@ use grid_forge_2d::core::GridSize2D;
 use grid_forge_2d::image::ops::load_from_image_const_typed_auto;
 use grid_forge_2d::image::TilePixConst;
 use grid_forge_2d::procgen_collapse::queue::PositionQueue2D;
-use grid_forge_2d::procgen_collapse::singular::{
+use grid_forge_2d::procgen_collapse::tile::{
     CollapsibleTileGrid2D, FrequencyHints2D, SingularBorderAnalyzer2D, SingularIdentityAnalyzer2D,
     SingularResolver2D,
 };

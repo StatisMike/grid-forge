@@ -299,7 +299,7 @@ macro_rules! __impl_collapsible_grid {
                 self.grid.get_all_empty_positions()
             }
         
-            /// Returns all possitions in the internal grid holds collapsed or uncollapsed tiles are either collapsed.
+            /// Returns all possitions in the internal grid holding either collapsed or uncollapsed tiles.
             pub fn retrieve_positions(&self, collapsed: bool) -> Vec<$position> {
                 let func: fn(&$collapsible_data) -> bool = if collapsed {
                     |d| d.is_collapsed()

@@ -1,6 +1,6 @@
 use crate::core::{Direction2D, Grid2D, GridPosition2D, TileContainer2D as _};
 use crate::procgen_collapse::option::PerOptionData2D;
-use crate::procgen_collapse::tile::CollapsibleTile2D;
+use crate::procgen_collapse::data::CollapsibleTile2D;
 use grid_forge_core::utils::OrderedFloat;
 use std::cmp::Ordering;
 use std::collections::{BTreeSet, HashMap, HashSet};

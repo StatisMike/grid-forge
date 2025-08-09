@@ -8,7 +8,7 @@ use grid_forge::image::ops::{init_map_image_buffer, write_to_image_const_typed};
 use grid_forge::image::TilePixConst;
 use grid_forge::prelude::*;
 use grid_forge::procgen_collapse::PositionQueue2D;
-use grid_forge::{procgen_collapse::singular::*};
+use grid_forge::procgen_collapse::singular::*; 
 
 use image::Rgb;
 use rand_chacha::ChaChaRng;
@@ -17,7 +17,7 @@ use utils::collapse::ArgHelper;
 use utils::image::*;
 use utils::RngHelper;
 
-use crate::utils::collapse::GifSingleSubscriber;
+use crate::utils::collapse::GifSubscriber;
 
 const MAP_10X10: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../assets/samples/seas.png"); 
 const MAP_20X20: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../assets/samples/roads.png");
@@ -63,7 +63,7 @@ fn main() {
                     std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "identity_entrophy.gif"))
                         .unwrap();
                 let subscriber =
-                    GifSingleSubscriber::new(file, &outputs_size, id_pixel_map.clone())
+                    GifSubscriber::new(file, &outputs_size, id_pixel_map.clone())
                         .with_rescale(3);
 
                 resolver = resolver.with_subscriber(Box::new(subscriber));
@@ -126,12 +126,12 @@ fn main() {
         if args.gif() {
             let file =
                 std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "border_position.gif")).unwrap();
-            let subscriber = GifSingleSubscriber::new(file, &outputs_size, id_pixel_map.clone())
+            let subscriber = GifSubscriber::new(file, &outputs_size, id_pixel_map.clone())
                 .with_rescale(3);
 
             resolver = resolver.with_subscriber(Box::new(subscriber));
         } else if args.debug() {
-            let subsciber = DebugSubscriber::new(Some(
+            let subsciber = DebugSubscriber2D::new(Some(
                 File::create(format!("{}{}", OUTPUTS_DIR, "border_position_debug.txt")).unwrap(),
             ));
             resolver = resolver.with_subscriber(Box::new(subsciber));

@@ -1,439 +1,730 @@
-use crate::{id::{IdDefault, TypedData}, TileData};
-
-#[derive(Clone, Copy, Debug)]
-pub struct CollapsedTileData {
-    tile_type_id: u64,
-}
-
-impl TileData for CollapsedTileData {}
-
-impl TypedData for CollapsedTileData {
-    fn tile_type_id(&self) -> u64 {
-        self.tile_type_id
-    }
-}
-
-impl IdDefault for CollapsedTileData {
-    fn tile_type_default(tile_type_id: u64) -> Self {
-        Self::new(tile_type_id)
-    }
-}
-
-impl CollapsedTileData {
-    #[inline]
-    pub fn new(tile_type_id: u64) -> Self {
-        Self { tile_type_id }
-    }
-}
-
-// #[macro_export]
-// macro_rules! __impl_common_collapsible_tile_trait {
-//     (
-//         trait_name: $name:ident,
-//         position: $position:ident,
-//         ways_to_be_option: $ways_to_be_option:ident,
-//         per_option_data: $per_option_data:ident,
-//     ) => {
-//         use rand::distributions::Distribution as _;
-
-//         pub trait $name: Sized + private::Sealed  {
-//             fn new_uncollapsed_tile(
-//                 num_options: usize,
-//                 ways_to_be_option: $ways_to_be_option,
-//                 weight: OptionWeights,
-//                 entrophy_noise: f32,
-//             ) -> Self;
-
-//             fn new_from_frequency_with_entrophy<R: Rng>(
-//                 rng: &mut R,
-//                 positions: &[$position],
-//                 options_data: &$per_option_data,
-//             ) -> Vec<($position, Self)> {
-//                 let rng_range = Self::entrophy_uniform();
-
-//                 let weight = options_data.ways_to_be_option
-//                     .iter_possible()
-//                     .map(|option_idx| options_data.get_weights(option_idx))
-//                     .fold(OptionWeights::default(), |sum, new| sum + new);
-
-//                 positions
-//                     .iter()
-//                     .map(|pos| {
-//                         (
-//                             *pos,
-//                             Self::new_uncollapsed_tile(
-//                                 options_data.possible_options_count,
-//                                 options_data.ways_to_be_option.clone(),
-//                                 weight,
-//                                 rng_range.sample(rng),
-//                             ),
-//                         )
-//                     })
-//                     .collect::<Vec<_>>()
-//             }
-
-//             fn new_from_frequency(
-//                 positions: &[$position],
-//                 options_data: &$per_option_data,
-//             ) -> Vec<($position, Self)> {
-//                 let weight = options_data.ways_to_be_option
-//                     .iter_possible()
-//                     .map(|option_idx| options_data.get_weights(option_idx))
-//                     .fold(OptionWeights::default(), |sum, new| sum + new);
-
-//                 positions
-//                     .iter()
-//                     .map(|pos| {
-//                         (
-//                             *pos,
-//                             Self::new_uncollapsed_tile(
-//                                 options_data.possible_options_count,
-//                                 options_data.ways_to_be_option.clone(),
-//                                 weight,
-//                                 0.0,
-//                             ),
-//                         )
-//                     })
-//                 .collect::<Vec<_>>()
-//             }
-
-//             fn num_possible_options(&self) -> usize;
-
-//             fn ways_to_be_option(&self) -> &$ways_to_be_option;
-
-//             fn mut_ways_to_be_option(&mut self) -> &mut $ways_to_be_option;
-
-//             fn remove_option(&mut self, weights: OptionWeights);
-
-//             /// Range of uniformly distributed data for entrophy noise.
-//             fn entrophy_uniform() -> Uniform<f32> {
-//                 Uniform::<f32>::new(0., 0.00001)
-//             }
-
-//             fn mark_collapsed(&mut self, collapsed_idx: usize);
-
-//             fn weight_sum(&self) -> u32;
-
-//             fn is_collapsed(&self) -> bool {
-//                 self.collapsed_idx().is_some()
-//             }
-
-//             fn collapsed_idx(&self) -> Option<usize>;
-
-//             /// Collapses tile into one of possible options, returning the vector of the removed options.
-//             fn collapse_gather_removed<R: Rng>(
-//                 &mut self,
-//                 rng: &mut R,
-//                 options_data: &$per_option_data,
-//             ) -> Vec<usize> {
-//                 assert!(
-//                     self.weight_sum() > 0,
-//                     "weight sum should be positive when collapsing!"
-//                 );
-//                 let random = rng.gen_range(0..self.weight_sum());
-//                 let mut current_sum = 0;
-//                 let mut chosen = None;
-//                 let mut out = Vec::new();
-//                 for option_idx in self.ways_to_be_option().iter_possible() {
-//                     current_sum += options_data.get_weights(option_idx).0;
-//                     if chosen.is_some() || random > current_sum {
-//                         out.push(option_idx);
-//                         continue;
-//                     }
-//                     chosen = Some(option_idx);
-//                 }
-//                 self.mark_collapsed(chosen.expect("options should always be chosen"));
-//                 out
-//             }
-
-//             /// Collapses tiles into one of possible options.
-//             fn collapse_basic<R: Rng>(&mut self, rng: &mut R, options_data: &$per_option_data) {
-//                 assert!(
-//                     self.weight_sum() > 0,
-//                     "weight sum should be positive when collapsing!"
-//                 );
-//                 let random = rng.gen_range(0..self.weight_sum());
-//                 let mut current_sum = 0;
-//                 let mut chosen = None;
-//                 for option_idx in self.ways_to_be_option().iter_possible() {
-//                     current_sum += options_data.get_weights(option_idx).0;
-//                     if chosen.is_some() || random > current_sum {
-//                         continue;
-//                     }
-//                     chosen = Some(option_idx);
-//                 }
-//                 self.mark_collapsed(chosen.expect("options should always be chosen"));
-//             }
-//         }
-//     };
-// }
-
-// #[macro_export]
-// macro_rules! __impl_collapsible_tile_data {
-//     (
-//         struct_name: $name:ident,
-//         trait_name: $trait_name:ident,
-//         ways_to_be_option: $ways_to_be_option:ident,
-//     ) => {
-
-//         #[derive(Clone, Debug)]
-//         pub struct $name {
-//             collapsed_option: Option<usize>,
-//             num_options: usize,
-//             ways_to_be_option: $ways_to_be_option,
-//             weight: OptionWeights,
-//             entrophy_noise: f32,
-//         }
-
-//         impl TileData for $name {}
-
-//         impl private::Sealed for $name {}
-
-//         impl $trait_name for $name {
-//             fn new_uncollapsed_tile(
-//                 num_options: usize,
-//                 ways_to_be_option: $ways_to_be_option,
-//                 weight: OptionWeights,
-//                 entrophy_noise: f32,
-//             ) -> Self {
-//                 Self {
-//                     collapsed_option: None,
-//                     num_options,
-//                     ways_to_be_option,
-//                     weight,
-//                     entrophy_noise,
-//                 }
-//             }
-
-//             fn num_possible_options(&self) -> usize {
-//                 self.num_options
-//             }
-
-//             fn ways_to_be_option(&self) -> &$ways_to_be_option {
-//                 &self.ways_to_be_option
-//             }
-
-//             fn mut_ways_to_be_option(&mut self) -> &mut $ways_to_be_option {
-//                 &mut self.ways_to_be_option
-//             }
-
-//             fn remove_option(&mut self, weights: OptionWeights) {
-//                 self.num_options -= 1;
-//                 self.weight -= weights;
-//             }
-
-//             fn mark_collapsed(&mut self, collapsed_idx: usize) {
-//                 self.collapsed_option = Some(collapsed_idx);
-//                 self.num_options = 0;
-//                 self.weight = OptionWeights::default();
-//             }
-
-//             fn weight_sum(&self) -> u32 {
-//                 self.weight.0
-//             }
-
-//             fn collapsed_idx(&self) -> Option<usize> {
-//                 self.collapsed_option
-//             }
-            
-//         }
-//     };
-// }
-
 #[macro_export]
-macro_rules! __impl_collapsible_tile_data {
+macro_rules! __impl_singular_adjacency_rules {
     (
         struct_name: $name:ident,
-        position: $position:ident,
-        ways_to_be_option: $ways_to_be_option:ident,
-        per_option_data: $per_option_data:ident,
+        adjacency_table: $adjacency_table:ty,
+        adjacencies: $adjacencies:ty,
+        direction: $direction:ty,
+    ) => {
+        /// Adjacency rules for the singular collapse algorithm.
+        #[derive(Debug)]
+        pub struct $name<Data: TypedData> {
+            inner: $adjacency_table,
+            id_type: PhantomData<Data>,
+        }
+
+        impl<Data: TypedData> Clone for $name<Data> {
+            fn clone(&self) -> Self {
+                Self {
+                    inner: self.inner.clone(),
+                    id_type: PhantomData,
+                }
+            }
+        }
+
+        impl<Data: TypedData> Default for $name<Data>
+        {
+            fn default() -> Self {
+                Self {
+                    inner: <$adjacency_table>::default(),
+                    id_type: PhantomData,
+                }
+            }
+        }
+
+        impl<Data: TypedData> $name<Data> {
+
+            pub (crate) fn add_adjacency_raw(
+                &mut self,
+                tile_id: u64,
+                adjacent_id: u64,
+                direction: $direction,
+            ) {
+                self.inner.insert_adjacency(tile_id, direction, adjacent_id);
+            }
+
+            pub fn add_adjacency<Tile: AsRef<Data>>(
+                &mut self,
+                tile: &Tile,
+                adjacent: &Tile,
+                direction: $direction,
+            ) {
+                self.add_adjacency_raw(tile.as_ref().tile_type_id(), adjacent.as_ref().tile_type_id(), direction);
+            }
+
+            pub (crate) fn inner(&self) -> &$adjacency_table {
+                &self.inner
+            }
+
+            pub fn check_adjacency(&self, tile: &Data, adjacent: &Data, direction: $direction) -> bool {
+                self.inner.get_all_adjacencies_in_direction(&tile.tile_type_id(), &direction).any(|&id| id == adjacent.tile_type_id())
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! __impl_singular_identity_analyzer {
+    (
+        struct_name: $name:ident,
+        adjacency_rules: $adjacency_rules:ident,
+        grid: $grid:ident,
+        position: $position:ty,
+        direction: $direction:ty,
+    ) => {
+        pub struct $name<Data: TypedData> {
+            tiles: Vec<u64>,
+            adjacency_rules: $adjacency_rules<Data>,
+        }
+
+        impl <Data: TypedData> Default for $name<Data> {
+            fn default() -> Self {
+                Self {
+                    tiles: Vec::new(),
+                    adjacency_rules: <$adjacency_rules<Data>>::default(),
+                }
+            }
+        }
+
+        impl <Data: TypedData> $name<Data> {
+            fn analyze_tile_at_pos(&mut self, map: &impl $grid<Data>, pos: $position) {
+                if let Some(tile) = map.get_tile_at_position(&pos) {
+                    if !self.tiles.contains(&tile.as_ref().tile_type_id()) {
+                        self.tiles.push(tile.as_ref().tile_type_id());
+                    }
+        
+                    for dir in <$direction>::ALL {
+                        if let Some(neighbour) = map.get_neighbour_at(&pos, &dir) {
+                            self.adjacency_rules.add_adjacency(&tile, &neighbour, dir)
+                        }
+                    }
+                }
+            }
+
+            pub fn analyze(&mut self, map: &impl $grid<Data>) {
+                for position in map.get_all_positions() {
+                    self.analyze_tile_at_pos(map, position);
+                }
+            }
+        
+            pub fn adjacency_rules(&self) -> &$adjacency_rules<Data> {
+                &self.adjacency_rules
+            }
+        
+            pub fn tile_type_ids(&self) -> &[u64] {
+                &self.tiles
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! __impl_singular_border_analyzer {
+    (
+        struct_name: $name:ident,
+        adjacency_rules: $adjacency_rules:ident,
+        direction_table: $direction_table:ident,
+        grid: $grid:ident,
+        position: $position:ty,
+        direction: $direction:ty,
+    ) => {
+        /// Analyzer creating adjacency rules based on the borders between tiles.
+        ///
+        /// Rules generated by it are more liberal than the ones produced by [`IdentityAnalyzer`], as the tiles are deemed to be adjacent not only
+        /// if they are adjacent in the sample grid, but the extra step during the process is taken - each tile border is given its unique identifier,
+        /// and the tile is a viable neighbour option if their borders in given direction have the same identifier.
+        ///
+        /// This analyzer additionally to analyzing the map, also provides method to add the tile adjacency manually.
+        pub struct $name<Data: TypedData>
+        {
+            tiles: Vec<u64>,
+            adjacency_rules: $adjacency_rules<Data>,
+            /// TileId key
+            inner: TypeIdMap<$direction_table<Option<u64>>>,
+            /// BorderId key; (TileId; GridDir)
+            border_types: TypeIdMap<Vec<(u64, $direction)>>,
+            phantom: PhantomData<Data>,
+        }
+
+        impl<Data: TypedData> Default for $name<Data>
+        {
+            fn default() -> Self {
+                Self {
+                    tiles: Vec::new(),
+                    adjacency_rules: $adjacency_rules::default(),
+                    inner: TypeIdMap::default(),
+                    border_types: TypeIdMap::default(),
+                    phantom: PhantomData,
+                }
+            }
+        }
+
+        impl<Data: TypedData> $name<Data> {
+            pub fn analyze(&mut self, map: &impl $grid<Data>) {
+                self.adjacency_rules = $adjacency_rules::default();
+                for position in map.get_all_positions() {
+                    self.analyze_tile_at_pos(map, position);
+                }
+                self.generate_adjacency_rules();
+            }
+
+            pub fn adjacency_rules(&self) -> &$adjacency_rules<Data> {
+                &self.adjacency_rules
+            }
+
+            pub fn tiles(&self) -> &[u64] {
+                &self.tiles
+            }
+
+            /// Manually add adjacency between two tiles.
+            ///
+            /// After addition of new adjacencies, the [`prepare`](Self::prepare) method should be called to generate the rules.
+            pub fn add_adjacency(&mut self, tile: &Data, neighbour: &Data, direction: &$direction) {
+                self.add_adjacency_raw(tile.tile_type_id(), neighbour.tile_type_id(), direction)
+            }
+
+            pub fn prepare(&mut self) {
+                self.generate_adjacency_rules()
+            }
+
+            fn analyze_tile_at_pos(&mut self, map: &impl $grid<Data>, pos: $position) {
+                if let Some(tile) = map.get_data_at_position(&pos) {
+                    if !self.tiles.contains(&tile.tile_type_id()) {
+                        self.tiles.push(tile.tile_type_id());
+                    }
+
+                    for dir in <$direction>::ALL {
+                        if let Some(neighbour) = map.get_neighbour_at(&pos, &dir) {
+                            self.add_adjacency_raw(
+                                tile.tile_type_id(),
+                                neighbour.as_ref().tile_type_id(),
+                                &dir,
+                            );
+                        }
+                    }
+                }
+            }
+
+            fn generate_adjacency_rules(&mut self) {
+                let border_ids = self.border_types.keys().copied().collect::<Vec<_>>();
+
+                for border_id in border_ids.iter() {
+                    let borders = self.border_types.get(border_id).unwrap().clone();
+
+                    for half_dir in <$direction>::PRIMARY {
+                        let first_borders = borders
+                            .iter()
+                            .filter_map(
+                                |(tile, dir)| {
+                                    if *dir == half_dir {
+                                        Some(*tile)
+                                    } else {
+                                        None
+                                    }
+                                },
+                            )
+                            .collect::<Vec<_>>();
+                        let second_borders = borders
+                            .iter()
+                            .filter_map(|(tile, dir)| {
+                                if *dir == half_dir.opposite() {
+                                    Some(*tile)
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect::<Vec<_>>();
+
+                        for tile_first in first_borders.iter() {
+                            for tile_second in second_borders.iter() {
+                                self.adjacency_rules.add_adjacency_raw(
+                                    *tile_first,
+                                    *tile_second,
+                                    half_dir,
+                                );
+                                self.adjacency_rules.add_adjacency_raw(
+                                    *tile_second,
+                                    *tile_first,
+                                    half_dir.opposite(),
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+
+            pub(crate) fn add_adjacency_raw(&mut self, tile_id: u64, adjacent_id: u64, direction: &$direction) {
+                self.ensure_adjacencies_present_for_tiles(&[tile_id, adjacent_id]);
+
+                match (
+                    self.get_border_id(&tile_id, direction),
+                    self.get_border_id(&adjacent_id, &direction.opposite()),
+                ) {
+                    (None, None) => {
+                        let new_id = self.get_next_border_id();
+                        self.set_border_id(new_id, tile_id, direction);
+                        self.set_border_id(new_id, adjacent_id, &direction.opposite());
+                    }
+                    (None, Some(id_border)) => {
+                        self.set_border_id(id_border, tile_id, direction);
+                    }
+                    (Some(id_border), None) => {
+                        self.set_border_id(id_border, adjacent_id, &direction.opposite());
+                    }
+                    (Some(id_left), Some(id_right)) => {
+                        if id_left == id_right {
+                            return;
+                        }
+                        self.unify_border_id(id_left.max(id_right), id_left.min(id_right));
+                    }
+                }
+            }
+
+            fn ensure_adjacencies_present_for_tiles(&mut self, ids: &[u64]) {
+                for id in ids {
+                    if !self.inner.contains_key(id) {
+                        self.inner.insert(*id, $direction_table::default());
+                    }
+                }
+            }
+
+            fn set_border_id(&mut self, border_id: u64, tile_id: u64, direction: &$direction) {
+                self.inner
+                    .get_mut(&tile_id)
+                    .unwrap()[*direction] = border_id.into();
+
+                self.border_types
+                    .entry(border_id)
+                    .or_default()
+                    .push((tile_id, *direction));
+            }
+
+            fn get_border_id(&self, tile_id: &u64, direction: &$direction) -> Option<u64> {
+                self.inner.get(tile_id).unwrap()[*direction]
+            }
+
+            fn unify_border_id(&mut self, existing: u64, into: u64) {
+                let cache = self.border_types.remove(&existing).unwrap();
+                for (tile_id, direction) in cache.iter() {
+                    self.set_border_id(into, *tile_id, direction);
+                }
+            }
+
+            fn get_next_border_id(&self) -> u64 {
+                if let Some(max_id) = self.border_types.keys().max() {
+                    *max_id + 1
+                } else {
+                    0
+                }
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! __impl_singular_frequency_hints {
+    (
+        struct_name: $name:ident,
+        grid: $grid:ident,
+    ) => {
+        /// Frequency hints for the *adjacency-based* generative algorithm.
+        ///
+        /// Describes the frequency of occurence of all distinct tiles. Can be generated automatically while analyzing sample
+        /// maps, or specified manually for each `tile_type_id` via [`set_weight_for_tile`](Self::set_weight_for_tile) method.
+        #[derive(Debug)]
+        pub struct $name<Data: TypedData>
+        {
+            weights: BTreeMap<u64, u32>,
+            id_type: PhantomData<Data>,
+        }
+
+        impl<Data: TypedData> Clone for $name<Data>
+        {
+            fn clone(&self) -> Self {
+                Self {
+                    weights: self.weights.clone(),
+                    id_type: PhantomData,
+                }
+            }
+        }
+
+        impl<Data: TypedData> Default for $name<Data> 
+        {
+            fn default() -> Self {
+                Self {
+                    weights: BTreeMap::new(),
+                    id_type: PhantomData,
+                }
+            }
+        }
+
+        impl<Data: TypedData> $name<Data>
+        {
+            pub fn set_weight_for_data<Tile>(&mut self, data: &Data, weight: u32) {
+                let entry = self.weights.entry(data.tile_type_id()).or_default();
+                *entry = weight;
+            }
+
+            pub fn count_data(&mut self, data: &Data) {
+                if let Some(count) = self.weights.get_mut(&data.tile_type_id()) {
+                    *count += 1;
+                } else {
+                    self.weights.insert(data.tile_type_id(), 1);
+                }
+            }
+
+            pub(crate) fn get_all_weights_cloned(&self) -> BTreeMap<u64, u32> {
+                self.weights.clone()
+            }
+
+            pub fn analyze(&mut self, map: &impl $grid<Data>) {
+                for position in map.get_all_positions() {
+                    let data = map.get_data_at_position(&position).unwrap();
+                    self.count_data(&data);
+                }
+            }
+        }
+
+    }
+}
+
+#[macro_export]
+macro_rules! __impl_singular_resolver {
+    (
+        struct_name: $name:ident,
+        subscriber_trait: $subscriber_trait:ident,
+        collapsible_data: $collapsible_data:ident,
+        collapsible_grid: $collapsible_grid:ident,
+        propagate_item: $propagate_item:ident,
+        propagator: $propagator:ident,
+        entrophy_queue: $entrophy_queue:ident,
+        position_queue: $position_queue:ident,
+        collapse_error: $collapse_error:ident,
+        position: $position:ty,
+    ) => {
+        /// Resolver of the singular collapsible procedural algorithm.
+        ///
+        /// It uses either [`EntrophyQueue`] or [`PositionQueue`] to process the option collapsing process of the [`CollapsibleTileGrid`],
+        /// additionally providing an option to subscribe to the collapse process via [`singular::Subscriber`](Subscriber).
+        pub struct $name<Data>
+        where
+            Data: TypedData,
+        {
+            subscriber: Option<Box<dyn $subscriber_trait>>,
+            tile_type: PhantomData<Data>,
+        }
+
+        impl<Data> Default for $name<Data>
+        where
+            Data: TypedData,
+        {
+            fn default() -> Self {
+                Self {
+                    subscriber: None,
+                    tile_type: PhantomData,
+                }
+            }
+        }
+
+        impl<Data> $name<Data>
+        where
+            Data: TypedData,
+        {
+            /// Attach a subscriber to the resolver. The subscriber will be notified of each tile being collapsed.
+            pub fn with_subscriber(mut self, subscriber: Box<dyn $subscriber_trait>) -> Self {
+                self.subscriber = Some(subscriber);
+                self
+            }
+
+            /// Retrieve the subscriber attached to the resolver.
+            pub fn retrieve_subscriber(&mut self) -> Option<Box<dyn $subscriber_trait>> {
+                self.subscriber.take()
+            }
+
+            /// Collapse the [`CollapsibleTileGrid`] using [`EntrophyQueue`].
+            ///
+            /// Contrary to [`generate_position`](Self::generate_position), this method don't require providing the precreated
+            /// queue, as it don't allow for any configuration - it will always collapse the tile with the lowest entrophy next.
+            ///
+            /// # Arguments
+            /// * `grid` - [`CollapsibleTileGrid`] to be processed. All non-collapsed tiles provided within will be
+            ///   removed on the beginning of the process.
+            /// * `rng` - [`Rng`] to be used for randomness.
+            /// * `positions` - [`GridPosition`]s to be collapsed. If any collapsed tile is present inside the provided `grid`
+            ///   at one of the positions provided, the tile will be overwritten with uncollapsed one.
+            ///
+            /// Provided `grid` can be translated into either a [`CollapsedGrid`](crate::gen::collapse::grid::CollapsedGrid)
+            /// or [`GridMap2D`](crate::map::GridMap2D) of some [`IdentifiableTileData`] after the process.
+            pub fn generate_entrophy<R: Rng>(
+                &mut self,
+                grid: &mut $collapsible_grid<Data>,
+                rng: &mut R,
+                positions: &[$position],
+            ) -> Result<(), $collapse_error>
+            {
+
+                let mut iter = 0;
+                let mut queue = $entrophy_queue::default();
+                let mut propagator = $propagator::default();
+
+                if let Some(subscriber) = self.subscriber.as_mut() {
+                    subscriber.on_generation_start();
+                }
+
+                grid.remove_uncollapsed();
+
+                let option_data = &grid.option_data;
+
+                let tiles = $collapsible_data::new_from_frequency_with_entrophy(
+                    rng,
+                    positions, 
+                    option_data
+                );
+                
+                for tile in tiles {
+                    queue.update_queue(tile.0, tile.1.calc_entrophy());
+                    grid.grid.insert_data(&tile.0, tile.1);
+                }
+
+                for initial_propagate in grid.get_initial_propagate_items(positions) {
+                    propagator.push_propagate(initial_propagate);
+                }
+
+                $collapse_error::from_result(
+                    propagator.propagate(&mut grid.grid, &option_data, &mut queue),
+                    CollapseErrorKind::Init,
+                    iter,
+                )?;
+
+                // Progress with collapse.
+                while let Some(collapse_position) = queue.get_next_position() {
+                    let to_collapse = grid
+                        .grid
+                        .get_mut_data_at_position(&collapse_position)
+                        .unwrap();
+                    // skip collapsed;
+                    if to_collapse.is_collapsed() {
+                        continue;
+                    }
+                    if !to_collapse.has_compatible_options() {
+                        return Err($collapse_error::new(
+                            collapse_position,
+                            CollapseErrorKind::Collapse,
+                            iter,
+                        ));
+                    }
+                    let removed_options = to_collapse.collapse_gather_removed(rng, &option_data);
+
+                    let collapsed_idx = to_collapse.collapsed_idx().unwrap();
+                    if let Some(subscriber) = self.subscriber.as_mut() {
+                        let collapsed_id = grid
+                            .option_data
+                            .get_tile_type_id(collapsed_idx)
+                            .unwrap();
+                        subscriber
+                            .as_mut()
+                            .on_collapse(&collapse_position, collapsed_id);
+                    }
+                    for removed_option in removed_options.into_iter() {
+                        propagator.push_propagate($propagate_item::new(collapse_position, removed_option))
+                    }
+                    $collapse_error::from_result(
+                        propagator.propagate(&mut grid.grid, &option_data, &mut queue),
+                        CollapseErrorKind::Propagation,
+                        iter,
+                    )?;
+                    iter += 1;
+                }
+
+                Ok(())
+            }
+
+            pub fn generate_position<R: Rng>(
+                &mut self,
+                grid: &mut $collapsible_grid<Data>,
+                rng: &mut R,
+                positions: &[$position],
+                mut queue: $position_queue,
+            ) -> Result<(), $collapse_error>
+            {
+                let mut iter = 0;
+
+                if let Some(subscriber) = self.subscriber.as_mut() {
+                    subscriber.on_generation_start();
+                }
+
+                grid.remove_uncollapsed();
+
+                let option_data = &grid.option_data;
+
+                let tiles = $collapsible_data::new_from_frequency(
+                    positions, 
+                    option_data
+                );
+                
+                for tile in tiles {
+                    queue.update_queue(tile.0);
+                    grid.grid.insert_data(&tile.0, tile.1);
+                }
+
+                // Progress with collapse.
+                while let Some(collapse_position) = queue.get_next_position() {
+                    let to_collapse = grid
+                        .grid
+                        .get_data_at_position(&collapse_position)
+                        .unwrap();
+                    // skip collapsed;
+                    if to_collapse.is_collapsed() {
+                        continue;
+                    }
+                    // Make sure that the tile has at leas option, and purge them based on the direct neighbours.
+                    if !to_collapse.has_compatible_options()
+                        || !$collapsible_grid::<Data>::purge_incompatible_options(
+                            &mut grid.grid,
+                            &collapse_position,
+                            &option_data,
+                        )
+                    {
+                        return Err($collapse_error::new(
+                            collapse_position,
+                            CollapseErrorKind::Collapse,
+                            iter,
+                        ));
+                    };
+
+                    let to_collapse = grid
+                        .grid
+                        .get_mut_data_at_position(&collapse_position)
+                        .unwrap();
+                    to_collapse.collapse_basic(rng, &option_data);
+
+                    let collapsed_idx = to_collapse.collapsed_idx().unwrap();
+
+                    // Purge options for the neighbours. This step is not required for the generation to be sound at the end,
+                    // but it increases the success rate of the process greatly at the relatively small performance cost.
+                    $collapsible_grid::<Data>::purge_options_for_neighbours(
+                        &mut grid.grid,
+                        collapsed_idx,
+                        &collapse_position,
+                        &option_data,
+                    );
+
+                    if let Some(subscriber) = self.subscriber.as_mut() {
+                        let collapsed_id = grid
+                            .option_data
+                            .get_tile_type_id(collapsed_idx)
+                            .unwrap();
+                        subscriber
+                            .as_mut()
+                            .on_collapse(&collapse_position, collapsed_id);
+                    }
+                    iter += 1;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! __impl_singular_subscriber_trait {
+    (
+        trait_name: $name:ident,
+        position: $position:ty,
     ) => {
 
-        #[derive(Clone, Debug)]
-        pub struct $name {
-            collapsed_option: Option<usize>,
-            num_options: usize,
-            ways_to_be_option: $ways_to_be_option,
-            weight: OptionWeights,
-            entrophy_noise: f32,
+        /// When applied to the struct allows injecting it into [`singular::Resolver`](Resolver) to react on each tile being collapsed.
+        pub trait $name: Any {
+            /// Called when the generation process starts. No-op by default, should be overridden to clear the state of the subcscriber
+            /// if it retains any state.
+            fn on_generation_start(&mut self) {
+                // no-op by default
+            }
+
+            /// Called when a tile is collapsed.
+            fn on_collapse(&mut self, position: &$position, tile_type_id: u64);
+
+            /// To retrieve the concrete subscriber type from [`singular::Resolver`](Resolver).
+            fn as_any(&self) -> &dyn Any;
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! __impl_singular_debug_subscriber {
+    (
+        struct_name: $name:ident,
+        trait_name: $trait_name:ident,
+        position: $position:ty,
+    ) => {
+
+        impl $trait_name for $name {
+            fn on_collapse(&mut self, position: &$position, tile_type_id: u64) {
+                if let Some(file) = &mut self.file {
+                    writeln!(
+                        file,
+                        "collapsed tile_type_id: {tile_type_id} on position: {position:?}"
+                    )
+                    .unwrap();
+                } else {
+                    println!("collapsed tile_type_id: {tile_type_id} on position: {position:?}");
+                }
+            }
+
+            fn as_any(&self) -> &dyn std::any::Any {
+                self
+            }
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! __impl_singular_collapse_history_subscriber {
+    (
+        struct_name: $name:ident,
+        history_item_name: $history_item:ident,
+        trait_name: $trait_name:ident,
+        position: $position:ty,
+    ) => {
+        /// Event in the history of tile generation process, containing the [`GridPosition`] of the tile alongside its collapsed
+        /// `tile_type_id`.
+        #[derive(Debug, Clone)]
+        pub struct $history_item {
+            pub position: $position,
+            pub tile_type_id: u64,
         }
 
-        impl TileData for $name {}
+        /// Simple subscriber to collect history of tile generation process.
+        ///
+        /// Every new generation began by the resolver will clear the history.
+        #[derive(Debug, Clone, Default)]
+        pub struct $name {
+            history: Vec<$history_item>,
+        }
 
         impl $name {
-            pub (crate) fn new_collapsed_data(collapsed_idx: usize) -> Self {
-                Self {
-                    collapsed_option: Some(collapsed_idx),
-                    num_options: 0,
-                    ways_to_be_option: $ways_to_be_option::default(),
-                    weight: OptionWeights::default(),
-                    entrophy_noise: 0.,
-                }
-            }
-
-            pub fn new_uncollapsed_tile(
-                num_options: usize,
-                ways_to_be_option: $ways_to_be_option,
-                weight: OptionWeights,
-                entrophy_noise: f32,
-            ) -> Self {
-                Self {
-                    collapsed_option: None,
-                    num_options,
-                    ways_to_be_option,
-                    weight,
-                    entrophy_noise,
-                }
-            }
-
-            pub fn new_from_frequency_with_entrophy<R: Rng>(
-                rng: &mut R,
-                positions: &[$position],
-                options_data: &$per_option_data,
-            ) -> Vec<($position, Self)> {
-                let rng_range = Self::entrophy_uniform();
-
-                let weight = options_data.ways_to_be_option
-                    .iter_possible()
-                    .map(|option_idx| options_data.get_weights(option_idx))
-                    .fold(OptionWeights::default(), |sum, new| sum + new);
-
-                positions
-                    .iter()
-                    .map(|pos| {
-                        (
-                            *pos,
-                            Self::new_uncollapsed_tile(
-                                options_data.possible_options_count,
-                                options_data.ways_to_be_option.clone(),
-                                weight,
-                                rng_range.sample(rng),
-                            ),
-                        )
-                    })
-                    .collect::<Vec<_>>()
-            }
-
-            pub fn new_from_frequency(
-                positions: &[$position],
-                options_data: &$per_option_data,
-            ) -> Vec<($position, Self)> {
-                let weight = options_data.ways_to_be_option
-                    .iter_possible()
-                    .map(|option_idx| options_data.get_weights(option_idx))
-                    .fold(OptionWeights::default(), |sum, new| sum + new);
-
-                positions
-                    .iter()
-                    .map(|pos| {
-                        (
-                            *pos,
-                            Self::new_uncollapsed_tile(
-                                options_data.possible_options_count,
-                                options_data.ways_to_be_option.clone(),
-                                weight,
-                                0.0,
-                            ),
-                        )
-                    })
-                .collect::<Vec<_>>()
-            }
-
-            pub fn num_possible_options(&self) -> usize {
-                self.num_options
-            }
-
-            pub fn has_compatible_options(&self) -> bool {
-                self.num_options > 0
-            }
-
-            pub fn ways_to_be_option(&self) -> &$ways_to_be_option {
-                &self.ways_to_be_option
-            }
-
-            pub fn mut_ways_to_be_option(&mut self) -> &mut $ways_to_be_option {
-                &mut self.ways_to_be_option
-            }
-
-            pub fn remove_option(&mut self, weights: OptionWeights) {
-                self.num_options -= 1;
-                self.weight -= weights;
-            }
-
-            pub fn entrophy_uniform() -> Uniform<f32> {
-                Uniform::<f32>::new(0., 0.00001)
-            }
-
-            pub fn mark_collapsed(&mut self, collapsed_idx: usize) {
-                self.collapsed_option = Some(collapsed_idx);
-                self.num_options = 0;
-                self.weight = OptionWeights::default();
-            }
-
-            pub fn weight_sum(&self) -> u32 {
-                self.weight.0
-            }
-
-            pub fn is_collapsed(&self) -> bool {
-                self.collapsed_idx().is_some()
-            }
-
-            pub fn collapsed_idx(&self) -> Option<usize> {
-                self.collapsed_option
-            }
-
-            pub fn collapse_gather_removed<R: Rng>(
-                &mut self,
-                rng: &mut R,
-                options_data: &$per_option_data,
-            ) -> Vec<usize> {
-                assert!(
-                    self.weight_sum() > 0,
-                    "weight sum should be positive when collapsing!"
-                );
-                let random = rng.gen_range(0..self.weight_sum());
-                let mut current_sum = 0;
-                let mut chosen = None;
-                let mut out = Vec::new();
-                for option_idx in self.ways_to_be_option.iter_possible() {
-                    current_sum += options_data.get_weights(option_idx).0;
-                    if chosen.is_some() || random > current_sum {
-                        out.push(option_idx);
-                        continue;
-                    }
-                    chosen = Some(option_idx);
-                }
-                self.mark_collapsed(chosen.expect("options should always be chosen"));
-                out
-            }
-
-            pub fn collapse_basic<R: Rng>(&mut self, rng: &mut R, options_data: &$per_option_data) {
-                assert!(
-                    self.weight_sum() > 0,
-                    "weight sum should be positive when collapsing!"
-                );
-                let random = rng.gen_range(0..self.weight_sum());
-                let mut current_sum = 0;
-                let mut chosen = None;
-                for option_idx in self.ways_to_be_option.iter_possible() {
-                    current_sum += options_data.get_weights(option_idx).0;
-                    if random > current_sum {
-                        continue;
-                    }
-                    chosen = Some(option_idx);
-                    break;
-                }
-                self.mark_collapsed(chosen.expect("options should always be chosen"));
-            }
-
-            pub fn calc_entrophy(&self) -> f32 {
-                Self::calc_entrophy_ext(self.weight.0, self.weight.1) + self.entrophy_noise
-            }
-
-            #[inline]
-            pub fn calc_entrophy_ext(weight_sum: u32, weight_log_sum: f32) -> f32 {
-                (weight_sum as f32).log2() - weight_log_sum / (weight_sum as f32)
+            /// Returns history of tile generation process.
+            pub fn history(&self) -> &[$history_item] {
+                &self.history
             }
         }
-    };
+
+        impl $trait_name for $name {
+            fn on_generation_start(&mut self) {
+                self.history.clear();
+            }
+
+            fn on_collapse(&mut self, position: &$position, tile_type_id: u64) {
+                self.history.push($history_item {
+                    position: *position,
+                    tile_type_id,
+                });
+            }
+
+            fn as_any(&self) -> &dyn Any {
+                self
+            }
+        }
+    }
 }
+

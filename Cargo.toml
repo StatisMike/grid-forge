@@ -25,6 +25,7 @@ license = "MIT"
 repository = "https://github.com/statismike/grid_forge"
 
 [workspace.dependencies]
+serde = { version = "1.0.*", features = ["derive"] }
 image = { version = "0.25.*", default-features = false }
 rand = { version = "0.8.*" }
 
