@@ -1090,12 +1090,15 @@ macro_rules! __impl_pattern_resolver {
 }
 
 #[macro_export]
-macro_rules! __impl_overlap_debug_subscriber {
+macro_rules! __impl_pattern_debug_subscriber {
     (
         struct_name: $name:ident,
         trait_name: $trait_name:ident,
         position: $position:ty,
     ) => {
+
+        use std::io::Write as _;
+
         impl $trait_name for $name {
             fn on_collapse(&mut self, position: &$position, tile_type_id: u64, pattern_id: u64) {
                 if let Some(file) = &mut self.file {
@@ -1110,6 +1113,36 @@ macro_rules! __impl_overlap_debug_subscriber {
             }
         
             fn as_any(&self) -> &dyn std::any::Any {
+                self
+            }
+        }
+    }
+}
+
+/// Implements a collapse history subscriber logic for pattern-based collapse procedural algorithm.
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __impl_pattern_history_subscriber {
+    (
+        struct_name: $name:ident,
+        history_item_name: $history_item:ident,
+        trait_name: $trait_name:ident,
+        position: $position:ty,
+    ) => {
+        impl $trait_name for $name {
+            fn on_generation_start(&mut self) {
+                self.history.clear();
+            }
+
+            fn on_collapse(&mut self, position: &$position, tile_type_id: u64, pattern_id: u64) {
+                self.history.push($history_item {
+                    position: *position,
+                    tile_type_id,
+                    pattern_id: Some(pattern_id),
+                });
+            }
+
+            fn as_any(&self) -> &dyn Any {
                 self
             }
         }

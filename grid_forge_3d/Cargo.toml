@@ -18,6 +18,7 @@ procgen = ["grid_forge_core/procgen"]
 [dependencies]
 grid_forge_core = { path = "../grid_forge_core" }
 grid_forge_2d = { path = "../grid_forge_2d", optional = true }
+nohash-hasher = { workspace = true }
 
 [dev-dependencies]
 criterion = { workspace = true }

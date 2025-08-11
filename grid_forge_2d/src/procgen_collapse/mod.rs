@@ -21,6 +21,12 @@ grid_forge_core::__impl_debug_subscriber! {
     struct_name: DebugSubscriber2D,
 }
 
+grid_forge_core::__impl_collapse_history_subscriber! {
+    struct_name: CollapseHistorySubscriber2D,
+    history_item_name: CollapseHistoryItem2D,
+    position: GridPosition2D,
+}
+
 grid_forge_core::__impl_collapsed_grid! {
     struct_name: CollapsedGrid2D,
     grid: GridMap2D,

@@ -24,7 +24,7 @@ rand = { workspace = true, optional = true }
 num-traits = "*"
 grid = { version = "0.13.*" }
 godot = { version = "^0.2.4", optional = true }
-nohash-hasher = "0.2.0"
+nohash-hasher = { workspace = true }
 rand_chacha = { workspace = true, optional = true }
 
 [dev-dependencies]

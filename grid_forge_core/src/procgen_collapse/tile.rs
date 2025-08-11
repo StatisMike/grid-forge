@@ -1,3 +1,4 @@
+/// Implements an adjacency rules logic for the tile-centric collapse procedural algorithm.
 #[macro_export]
 macro_rules! __impl_singular_adjacency_rules {
     (
@@ -63,6 +64,7 @@ macro_rules! __impl_singular_adjacency_rules {
     }
 }
 
+/// Implements an identity analyzer logic for the tile-centric collapse procedural algorithm.
 #[macro_export]
 macro_rules! __impl_singular_identity_analyzer {
     (
@@ -118,6 +120,7 @@ macro_rules! __impl_singular_identity_analyzer {
     }
 }
 
+/// Implements a border analyzer logic for the tile-centric collapse procedural algorithm.
 #[macro_export]
 macro_rules! __impl_singular_border_analyzer {
     (
@@ -321,7 +324,9 @@ macro_rules! __impl_singular_border_analyzer {
     }
 }
 
+/// Implements the frequency hints for the tile-centric collapse procedural algorithm.
 #[macro_export]
+#[doc(hidden)]
 macro_rules! __impl_singular_frequency_hints {
     (
         struct_name: $name:ident,
@@ -330,7 +335,7 @@ macro_rules! __impl_singular_frequency_hints {
         /// Frequency hints for the *adjacency-based* generative algorithm.
         ///
         /// Describes the frequency of occurence of all distinct tiles. Can be generated automatically while analyzing sample
-        /// maps, or specified manually for each `tile_type_id` via [`set_weight_for_tile`](Self::set_weight_for_tile) method.
+        /// maps, or specified manually for each `tile_type_id` via [`set_weight_for_data`](Self::set_weight_for_data) method.
         #[derive(Debug)]
         pub struct $name<Data: TypedData>
         {
@@ -360,7 +365,7 @@ macro_rules! __impl_singular_frequency_hints {
 
         impl<Data: TypedData> $name<Data>
         {
-            pub fn set_weight_for_data<Tile>(&mut self, data: &Data, weight: u32) {
+            pub fn set_weight_for_data(&mut self, data: &Data, weight: u32) {
                 let entry = self.weights.entry(data.tile_type_id()).or_default();
                 *entry = weight;
             }
@@ -388,6 +393,7 @@ macro_rules! __impl_singular_frequency_hints {
     }
 }
 
+/// Implements the resolver logic for the tile-centric collapse procedural algorithm.
 #[macro_export]
 macro_rules! __impl_singular_resolver {
     (
@@ -626,6 +632,7 @@ macro_rules! __impl_singular_resolver {
     }
 }
 
+/// Defines a subscriber trait for the tile-centric collapse procedural algorithm.
 #[macro_export]
 macro_rules! __impl_singular_subscriber_trait {
     (
@@ -650,7 +657,9 @@ macro_rules! __impl_singular_subscriber_trait {
     }
 }
 
+/// Implements a basic debug subscriber logic for tile-centric collapse procedural algorithm.
 #[macro_export]
+#[doc(hidden)]
 macro_rules! __impl_singular_debug_subscriber {
     (
         struct_name: $name:ident,
@@ -678,7 +687,9 @@ macro_rules! __impl_singular_debug_subscriber {
     }
 }
 
+/// Implements a collapse history subscriber logic for tile-centric collapse procedural algorithm.
 #[macro_export]
+#[doc(hidden)]
 macro_rules! __impl_singular_collapse_history_subscriber {
     (
         struct_name: $name:ident,
@@ -686,29 +697,6 @@ macro_rules! __impl_singular_collapse_history_subscriber {
         trait_name: $trait_name:ident,
         position: $position:ty,
     ) => {
-        /// Event in the history of tile generation process, containing the [`GridPosition`] of the tile alongside its collapsed
-        /// `tile_type_id`.
-        #[derive(Debug, Clone)]
-        pub struct $history_item {
-            pub position: $position,
-            pub tile_type_id: u64,
-        }
-
-        /// Simple subscriber to collect history of tile generation process.
-        ///
-        /// Every new generation began by the resolver will clear the history.
-        #[derive(Debug, Clone, Default)]
-        pub struct $name {
-            history: Vec<$history_item>,
-        }
-
-        impl $name {
-            /// Returns history of tile generation process.
-            pub fn history(&self) -> &[$history_item] {
-                &self.history
-            }
-        }
-
         impl $trait_name for $name {
             fn on_generation_start(&mut self) {
                 self.history.clear();
@@ -718,6 +706,7 @@ macro_rules! __impl_singular_collapse_history_subscriber {
                 self.history.push($history_item {
                     position: *position,
                     tile_type_id,
+                    pattern_id: None,
                 });
             }
 
@@ -728,3 +717,105 @@ macro_rules! __impl_singular_collapse_history_subscriber {
     }
 }
 
+#[macro_export]
+macro_rules! __impl_propagate_item {
+    (
+        struct_name: $name:ident,
+        position: $position:ident,
+    ) => {
+
+        #[derive(Debug, Clone, Copy)]
+        pub struct $name {
+            pub position: $position,
+            pub to_remove: usize,
+        }
+
+        impl $name {
+            pub fn new(position: $position, to_remove: usize) -> Self {
+                Self { position, to_remove }
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! __impl_propagator {
+    (
+        struct_name: $struct_name:ident,
+        propagate_item: $propagate_item:ident,
+        collapsible_tile_data: $collapsible_tile_data:ident,
+        per_option_data: $per_option_data:ident,
+        entrophy_queue: $entrophy_queue:ident,
+        direction: $direction:ident,
+        position: $position:ident,
+        grid: $grid:ident,
+    ) => {
+        pub struct $struct_name {
+            inner: Vec<$propagate_item>,
+        }
+
+        impl Default for $struct_name {
+            fn default() -> Self {
+                Self { inner: Vec::new() }
+            }
+        }
+
+        impl $struct_name {
+            pub fn push_propagate(&mut self, item: $propagate_item) {
+                self.inner.push(item);
+            }
+        
+            pub(crate) fn propagate(
+                &mut self,
+                grid: &mut impl $grid<$collapsible_tile_data>,
+                option_data: &$per_option_data,
+                queue: &mut $entrophy_queue,
+            ) -> Result<(), $position> {
+                let mut tiles_to_update = HashSet::new();
+                let size = *grid.size();
+                while let Some(item) = self.inner.pop() {
+                    for direction in $direction::ALL {
+                        let pos_to_update =
+                            if let Some(pos) = direction.opposite().march_step(&item.position, &size) {
+                                pos
+                            } else {
+                                continue;
+                            };
+                        let mut tile = if let Some(tile) = grid.get_mut_tile_at_position(&pos_to_update) {
+                            tile
+                        } else {
+                            continue;
+                        };
+                        if tile.as_ref().is_collapsed() {
+                            continue;
+                        }
+                        for option_idx in
+                            option_data.get_all_enabled_in_direction(item.to_remove, direction.opposite())
+                        {
+                            let binding = tile.data();
+                            let removed = binding
+                                .mut_ways_to_be_option()
+                                .decrement(*option_idx, direction);
+                            if removed {
+                                binding.remove_option(option_data.get_weights(*option_idx));
+                            }
+                            if !binding.has_compatible_options() {
+                                return Err(pos_to_update);
+                            }
+                            if removed {
+                                self.push_propagate($propagate_item::new(tile.grid_position(), *option_idx));
+                                tiles_to_update.insert(tile.grid_position());
+                            }
+                        }
+                    }
+                }
+        
+                for pos in tiles_to_update {
+                    queue.update_queue(pos, grid.get_data_at_position(&pos).unwrap().calc_entrophy());
+                }
+        
+                Ok(())
+            }
+        }
+    };
+}

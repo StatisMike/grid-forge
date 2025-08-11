@@ -9,7 +9,7 @@ use grid_forge_core::id::{IdDefault, TypedData, IdentTileBuilder, TypeIdMap};
 use grid_forge_core::procgen_collapse::data::CollapsedTileData;
 use grid_forge_core::procgen_collapse::error::CollapseErrorKind;
 
-use crate::procgen_collapse::DebugSubscriber2D;
+use crate::procgen_collapse::{CollapseHistoryItem2D, CollapseHistorySubscriber2D, DebugSubscriber2D};
 use crate::{
     core::{Direction2D, DirectionTable2D, Grid2D, GridPosition2D, GridSize2D, GridMap2D, TileContainer2D},
     procgen_collapse::{
@@ -81,6 +81,13 @@ grid_forge_core::__impl_singular_subscriber_trait! {
 
 grid_forge_core::__impl_singular_debug_subscriber! {
     struct_name: DebugSubscriber2D,
+    trait_name: SingularSubscriber2D,
+    position: GridPosition2D,
+}
+
+grid_forge_core::__impl_singular_collapse_history_subscriber! {
+    struct_name: CollapseHistorySubscriber2D,
+    history_item_name: CollapseHistoryItem2D,
     trait_name: SingularSubscriber2D,
     position: GridPosition2D,
 }

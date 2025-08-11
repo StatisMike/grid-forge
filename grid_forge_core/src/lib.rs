@@ -215,25 +215,10 @@
 
 pub mod utils;
 
-// #[cfg(feature = "gen")]
-// pub mod gen;
-
 pub mod id;
 
-// pub use map::*;
-
-/// Marker trait for structs that can be contained withing [`GridMap2D`](crate::map::GridMap2D) and [`TileContainer`]
+/// Marker trait for structs that can be contained within grids and tile containers.
 pub trait TileData: Sized {}
-
-// #[allow(clippy::non_minimal_cfg)]
-// #[cfg(any(feature = "godot"))]
-// pub(crate) mod ext;
-
-// #[cfg(feature = "godot")]
-// pub mod godot {
-//     use crate::ext;
-//     pub use ext::godot::*;
-// }
 
 #[cfg(feature = "image")]
 pub mod image;

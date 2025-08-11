@@ -57,13 +57,13 @@ macro_rules! __impl_grid_trait {
 
             fn get_neighbours<'a>(&'a self, position: &$position_type) -> $direction_table<Option<__tile_ref_type!()>>;
 
-             fn get_neighbour_at<'a>(
+            fn get_neighbour_at<'a>(
                 &'a self,
                 position: &$position_type,
                 direction: &$direction_type,
             ) -> Option<__tile_ref_type!()>;
 
-           fn get_mut_neighbour_at<'a>(
+            fn get_mut_neighbour_at<'a>(
                 &'a mut self,
                 position: &$position_type,
                 direction: &$direction_type,
@@ -84,7 +84,7 @@ macro_rules! __impl_grid_trait {
             where
                 Data: 'a;
 
-           fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = &'a mut Option<Data>>
+            fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = &'a mut Option<Data>>
             where
                 Data: 'a;
 
@@ -137,6 +137,73 @@ macro_rules! __impl_grid_trait {
     }
 }
 
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __impl_grid_shared_trait {
+    (
+        grid_shared_trait: $grid_shared_trait:ident,
+        grid_map_trait: $grid_map_trait:ident,
+
+        direction: $direction_type:ty,
+        direction_table: $direction_table:ident,
+        size: $size_type:ty,
+        position: $position_type:ty,
+        tile: $tile_type:ident,
+        tile_ref: $tile_ref_type:ident,
+        tile_mut: $tile_mut_type:ident,
+        tile_container_trait: $tile_container_trait:ident,
+        neighbours_count: $neighbour_size:literal,
+
+        $(generic_grid_params: [$($generic_grid_param:tt)*],)?
+        $(generic_shared_params: [$($generic_shared_param:tt)*],)?
+        $(where_clause: [$($where_clause:tt)*],)?
+        $(other_mut_access: [$($other_mut_access:tt => $other_mut_access_translate:tt)*],)?
+    )
+    => {
+
+        #[allow(unused_imports)]
+        use crate::core::$tile_container_trait as _;
+        #[allow(unused_imports)]
+        use std::default::Default as _;
+
+        macro_rules! __tile_type { () => { $tile_type<Data> }; }
+        macro_rules! __tile_ref_type { () => { $tile_ref_type<'a, Data> }; }
+        macro_rules! __tile_mut_type { () => { $tile_mut_type<'a, Data> }; }
+
+        /// Trait for basic grid map operations.
+        /// 
+        /// Encapsulates all operations on the grid map and data stored in its tiles.
+        /// 
+        /// For documentation of each method, refer to the documentation on the concrete type implementing this trait.
+        pub trait $grid_shared_trait<$($($generic_shared_param)*)?> : $grid_map_trait<($($generic_shared_param)*)?>
+        $(where $($where_clause)*)?
+        {
+            fn import_shared_data(&mut self, shared_data: grid_forge_core::id::TypeIdMap<Shared>);
+
+            fn export_shared_data(&mut self) -> grid_forge_core::id::TypeIdMap<Shared>;
+
+            fn check_shared_data(&self) -> Vec<u64>;
+
+            fn clone_shared_data(&self) -> grid_forge_core::id::TypeIdMap<Shared>
+            where Shared: Clone;
+
+            fn insert_shared_data(&mut self, type_id: u64, data: Shared);
+
+            fn remove_shared_data(&mut self, type_id: u64);
+
+            fn get_mut_shared_data(&mut self, type_id: u64) -> Option<&mut Shared> {
+                self.shared_data.get_shared_data_mut(&type_id)
+            }
+
+            fn get_shared_data_at_position(&self, position: &$position) -> Option<&Shared>;
+
+            fn get_tile_with_shared_at_position<'a>(&'a self, position: &$position) -> Option<__tile_ref_shared_type!()>;
+
+            fn get_mut_tile_with_shared_at_position<'a>(&'a mut self, position: &$position) -> Option<__tile_mut_shared_type!()>;
+        }
+    }
+}
+
 
 #[doc(hidden)]
 #[macro_export]
@@ -179,14 +246,13 @@ macro_rules! __impl_grid {
         {
             size: $size_type,
             tiles: Vec<Option<Data>>,
-            mut_accessed: Option<std::collections::HashSet<$position_type>>,
+            mut_accessed: Option<std::collections::HashSet<usize, std::hash::BuildHasherDefault<nohash_hasher::NoHashHasher<usize>>>>,
             $($additional_field: $additional_type),*
         }
 
         impl<$($($generic_param)*)?> $struct_name<$($($generic_param)*)?>
         $(where $($where_clause)*)?
         {
-
             /// Creates a new empty grid with the specified dimensions.
             ///
             /// All tile slots are initialized as empty. Use insertion methods to populate the grid.
@@ -255,7 +321,7 @@ macro_rules! __impl_grid {
                     return None;
                 }
                 if let Some(mut_accessed) = &mut self.mut_accessed {
-                    mut_accessed.insert(*position);
+                    mut_accessed.insert(self.size.offset(position));
                 }
                 unsafe { self.tiles.get_unchecked_mut(self.size.offset(position)).as_mut() }
             }
@@ -274,7 +340,7 @@ macro_rules! __impl_grid {
                     return None;
                 }
                 if let Some(mut_accessed) = &mut self.mut_accessed {
-                    mut_accessed.insert(*position);
+                    mut_accessed.insert(self.size.offset(position));
                 }
                 unsafe {
                     self
@@ -309,7 +375,7 @@ macro_rules! __impl_grid {
                     return false;
                 }
                 if let Some(mut_accessed) = &mut self.mut_accessed {
-                    mut_accessed.insert(tile.grid_position());
+                    mut_accessed.insert(self.size.offset(&tile.grid_position()));
                 }
                 unsafe {
                     self.tiles.get_unchecked_mut(self.size.offset(&tile.grid_position())).replace(tile.into_data());
@@ -329,7 +395,7 @@ macro_rules! __impl_grid {
                     return false;
                 }
                 if let Some(mut_accessed) = &mut self.mut_accessed {
-                    mut_accessed.insert(*position);
+                    mut_accessed.insert(self.size.offset(position));
                 }
                 unsafe {
                     self.tiles.get_unchecked_mut(self.size.offset(&position)).replace(data);
@@ -350,7 +416,7 @@ macro_rules! __impl_grid {
                     return None;
                 }
                 if let Some(mut_accessed) = &mut self.mut_accessed {
-                    mut_accessed.insert(*position);
+                    mut_accessed.insert(self.size.offset(position));
                 }
                 let offset = self.size.offset(position);
 
@@ -620,7 +686,7 @@ macro_rules! __impl_grid {
             ///   documentation.
             fn mut_access_tracking(&mut self, enabled: bool) {
                 self.mut_accessed = if enabled {
-                    Some(std::collections::HashSet::new())
+                    Some(std::collections::HashSet::<usize, std::hash::BuildHasherDefault<nohash_hasher::NoHashHasher<usize>>>::default())
                 } else {
                     None
                 };
@@ -639,17 +705,16 @@ macro_rules! __impl_grid {
             /// use [`drain_mut_accessed`](Self::drain_mut_accessed).
             fn get_mut_accessed(&self) -> Vec<$position_type> {
                 if let Some(mut_accessed) = &self.mut_accessed {
+                    let mut combined = mut_accessed.clone().into_iter().map(|i| self.size.pos_from_offset(i)).collect::<std::collections::HashSet<_>>();
                     $(
-                        let mut combined = mut_accessed.clone();
                         $(
                             if let Some(other) = &self.$other_mut_access.get_mut_accessed() {
                                 self.$other_mut_access_translate(&mut combined, other);
                             }
                         )*
-                        let mut_accessed = combined;
                     )?
 
-                    let mut result = mut_accessed.iter().copied().collect::<Vec<_>>();
+                    let mut result = combined.iter().copied().collect::<Vec<_>>();
                     result.sort();
                     result
                 } else {
@@ -666,17 +731,16 @@ macro_rules! __impl_grid {
             /// instead.
             fn drain_mut_accessed(&mut self) -> Vec<$position_type> {
                 if let Some(mut_accessed) = &self.mut_accessed.take() {
+                    let mut combined = mut_accessed.clone().into_iter().map(|i| self.size.pos_from_offset(i)).collect::<std::collections::HashSet<_>>();
                     $(
-                        let mut combined = mut_accessed.clone();
                         $(
                             if let Some(other) = &self.$other_mut_access.take_mut_accessed().take() {
                                 self.$other_mut_access_translate(&mut combined, other);
                             }
                         )*
-                        let mut_accessed = combined;
                     )?
 
-                    let mut result = mut_accessed.iter().copied().collect::<Vec<_>>();
+                    let mut result = combined.iter().copied().collect::<Vec<_>>();
                     result.sort();
                     result
                 } else {
@@ -883,7 +947,7 @@ macro_rules! __impl_grid_with_shared {
                     return None;
                 }
                 if let Some(mut_accessed) = &mut self.mut_accessed {
-                    mut_accessed.insert(*position);
+                    mut_accessed.insert(self.size.offset(position));
                 }
                 let Some(data) = (unsafe {
                     self.tiles

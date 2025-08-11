@@ -79,7 +79,7 @@ macro_rules! __impl_collapsible_grid {
 
         impl <Tile: TypedData> std::fmt::Debug for $name<Tile> {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                f.debug_struct("CollapsibleTileGrid2D")
+                f.debug_struct(stringify!($name))
                     .field("grid", &self.grid)
                     .field("option_data", &self.option_data)
                     .finish()
