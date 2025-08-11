@@ -98,7 +98,7 @@ impl<Data: TileData> GridMap3D<Data> {
                 )
             })
             .for_each(|(pos, data)| {
-                self.insert_tile(Tile3D::new(pos, data));
+                self.insert(Tile3D::new(pos, data));
             });
     }
 
@@ -106,13 +106,13 @@ impl<Data: TileData> GridMap3D<Data> {
         let layer_size = GridSize2D::new(self.size.x(), self.size.y());
         let mut out = GridMap2D::new(layer_size);
         let positions = self
-            .iter_all_positions()
+            .iter_positions()
             .filter(|pos| pos.z() == z)
             .collect::<Vec<_>>();
         for pos in positions {
-            let tile: Option<Tile3D<Data>> = self.remove_tile_at_position(&pos);
+            let tile: Option<Tile3D<Data>> = self.remove_at(&pos);
             if let Some(tile) = tile {
-                out.insert_tile(Tile2D::new(
+                out.insert(Tile2D::new(
                     GridPosition2D::new(tile.0.x(), tile.0.y()),
                     tile.1,
                 ));

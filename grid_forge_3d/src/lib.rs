@@ -36,7 +36,7 @@
 //!
 //! // Grid is now empty.
 //! for pos in size.get_all_possible_positions() {
-//!     assert!(map.get_data_at_position(&pos).is_none());
+//!     assert!(map.data_at(&pos).is_none());
 //! }
 //!
 //! let mut tile_vec = Vec::new();
@@ -61,7 +61,7 @@
 //!     assert!(map.insert_data(&pos, data), "failed to insert data");
 //!
 //!     // The Tile3D can be removed from the grid.
-//!     tile_vec.push(map.remove_tile_at_position(&pos).expect("failed to retrieve tile"));
+//!     tile_vec.push(map.remove_at(&pos).expect("failed to retrieve tile"));
 //! }
 //!
 //! for tile in tile_vec {
@@ -70,11 +70,11 @@
 //!     let data = tile.data();
 //!
 //!     // Alternatively, the Tile3D can be also inserted into the grid.
-//!     assert!(map.insert_tile(Tile3D::new(pos, data)), "failed to insert tile");
+//!     assert!(map.insert(Tile3D::new(pos, data)), "failed to insert tile");
 //! }
 //!
 //! // We can also iterate on the tile references.
-//! for tile in map.iter_tiles() {
+//! for tile in map.tiles() {
 //!
 //!     /// Coords can be also retrieved as an array.
 //!     let [x, y, z] = tile.grid_position().coords();

@@ -72,7 +72,7 @@ fn main() {
     let mut map: GridMap2D<TwoColoredTileData> =
         walker.gen_grid_map(|_| TwoColoredTileData::new(TileColor::Red));
 
-    map.fill_empty_using(|_| TwoColoredTileData::new(TileColor::Gray));
+    map.fill_with_fn(|_| TwoColoredTileData::new(TileColor::Gray));
 
     let mut image = init_map_image_buffer::<DefaultVisPixel, 1, 1>(&size);
 

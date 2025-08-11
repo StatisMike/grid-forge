@@ -9,7 +9,7 @@ use grid_forge_core::TileData;
 use grid_forge_core::procgen_collapse::option::OptionWeights;
 
 grid_forge_core::__impl_collapsible_tile_data! {
-    struct_name: CollapsibleTile2D,
+    struct_name: CollapsibleData2D,
     position: GridPosition2D,
     ways_to_be_option: WaysToBeOption2D,
     per_option_data: PerOptionData2D,

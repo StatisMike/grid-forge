@@ -90,13 +90,13 @@ macro_rules! __impl_singular_identity_analyzer {
 
         impl <Data: TypedData> $name<Data> {
             fn analyze_tile_at_pos(&mut self, map: &impl $grid<Data>, pos: $position) {
-                if let Some(tile) = map.get_tile_at_position(&pos) {
+                if let Some(tile) = map.tile_at(&pos) {
                     if !self.tiles.contains(&tile.as_ref().tile_type_id()) {
                         self.tiles.push(tile.as_ref().tile_type_id());
                     }
         
                     for dir in <$direction>::ALL {
-                        if let Some(neighbour) = map.get_neighbour_at(&pos, &dir) {
+                        if let Some(neighbour) = map.neighbor_at(&pos, &dir) {
                             self.adjacency_rules.add_adjacency(&tile, &neighbour, dir)
                         }
                     }
@@ -104,7 +104,7 @@ macro_rules! __impl_singular_identity_analyzer {
             }
 
             pub fn analyze(&mut self, map: &impl $grid<Data>) {
-                for position in map.get_all_positions() {
+                for position in map.positions() {
                     self.analyze_tile_at_pos(map, position);
                 }
             }
@@ -165,7 +165,7 @@ macro_rules! __impl_singular_border_analyzer {
         impl<Data: TypedData> $name<Data> {
             pub fn analyze(&mut self, map: &impl $grid<Data>) {
                 self.adjacency_rules = $adjacency_rules::default();
-                for position in map.get_all_positions() {
+                for position in map.positions() {
                     self.analyze_tile_at_pos(map, position);
                 }
                 self.generate_adjacency_rules();
@@ -191,13 +191,13 @@ macro_rules! __impl_singular_border_analyzer {
             }
 
             fn analyze_tile_at_pos(&mut self, map: &impl $grid<Data>, pos: $position) {
-                if let Some(tile) = map.get_data_at_position(&pos) {
+                if let Some(tile) = map.data_at(&pos) {
                     if !self.tiles.contains(&tile.tile_type_id()) {
                         self.tiles.push(tile.tile_type_id());
                     }
 
                     for dir in <$direction>::ALL {
-                        if let Some(neighbour) = map.get_neighbour_at(&pos, &dir) {
+                        if let Some(neighbour) = map.neighbor_at(&pos, &dir) {
                             self.add_adjacency_raw(
                                 tile.tile_type_id(),
                                 neighbour.as_ref().tile_type_id(),
@@ -383,8 +383,8 @@ macro_rules! __impl_singular_frequency_hints {
             }
 
             pub fn analyze(&mut self, map: &impl $grid<Data>) {
-                for position in map.get_all_positions() {
-                    let data = map.get_data_at_position(&position).unwrap();
+                for position in map.positions() {
+                    let data = map.data_at(&position).unwrap();
                     self.count_data(&data);
                 }
             }
@@ -506,7 +506,7 @@ macro_rules! __impl_singular_resolver {
                 while let Some(collapse_position) = queue.get_next_position() {
                     let to_collapse = grid
                         .grid
-                        .get_mut_data_at_position(&collapse_position)
+                        .data_at_mut(&collapse_position)
                         .unwrap();
                     // skip collapsed;
                     if to_collapse.is_collapsed() {
@@ -577,7 +577,7 @@ macro_rules! __impl_singular_resolver {
                 while let Some(collapse_position) = queue.get_next_position() {
                     let to_collapse = grid
                         .grid
-                        .get_data_at_position(&collapse_position)
+                        .data_at(&collapse_position)
                         .unwrap();
                     // skip collapsed;
                     if to_collapse.is_collapsed() {
@@ -600,7 +600,7 @@ macro_rules! __impl_singular_resolver {
 
                     let to_collapse = grid
                         .grid
-                        .get_mut_data_at_position(&collapse_position)
+                        .data_at_mut(&collapse_position)
                         .unwrap();
                     to_collapse.collapse_basic(rng, &option_data);
 
@@ -781,7 +781,7 @@ macro_rules! __impl_propagator {
                             } else {
                                 continue;
                             };
-                        let mut tile = if let Some(tile) = grid.get_mut_tile_at_position(&pos_to_update) {
+                        let mut tile = if let Some(tile) = grid.tile_at_mut(&pos_to_update) {
                             tile
                         } else {
                             continue;
@@ -811,7 +811,7 @@ macro_rules! __impl_propagator {
                 }
         
                 for pos in tiles_to_update {
-                    queue.update_queue(pos, grid.get_data_at_position(&pos).unwrap().calc_entrophy());
+                    queue.update_queue(pos, grid.data_at(&pos).unwrap().calc_entrophy());
                 }
         
                 Ok(())

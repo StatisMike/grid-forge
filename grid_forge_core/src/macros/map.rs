@@ -39,48 +39,48 @@ macro_rules! __impl_grid_trait {
         {
             fn size(&self) -> &$size_type;
 
-            fn get_data_at_position(&self, position: &$position_type) -> Option<&Data>;
+            fn data_at(&self, position: &$position_type) -> Option<&Data>;
 
-            fn get_tile_at_position<'a>(&'a self, position: &$position_type) -> Option<__tile_ref_type!()>;
+            fn tile_at<'a>(&'a self, position: &$position_type) -> Option<__tile_ref_type!()>;
 
-            fn get_mut_data_at_position(&mut self, position: &$position_type) -> Option<&mut Data>;
+            fn data_at_mut(&mut self, position: &$position_type) -> Option<&mut Data>;
 
-            fn get_mut_tile_at_position<'a>(&'a mut self, position: &$position_type) -> Option<__tile_mut_type!()>;
+            fn tile_at_mut<'a>(&'a mut self, position: &$position_type) -> Option<__tile_mut_type!()>;
 
-            fn get_tiles_at_positions<'a>(&'a self, positions: &[$position_type]) -> Vec<__tile_ref_type!()>;
+            fn tiles_at<'a>(&'a self, positions: &[$position_type]) -> Vec<__tile_ref_type!()>;
 
-            fn insert_tile(&mut self, tile: __tile_type!()) -> bool;
+            fn insert(&mut self, tile: __tile_type!()) -> bool;
 
             fn insert_data(&mut self, position: &$position_type, data: Data) -> bool;
 
-            fn remove_tile_at_position(&mut self, position: &$position_type) -> Option<__tile_type!()>;
+            fn remove_at(&mut self, position: &$position_type) -> Option<__tile_type!()>;
 
-            fn get_neighbours<'a>(&'a self, position: &$position_type) -> $direction_table<Option<__tile_ref_type!()>>;
+            fn neighbors<'a>(&'a self, position: &$position_type) -> $direction_table<Option<__tile_ref_type!()>>;
 
-            fn get_neighbour_at<'a>(
+            fn neighbor_at<'a>(
                 &'a self,
                 position: &$position_type,
                 direction: &$direction_type,
             ) -> Option<__tile_ref_type!()>;
 
-            fn get_mut_neighbour_at<'a>(
+            fn neighbor_at_mut<'a>(
                 &'a mut self,
                 position: &$position_type,
                 direction: &$direction_type,
             ) -> Option<__tile_mut_type!()>;
 
-            fn get_all_positions(&self) -> Vec<$position_type>;
+            fn positions(&self) -> Vec<$position_type>;
 
-            fn iter_all_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + 'a
+            fn iter_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + 'a
             where
                 Data: 'a;
 
-            fn get_all_positions_with_type(&self, tile_type_id: &u64) -> Vec<$position_type>
+            fn positions_with_type(&self, tile_type_id: &u64) -> Vec<$position_type>
             where Data: grid_forge_core::id::TypedData;
 
-            fn get_all_empty_positions(&self) -> Vec<$position_type>;
+            fn empty_positions(&self) -> Vec<$position_type>;
 
-            fn iter_all_empty_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + 'a
+            fn iter_empty_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + 'a
             where
                 Data: 'a;
 
@@ -88,19 +88,19 @@ macro_rules! __impl_grid_trait {
             where
                 Data: 'a;
 
-            fn iter_tiles<'a>(&'a self) -> impl Iterator<Item = __tile_ref_type!()>
+            fn tiles<'a>(&'a self) -> impl Iterator<Item = __tile_ref_type!()>
             where
                 Data: 'a;
 
-            fn iter_mut_tiles<'a>(&'a mut self) -> impl Iterator<Item = __tile_mut_type!()>
+            fn tiles_mut<'a>(&'a mut self) -> impl Iterator<Item = __tile_mut_type!()>
             where
                 Data: 'a;
 
-            fn indexed_iter<'a>(&'a self) -> impl Iterator<Item = ($position_type, &'a Option<Data>)>
+            fn enumerate<'a>(&'a self) -> impl Iterator<Item = ($position_type, &'a Option<Data>)>
             where
                 Data: 'a;
 
-            fn indexed_iter_mut<'a>(
+            fn enumerate_mut<'a>(
                 &'a mut self,
             ) -> impl Iterator<Item = ($position_type, &'a mut Option<Data>)>
             where
@@ -114,13 +114,13 @@ macro_rules! __impl_grid_trait {
 
             fn drain(self) -> Vec<__tile_type!()>;
 
-            fn fill_empty_using(&mut self, func: fn($position_type) -> Data);
+            fn fill_with_fn(&mut self, func: fn($position_type) -> Data);
 
-            fn fill_empty_with_default(&mut self)
+            fn fill_default(&mut self)
             where
                 Data: Default;
 
-            fn fill_empty_with(&mut self, data: Data)
+            fn fill_with(&mut self, data: Data)
             where
                 Data: Clone;
 
@@ -166,26 +166,26 @@ macro_rules! __impl_grid_shared_trait {
             $($($where_clause)*)?,
             Shared: grid_forge_core::id::SharedData,
         {
-            fn import_shared_data(&mut self, shared_data: grid_forge_core::id::TypeIdMap<Shared>);
+            fn import_shared(&mut self, shared_data: grid_forge_core::id::TypeIdMap<Shared>);
 
-            fn export_shared_data(&mut self) -> grid_forge_core::id::TypeIdMap<Shared>;
+            fn export_shared(&mut self) -> grid_forge_core::id::TypeIdMap<Shared>;
 
-            fn check_shared_data(&self) -> Vec<u64>;
+            fn shared_types(&self) -> Vec<u64>;
 
-            fn clone_shared_data(&self) -> grid_forge_core::id::TypeIdMap<Shared>
+            fn clone_shared(&self) -> grid_forge_core::id::TypeIdMap<Shared>
             where Shared: Clone;
 
-            fn insert_shared_data(&mut self, type_id: u64, data: Shared);
+            fn insert_shared(&mut self, type_id: u64, data: Shared);
 
-            fn remove_shared_data(&mut self, type_id: u64);
+            fn remove_shared(&mut self, type_id: u64);
 
             fn get_mut_shared_data(&mut self, type_id: u64) -> Option<&mut Shared>;
 
-            fn get_shared_data_at_position(&self, position: &$position_type) -> Option<&Shared>;
+            fn shared_at(&self, position: &$position_type) -> Option<&Shared>;
 
-            fn get_tile_with_shared_at_position<'a>(&'a self, position: &$position_type) -> Option<__tile_ref_shared_type!()>;
+            fn tile_with_shared_at<'a>(&'a self, position: &$position_type) -> Option<__tile_ref_shared_type!()>;
 
-            fn get_mut_tile_with_shared_at_position<'a>(&'a mut self, position: &$position_type) -> Option<__tile_mut_shared_type!()>;
+            fn tile_with_shared_at_mut<'a>(&'a mut self, position: &$position_type) -> Option<__tile_mut_shared_type!()>;
         }
     }
 }
@@ -267,8 +267,8 @@ macro_rules! __impl_grid {
             /// - `Some(&Data)` if position is valid and contains data
             /// - `None` otherwise
             ///
-            /// For a version that returns position and data together, see [`get_mut_tile_at_position`](Self::get_tile_at_position()).
-            fn get_data_at_position(&self, position: &$position_type) -> Option<&Data> {
+            /// For a version that returns position and data together, see [`tile_at_mut`](Self::tile_at()).
+            fn data_at(&self, position: &$position_type) -> Option<&Data> {
                 if !self.size.is_position_valid(position) {
                     return None;
                 }
@@ -283,8 +283,8 @@ macro_rules! __impl_grid {
             #[doc = " if position is valid and contains data"]
             /// - `None` otherwise
             ///
-            /// For direct data access without position, see [`get_data_at_position`](Self::get_data_at_position()).
-            fn get_tile_at_position<'a>(&'a self, position: &$position_type) -> Option<__tile_ref_type!()> {
+            /// For direct data access without position, see [`data_at`](Self::data_at()).
+            fn tile_at<'a>(&'a self, position: &$position_type) -> Option<__tile_ref_type!()> {
                 if !self.size.is_position_valid(position) {
                     return None;
                 }
@@ -302,7 +302,7 @@ macro_rules! __impl_grid {
             /// - `None` otherwise
             ///
             /// For a version that returns position and data together, see [`get_tile_mut_at_position`](Self::get_tile_mut_at_position()).
-            fn get_mut_data_at_position(&mut self, position: &$position_type) -> Option<&mut Data> {
+            fn data_at_mut(&mut self, position: &$position_type) -> Option<&mut Data> {
                 if !self.size.is_position_valid(position) {
                     return None;
                 }
@@ -320,8 +320,8 @@ macro_rules! __impl_grid {
             #[doc = " if position is valid and contains data"]
             /// - `None` otherwise
             ///
-            /// For direct data access without position, see [`get_mut_data_at_position`](Self::get_mut_data_at_position()).
-            fn get_mut_tile_at_position<'a>(&'a mut self, position: &$position_type) -> Option<__tile_mut_type!()> {
+            /// For direct data access without position, see [`data_at_mut`](Self::data_at_mut()).
+            fn tile_at_mut<'a>(&'a mut self, position: &$position_type) -> Option<__tile_mut_type!()> {
                 if !self.size.is_position_valid(position) {
                     return None;
                 }
@@ -343,10 +343,10 @@ macro_rules! __impl_grid {
             #[doc = "Vec of [`TileRef`]]"]
             #[doc = concat!("(", stringify!($tile_ref_type), ")")]
             #[doc = " for each provided position containing data."]
-            fn get_tiles_at_positions<'a>(&'a self, positions: &[$position_type]) -> Vec<__tile_ref_type!()> {
+            fn tiles_at<'a>(&'a self, positions: &[$position_type]) -> Vec<__tile_ref_type!()> {
                 positions
                     .iter()
-                    .filter_map(|position| self.get_tile_at_position(position))
+                    .filter_map(|position| self.tile_at(position))
                     .collect::<Vec<_>>()
             }
 
@@ -355,7 +355,7 @@ macro_rules! __impl_grid {
             /// # Returns
             /// - `true` if insertion succeeded (valid position)
             /// - `false` if position is out of bounds
-            fn insert_tile(&mut self, tile: __tile_type!()) -> bool
+            fn insert(&mut self, tile: __tile_type!()) -> bool
             {
                 if !self.size.is_position_valid(&tile.grid_position()) {
                     return false;
@@ -371,7 +371,7 @@ macro_rules! __impl_grid {
 
             /// Inserts raw data at a specific position.
             ///
-            /// See [`insert_tile`](Self::insert_tile()) for version using tile type.
+            /// See [`insert`](Self::insert()) for version using tile type.
             ///
             /// # Returns
             /// - `true` if insertion succeeded (valid position)
@@ -396,7 +396,7 @@ macro_rules! __impl_grid {
             #[doc = concat!("(", stringify!($tile_type), ")")]
             #[doc = " if position was valid and contained data"]
             /// - `None` otherwise
-            fn remove_tile_at_position(&mut self, position: &$position_type) -> Option<__tile_type!()>
+            fn remove_at(&mut self, position: &$position_type) -> Option<__tile_type!()>
             {
                 if !self.size.is_position_valid(position) {
                     return None;
@@ -420,11 +420,11 @@ macro_rules! __impl_grid {
             #[doc = " containing the [`Some(TileRef)`]"]
             #[doc = concat!("(", stringify!($tile_ref_type), ")")]
             #[doc = " for each direction if it contains data, or `None` otherwise."]
-            fn get_neighbours<'a>(&'a self, position: &$position_type) -> $direction_table<Option<__tile_ref_type!()>> {
+            fn neighbors<'a>(&'a self, position: &$position_type) -> $direction_table<Option<__tile_ref_type!()>> {
                 let mut result = $direction_table::new([const { None }; $neighbour_size]);
                 for direction in <$direction_type>::ALL {
                     if let Some(pos) = direction.march_step(position, &self.size) {
-                        if let Some(tile) = self.get_tile_at_position(&pos) {
+                        if let Some(tile) = self.tile_at(&pos) {
                             result[direction] = Some(tile);
                         }
                     }
@@ -439,13 +439,13 @@ macro_rules! __impl_grid {
             #[doc = concat!("(", stringify!($tile_ref_type), ")")]
             #[doc = " if position is valid and contains data"]
             /// - `None` otherwise
-            fn get_neighbour_at<'a>(
+            fn neighbor_at<'a>(
                 &'a self,
                 position: &$position_type,
                 direction: &$direction_type,
             ) -> Option<__tile_ref_type!()> {
                 if let Some(position) = direction.march_step(position, &self.size) {
-                    return self.get_tile_at_position(&position);
+                    return self.tile_at(&position);
                 }
                 None
             }
@@ -457,38 +457,38 @@ macro_rules! __impl_grid {
             #[doc = concat!("(", stringify!($tile_mut_type), ")")]
             #[doc = " if position is valid and contains data"]
             /// - `None` otherwise
-            fn get_mut_neighbour_at<'a>(
+            fn neighbor_at_mut<'a>(
                 &'a mut self,
                 position: &$position_type,
                 direction: &$direction_type,
             ) -> Option<__tile_mut_type!()> {
                 if let Some(position) = direction.march_step(position, &self.size) {
-                    return self.get_mut_tile_at_position(&position);
+                    return self.tile_at_mut(&position);
                 }
                 None
             }
 
             /// Returns all positions contactining data in the grid map..
-            fn get_all_positions(&self) -> Vec<$position_type> {
-                self.indexed_iter()
+            fn positions(&self) -> Vec<$position_type> {
+                self.enumerate()
                     .filter_map(|(pos, t)| if t.is_some() { Some(pos) } else { None })
                     .collect()
             }
 
             /// Returns iterator over all positions contactining data in the grid map.
-            fn iter_all_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + 'a
+            fn iter_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + 'a
             where
                 Data: 'a,
             {
-                self.indexed_iter()
+                self.enumerate()
                     .filter_map(|(pos, t)| if t.is_some() { Some(pos) } else { None })
             }
 
             /// Returns all positions containing data of the specified [`tile_type_id`] in the grid map.
-            fn get_all_positions_with_type(&self, tile_type_id: &u64) -> Vec<$position_type>
+            fn positions_with_type(&self, tile_type_id: &u64) -> Vec<$position_type>
             where Data: grid_forge_core::id::TypedData
             {
-                self.indexed_iter()
+                self.enumerate()
                     .filter_map(|(pos, t)| {
                         if let Some(t) = t {
                             if t.tile_type_id() == *tile_type_id {
@@ -504,18 +504,18 @@ macro_rules! __impl_grid {
             }
 
             /// Returns all empty positions in the grid map.
-            fn get_all_empty_positions(&self) -> Vec<$position_type> {
-                self.indexed_iter()
+            fn empty_positions(&self) -> Vec<$position_type> {
+                self.enumerate()
                     .filter_map(|(pos, t)| if t.is_none() { Some(pos) } else { None })
                     .collect()
             }
 
             /// Returns iterator over all empty positions in the grid map.
-            fn iter_all_empty_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + 'a
+            fn iter_empty_positions<'a>(&'a self) -> impl Iterator<Item = $position_type> + 'a
             where
                 Data: 'a,
             {
-                self.indexed_iter()
+                self.enumerate()
                     .filter_map(|(pos, t)| if t.is_none() { Some(pos) } else { None })
             }
 
@@ -530,27 +530,27 @@ macro_rules! __impl_grid {
             }
 
             /// Returns iterator over all tiles in the grid map.
-            fn iter_tiles<'a>(&'a self) -> impl Iterator<Item = __tile_ref_type!()>
+            fn tiles<'a>(&'a self) -> impl Iterator<Item = __tile_ref_type!()>
             where
                 Data: 'a,
             {
-                self.indexed_iter()
+                self.enumerate()
                     .filter_map(|(pos, data)| data.as_ref().map(|d| (pos, d).into()))
             }
 
             /// Returns iterator over all tiles in the grid map (mutable).
             ///
             /// This method is not tracked even with [`mut_access_tracking`](Self::mut_access_tracking) enabled.
-            fn iter_mut_tiles<'a>(&'a mut self) -> impl Iterator<Item = __tile_mut_type!()>
+            fn tiles_mut<'a>(&'a mut self) -> impl Iterator<Item = __tile_mut_type!()>
             where
                 Data: 'a,
             {
-                self.indexed_iter_mut()
+                self.enumerate_mut()
                     .filter_map(|(pos, data)| data.as_mut().map(|d| (pos, d).into()))
             }
 
             /// Returns iterator over tuples of position and tile slot data.
-            fn indexed_iter<'a>(&'a self) -> impl Iterator<Item = ($position_type, &'a Option<Data>)>
+            fn enumerate<'a>(&'a self) -> impl Iterator<Item = ($position_type, &'a Option<Data>)>
             where
                 Data: 'a,
             {
@@ -563,7 +563,7 @@ macro_rules! __impl_grid {
             /// Returns iterator over tuples of position and tile slot data (mutable).
             ///
             /// This method is not tracked even with [`mut_access_tracking`](Self::mut_access_tracking) enabled.
-            fn indexed_iter_mut<'a>(
+            fn enumerate_mut<'a>(
                 &'a mut self,
             ) -> impl Iterator<Item = ($position_type, &'a mut Option<Data>)>
             where
@@ -584,7 +584,7 @@ macro_rules! __impl_grid {
             /// To retrieve the remapped tiles without consuming the grid map, you can use [`cloned_remapped`](Self::cloned_remapped)
             /// method if the tile data implements [`Clone`](Clone).
             fn drain_remapped(mut self, anchor_pos: $position_type) -> Vec<__tile_type!()> {
-                self.indexed_iter_mut()
+                self.enumerate_mut()
                     .filter_map(|(pos, t)| {
                         if t.is_none() {
                             None
@@ -605,7 +605,7 @@ macro_rules! __impl_grid {
             where
                 Data: Clone,
             {
-                self.indexed_iter()
+                self.enumerate()
                     .filter_map(|(pos, t)| {
                         if t.is_some() {
                             Some((anchor_pos + pos, t.clone().unwrap()).into())
@@ -618,7 +618,7 @@ macro_rules! __impl_grid {
 
             /// Retrieves all tiles consuming the map.
             fn drain(mut self) -> Vec<__tile_type!()> {
-                self.indexed_iter_mut()
+                self.enumerate_mut()
                     .filter_map(|(pos, t)| {
                         if t.is_none() {
                             None
@@ -630,8 +630,8 @@ macro_rules! __impl_grid {
             }
 
             /// Fills empty positions in the grid map with the result of the provided function.
-            fn fill_empty_using(&mut self, func: fn($position_type) -> Data) {
-                for (pos, t) in self.indexed_iter_mut() {
+            fn fill_with_fn(&mut self, func: fn($position_type) -> Data) {
+                for (pos, t) in self.enumerate_mut() {
                     if t.is_none() {
                         t.replace(func(pos));
                     }
@@ -639,22 +639,22 @@ macro_rules! __impl_grid {
             }
 
             /// Fills empty positions in the grid map with the tile data default value.
-            fn fill_empty_with_default(&mut self)
+            fn fill_default(&mut self)
             where
                 Data: Default,
             {
-                let empty_positions = self.get_all_empty_positions();
+                let empty_positions = self.empty_positions();
                 for pos in empty_positions {
                     self.insert_data(&pos, Data::default());
                 }
             }
 
             /// Fills empty positions in the grid map with the provided data.
-            fn fill_empty_with(&mut self, data: Data)
+            fn fill_with(&mut self, data: Data)
             where
                 Data: Clone,
             {
-                for pos in self.get_all_empty_positions() {
+                for pos in self.empty_positions() {
                     self.insert_data(&pos, data.clone());
                 }
             }
@@ -735,11 +735,11 @@ macro_rules! __impl_grid {
             }
 
             fn len_taken(&self) -> usize {
-                self.iter_all_positions().count()
+                self.iter_positions().count()
             }
 
             fn first_data<'a>(&'a self) -> Option<__tile_ref_type!()> {
-                self.iter_tiles().next()
+                self.tiles().next()
             }
         }
     }
@@ -820,12 +820,12 @@ macro_rules! __impl_grid_with_shared {
             ///
             /// If there were some shared data already present with the same `type_id`, it will be overwritten.
             /// Non-matched `type_id`s will be ignored. To make sure that they are wiped out, you can use
-            /// [`export_shared_data`](Self::export_shared_data) to drain existing shared data..
+            /// [`export_shared`](Self::export_shared) to drain existing shared data..
             ///
             /// While importing shared data, even if `mut_access_tracking` is enabled, the shared data inclusion
             /// will not be tracked. In these scenarios it is implied that all tiles were modified and all
             /// objects dependent on the shared data should be updated.
-            fn import_shared_data(&mut self, shared_data: grid_forge_core::id::TypeIdMap<Shared>)
+            fn import_shared(&mut self, shared_data: grid_forge_core::id::TypeIdMap<Shared>)
             {
                 for (type_id, data) in shared_data {
                     self.shared_data.replace_shared_data(type_id, Some(data), false);
@@ -835,13 +835,13 @@ macro_rules! __impl_grid_with_shared {
             /// Exports shared data from the grid.
             ///
             /// This method will drain all shared data from the grid and return it as a [`TypeIdMap`](crate::id::TypeIdMap).
-            /// If you would rather keep the shared data, you can use [`clone_shared_data`](Self::clone_shared_data) instead
+            /// If you would rather keep the shared data, you can use [`clone_shared`](Self::clone_shared) instead
             /// if the shared data struct implements [`Clone`](Clone).
             ///
             /// While exporting shared data, even if `mut_access_tracking` is enabled, the shared data mut access
             /// will not be tracked. In these scenarios it is implied that all tiles were modified and all
             /// objects dependent on the shared data should be updated.
-            fn export_shared_data(&mut self) -> grid_forge_core::id::TypeIdMap<Shared> {
+            fn export_shared(&mut self) -> grid_forge_core::id::TypeIdMap<Shared> {
                 self.shared_data.drain_shared_data()
             }
 
@@ -849,10 +849,10 @@ macro_rules! __impl_grid_with_shared {
             ///
             /// Returns vector of all tile_type_ids present in the grid which don't have
             /// corresponding shared data registered.
-            fn check_shared_data(&self) -> Vec<u64> {
+            fn shared_types(&self) -> Vec<u64> {
                 let mut checked = std::collections::HashSet::new();
                 let mut missing = Vec::new();
-                for tile in self.iter_tiles() {
+                for tile in self.tiles() {
                     if checked.contains(&tile.data().tile_type_id()) {
                         continue;
                     }
@@ -869,7 +869,7 @@ macro_rules! __impl_grid_with_shared {
             /// Clones shared data from the grid.
             ///
             /// This method will export all shared data by cloning them, keeping existing shared data intact.
-            fn clone_shared_data(&self) -> grid_forge_core::id::TypeIdMap<Shared>
+            fn clone_shared(&self) -> grid_forge_core::id::TypeIdMap<Shared>
             where Shared: Clone {
                 self.shared_data.iter_shared_data().map(|(type_id, data)| (*type_id, data.clone())).collect()
             }
@@ -878,14 +878,14 @@ macro_rules! __impl_grid_with_shared {
             ///
             /// If there were some shared data already present with the same `type_id`, it will be overwritten.
             /// When `mut_access_tracking` is enabled, the shared data inclusion will be tracked.
-            fn insert_shared_data(&mut self, type_id: u64, data: Shared) {
+            fn insert_shared(&mut self, type_id: u64, data: Shared) {
                 self.shared_data.replace_shared_data(type_id, Some(data), true);
             }
 
             /// Removes shared data from the grid for the specified `type_id`.
             ///
             /// When `mut_access_tracking` is enabled, the shared data removal will be tracked.
-            fn remove_shared_data(&mut self, type_id: u64) {
+            fn remove_shared(&mut self, type_id: u64) {
                 self.shared_data.replace_shared_data(type_id, None, true);
             }
 
@@ -901,8 +901,8 @@ macro_rules! __impl_grid_with_shared {
             /// Gets shared data for the specified position.
             ///
             /// Returns `None` if there is no shared data for the tile type at the specified position.
-            fn get_shared_data_at_position(&self, position: &$position) -> Option<&Shared> {
-                let Some(tile) = self.get_tile_at_position(position) else { return None };
+            fn shared_at(&self, position: &$position) -> Option<&Shared> {
+                let Some(tile) = self.tile_at(position) else { return None };
 
                 self.shared_data.get_shared_data(&tile.data().tile_type_id())
             }
@@ -912,8 +912,8 @@ macro_rules! __impl_grid_with_shared {
             /// Returns a composite struct containing the tile position and immutable references to the tile and shared data.
             ///
             /// Returns `None` if there is no tile at the specified position or no shared data for its tile type.
-            fn get_tile_with_shared_at_position<'a>(&'a self, position: &$position) -> Option<__tile_ref_shared_type!()> {
-                let Some(tile) = self.get_tile_at_position(position) else { return None };
+            fn tile_with_shared_at<'a>(&'a self, position: &$position) -> Option<__tile_ref_shared_type!()> {
+                let Some(tile) = self.tile_at(position) else { return None };
                 let Some(shared) = self.shared_data.get_shared_data(&tile.data().tile_type_id()) else { return None };
                 Some((tile, shared).into())
             }
@@ -929,7 +929,7 @@ macro_rules! __impl_grid_with_shared {
             /// If `mut_access_tracking` is enabled, the position will be tracked as mutably accessed.
             ///
             /// Returns `None` if there is no tile at the specified position or no shared data for its tile type.
-            fn get_mut_tile_with_shared_at_position<'a>(&'a mut self, position: &$position) -> Option<__tile_mut_shared_type!()> {
+            fn tile_with_shared_at_mut<'a>(&'a mut self, position: &$position) -> Option<__tile_mut_shared_type!()> {
                 if !self.size.is_position_valid(position) {
                     return None;
                 }
@@ -963,7 +963,7 @@ macro_rules! __impl_grid_with_shared {
                 mut_accessed_types: &grid_forge_core::id::TypeIdSet,
             ) {
                 use crate::core::$tile_container_trait as _;
-                for tile in self.iter_tiles() {
+                for tile in self.tiles() {
                     if mut_accessed_types.contains(&tile.data().tile_type_id()) {
                         mut_accessed_tiles.insert(tile.grid_position());
                     }
@@ -985,11 +985,11 @@ macro_rules! __impl_shared_from_regular {
             /// Creates shared data grid from regular grid.
             ///
             /// The source grid will be consumed, and new grid will be created. Its internal shared data container
-            /// will be created as empty - you can use [`import_shared_data`](Self::import_shared_data) to populate it.
+            /// will be created as empty - you can use [`import_shared`](Self::import_shared) to populate it.
             pub fn from_regular(regular: $grid_type<Data>) -> Self {
                 let mut shared = Self::new(regular.size().clone());
                 for tile in regular.drain() {
-                    shared.insert_tile(tile);
+                    shared.insert(tile);
                 }
                 shared
             }
@@ -1065,7 +1065,7 @@ macro_rules! __impl_grid_tests {
 
             let size = *grid.size();
             for pos in size.get_all_possible_positions() {
-                let tile = grid.get_tile_at_position(&pos).unwrap();
+                let tile = grid.tile_at(&pos).unwrap();
                 assert_eq!(
                     tile.grid_position(), pos,
                     "wrong position on position: {pos:?}; simple access"
@@ -1078,15 +1078,15 @@ macro_rules! __impl_grid_tests {
             }
 
             for pos in size.get_all_possible_positions() {
-                let tile_data = grid.get_data_at_position(&pos).unwrap();
+                let tile_data = grid.data_at(&pos).unwrap();
                 assert_eq!(
                     tile_data.offset,
                     size.offset(&pos),
-                    "wrong offset on position: {pos:?}; get_tile_at_position access"
+                    "wrong offset on position: {pos:?}; tile_at access"
                 );
             }
 
-            for tile in grid.iter_tiles() {
+            for tile in grid.tiles() {
                 assert_eq!(
                     tile.data().offset,
                     size.offset(&tile.grid_position()),
@@ -1110,12 +1110,12 @@ macro_rules! __impl_grid_tests {
 
             let size = *grid.size();
             for pos in size.get_all_possible_positions() {
-                let mut tile = grid.get_mut_tile_at_position(&pos).unwrap();
+                let mut tile = grid.tile_at_mut(&pos).unwrap();
                 tile.data().varia = size.offset(&pos);
             }
 
             for pos in size.get_all_possible_positions() {
-                let tile = grid.get_data_at_position(&pos).unwrap();
+                let tile = grid.data_at(&pos).unwrap();
                 assert_eq!(
                     tile.offset,
                     size.offset(&pos),
@@ -1125,7 +1125,7 @@ macro_rules! __impl_grid_tests {
             }
 
             for pos in size.get_all_possible_positions() {
-                let data = grid.get_mut_data_at_position(&pos).unwrap();
+                let data = grid.data_at_mut(&pos).unwrap();
                 data.varia *= 2;
             }
 
@@ -1153,7 +1153,7 @@ macro_rules! __impl_grid_tests {
 
             // Get positions that should be tracked
             let positions_to_track = BTreeSet::from_iter(grid
-                .get_all_positions()
+                .positions()
                 .into_iter()
                 .filter(|pos| {
                     let offset = size.offset(pos);
@@ -1162,7 +1162,7 @@ macro_rules! __impl_grid_tests {
             );
 
             for pos in positions_to_track.iter() {
-                grid.get_mut_tile_at_position(pos).unwrap();
+                grid.tile_at_mut(pos).unwrap();
             }
 
             let mut_accessed = BTreeSet::from_iter(grid.get_mut_accessed().iter().copied());
@@ -1210,7 +1210,7 @@ macro_rules! __impl_grid_tests {
                     expected,
                 },
             ) in cases.iter().enumerate() {
-                let actual = grid.get_neighbour_at(pos, direction);
+                let actual = grid.neighbor_at(pos, direction);
                 match (actual, expected) {
                     (Some(neighbour), Some(expected_pos)) => {
                         assert_eq!(neighbour.grid_position(), *expected_pos, "wrong neighbour at position: {pos:?}; direction: {direction:?}. Case: {i}, Size: {size:?}");
@@ -1248,7 +1248,7 @@ macro_rules! __impl_grid_tests {
                     expected,
                 },
             ) in cases.iter().enumerate() {
-                let neighbours = grid.get_neighbours(pos);
+                let neighbours = grid.neighbors(pos);
 
                 for direction in <$direction_type>::ALL {
                     let expected = &expected[direction];
@@ -1321,7 +1321,7 @@ macro_rules! __impl_shared_grid_tests {
                 let shared = TestData::new(type_id);
                 ids.insert(type_id, shared);
             }
-            grid.import_shared_data(ids);
+            grid.import_shared(ids);
         }
 
         #[test]
@@ -1329,11 +1329,11 @@ macro_rules! __impl_shared_grid_tests {
             let mut grid = $grid_type::new(<$size_type>::from_slice(&[10; $dimension_count]));
             set_up_grid(&mut grid);
 
-            assert_eq!(0, grid.check_shared_data().len());
+            assert_eq!(0, grid.shared_types().len());
 
             let size = *grid.size();
             for pos in size.get_all_possible_positions() {
-                let tile = grid.get_tile_with_shared_at_position(&pos).unwrap();
+                let tile = grid.tile_with_shared_at(&pos).unwrap();
                 assert_eq!(
                     tile.grid_position(),
                     pos,
@@ -1347,15 +1347,15 @@ macro_rules! __impl_shared_grid_tests {
             }
 
             // for pos in size.get_all_possible_positions() {
-            //     let tile_data = grid.get_data_at_position(&pos).unwrap();
+            //     let tile_data = grid.data_at(&pos).unwrap();
             //     assert_eq!(
             //         tile_data.offset,
             //         size.offset(&pos),
-            //         "wrong offset on position: {pos:?}; get_tile_at_position access"
+            //         "wrong offset on position: {pos:?}; tile_at access"
             //     );
             // }
 
-            // for tile in grid.iter_tiles() {
+            // for tile in grid.tiles() {
             //     assert_eq!(
             //         tile.data().offset,
             //         size.offset(&tile.grid_position()),
@@ -1379,12 +1379,12 @@ macro_rules! __impl_shared_grid_tests {
 
         //     let size = *grid.size();
         //     for pos in size.get_all_possible_positions() {
-        //         let mut tile = grid.get_mut_tile_at_position(&pos).unwrap();
+        //         let mut tile = grid.tile_at_mut(&pos).unwrap();
         //         tile.data().varia = size.offset(&pos);
         //     }
 
         //     for pos in size.get_all_possible_positions() {
-        //         let tile = grid.get_data_at_position(&pos).unwrap();
+        //         let tile = grid.data_at(&pos).unwrap();
         //         assert_eq!(
         //             tile.offset,
         //             size.offset(&pos),
@@ -1394,7 +1394,7 @@ macro_rules! __impl_shared_grid_tests {
         //     }
 
         //     for pos in size.get_all_possible_positions() {
-        //         let data = grid.get_mut_data_at_position(&pos).unwrap();
+        //         let data = grid.data_at_mut(&pos).unwrap();
         //         data.varia *= 2;
         //     }
 

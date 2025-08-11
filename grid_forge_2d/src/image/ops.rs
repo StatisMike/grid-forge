@@ -35,7 +35,7 @@ where
 {
     let size = check_grid_vis_size(image, (WIDTH, HEIGHT))?;
     let mut grid = GridMap2D::<T>::new(size);
-    for (pos, pix) in grid.indexed_iter_mut() {
+    for (pos, pix) in grid.enumerate_mut() {
         let mut pix_tile = TilePixConst::<WIDTH, HEIGHT, P>::default();
         read_tile(&mut pix_tile, image, &pos)?;
         match pix {
@@ -76,7 +76,7 @@ where
     let size = check_grid_vis_size(image, pixel_size)?;
     let mut grid = GridMap2D::<T>::new(size);
     let mut checked = false;
-    for (pos, pix) in grid.indexed_iter_mut() {
+    for (pos, pix) in grid.enumerate_mut() {
         let mut pix_tile = TilePixVar::<P>::new_empty(pixel_size.0, pixel_size.1);
 
         if !checked {
@@ -143,7 +143,7 @@ where
     let size = check_grid_vis_size(image, (WIDTH, HEIGHT))?;
     let mut grid = GridMap2D::new(size);
 
-    for (pos, tile_slot) in grid.indexed_iter_mut() {
+    for (pos, tile_slot) in grid.enumerate_mut() {
         let mut pix_tile = TilePixConst::<WIDTH, HEIGHT, P>::default();
         read_tile(&mut pix_tile, image, &pos)?;
         let tile_id = pix_tile.pix_hash();
@@ -207,7 +207,7 @@ where
 
     let mut checked = false;
 
-    for (pos, tile_slot) in grid.indexed_iter_mut() {
+    for (pos, tile_slot) in grid.enumerate_mut() {
         let mut pix_tile = TilePixVar::new_empty(pix_size.0, pix_size.1);
 
         if !checked {
@@ -285,7 +285,7 @@ where
         pix_id_map.insert(pix.tile_pixels().pix_hash(), *id);
     }
 
-    for (pos, tile_slot) in grid.indexed_iter_mut() {
+    for (pos, tile_slot) in grid.enumerate_mut() {
         let mut pix_tile = TilePixConst::<WIDTH, HEIGHT, P>::default();
         read_tile(&mut pix_tile, image, &pos)?;
         match pix_id_map.get(&pix_tile.pix_hash()) {
@@ -350,7 +350,7 @@ where
         pix_id_map.insert(pix.tile_pixels().pix_hash(), *id);
     }
 
-    for (pos, tile_slot) in grid.indexed_iter_mut() {
+    for (pos, tile_slot) in grid.enumerate_mut() {
         let mut pix_tile = TilePixVar::<P>::new_empty(pix_size.0, pix_size.1);
         read_tile(&mut pix_tile, image, &pos)?;
         match pix_id_map.get(&pix_tile.pix_hash()) {
@@ -377,7 +377,7 @@ where
     P: PixelWithDefault + 'static,
 {
     check_grid_image_size(image, (WIDTH, HEIGHT), map.size())?;
-    for (pos, slot) in map.indexed_iter() {
+    for (pos, slot) in map.enumerate() {
         let Some(tile) = slot else { continue };
         write_tile(image, pos, tile.tile_pixels())?;
     }
@@ -395,7 +395,7 @@ where
     P: PixelWithDefault + 'static,
 {
     check_grid_image_size(image, pix_size, map.size())?;
-    for (pos, slot) in map.indexed_iter() {
+    for (pos, slot) in map.enumerate() {
         let Some(tile) = slot else { continue };
         write_tile(image, pos, tile.tile_pixels())?;
     }
@@ -414,7 +414,7 @@ where
     P: PixelWithDefault + 'static,
 {
     check_grid_image_size(image, (WIDTH, HEIGHT), map.size())?;
-    for (pos, slot) in map.indexed_iter() {
+    for (pos, slot) in map.enumerate() {
         let Some(tile) = slot else { continue };
         let tile_id = tile.tile_type_id();
         let Some(tile_pix) = tile_pixels.get(&tile_id) else {
@@ -438,7 +438,7 @@ where
     P: PixelWithDefault + 'static,
 {
     check_grid_image_size(image, pix_size, map.size())?;
-    for (pos, slot) in map.indexed_iter() {
+    for (pos, slot) in map.enumerate() {
         let Some(tile) = slot else { continue };
         let tile_id = tile.tile_type_id();
         let Some(tile_pix) = tile_pixels.get(&tile_id) else {
@@ -460,8 +460,8 @@ where
     P: PixelWithDefault + 'static,
 {
     check_grid_image_size(image, (WIDTH, HEIGHT), map.size())?;
-    for position in map.iter_all_positions() {
-        let Some(tile_pix) = map.get_shared_data_at_position(&position) else {
+    for position in map.iter_positions() {
+        let Some(tile_pix) = map.shared_at(&position) else {
             continue;
         };
         write_tile(image, position, tile_pix.tile_pixels())?;
@@ -480,8 +480,8 @@ where
     P: PixelWithDefault + 'static,
 {
     check_grid_image_size(image, pix_size, map.size())?;
-    for position in map.iter_all_positions() {
-        let Some(tile_pix) = map.get_shared_data_at_position(&position) else {
+    for position in map.iter_positions() {
+        let Some(tile_pix) = map.shared_at(&position) else {
             continue;
         };
         check_tile_vis_size(pix_size, tile_pix.tile_pixels())?;

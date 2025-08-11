@@ -120,7 +120,7 @@ macro_rules! __impl_pattern_grid {
                     inner: $grid_struct::new(*map.size()),
                 };
 
-                for position in map.get_all_positions() {
+                for position in map.positions() {
                     if let Some(pattern) = instance.create_pattern(map, &position) {
                         let tile = PatternTileData::WithPattern {
                             tile_type_id: pattern.tile_type_id(),
@@ -128,7 +128,7 @@ macro_rules! __impl_pattern_grid {
                         };
                         collection.add_pattern(pattern);
                         instance.inner.insert_data(&position, tile);
-                    } else if let Some(ident_tile) = map.get_tile_at_position(&position) {
+                    } else if let Some(ident_tile) = map.tile_at(&position) {
                         let tile = PatternTileData::OnlyId {
                             tile_type_id: ident_tile.as_ref().tile_type_id(),
                         };
@@ -153,7 +153,7 @@ macro_rules! __impl_pattern_grid {
             ) -> Option<$pattern_struct<$($size_const),*>> {
                 if let Some(positions) = self.generate_pattern_positions(anchor_pos, map.size()) {
                     let mut pattern = $pattern_struct::empty();
-                    let tiles = map.get_tiles_at_positions(&positions);
+                    let tiles = map.tiles_at(&positions);
                     for tile in tiles {
                         pattern.set_id_for_pos(
                             anchor_pos,
@@ -286,7 +286,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                 for tile in
                     Self::collapsed_into_collapsible_pattern(rng, collapsed, &patterns, &option_data)?
                 {
-                    grid.insert_tile(tile);
+                    grid.insert(tile);
                 }
         
                 Ok(Self {
@@ -300,7 +300,7 @@ macro_rules! __impl_pattern_collapsible_grid {
             pub fn retrieve_collapsed(&self) -> $collapsed_grid {
                 let mut out = $collapsed_grid::new(self.pattern_grid.size().clone());
         
-                for tile in self.pattern_grid.iter_tiles() {
+                for tile in self.pattern_grid.tiles() {
                     if !tile.data().is_collapsed() {
                         continue;
                     }
@@ -327,7 +327,7 @@ macro_rules! __impl_pattern_collapsible_grid {
             { 
                 let mut out = $grid::<OutputTile>::new(*self.pattern_grid.size());
         
-                for tile in self.pattern_grid.iter_tiles() {
+                for tile in self.pattern_grid.tiles() {
                     if !tile.data().is_collapsed() {
                         continue;
                     }
@@ -355,7 +355,7 @@ macro_rules! __impl_pattern_collapsible_grid {
             {
                 let mut out = $grid::<OutputTile>::new(*self.pattern_grid.size());
         
-                for tile in self.pattern_grid.iter_tiles() {
+                for tile in self.pattern_grid.tiles() {
                     if !tile.data().is_collapsed() {
                         continue;
                     }
@@ -385,7 +385,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                     |d| !d.is_collapsed()
                 };
                 self.pattern_grid
-                    .indexed_iter()
+                    .enumerate()
                     .filter_map(|t| {
                         if let Some(d) = t.1 {
                             if func(d) {
@@ -415,7 +415,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                 let check_provided = HashSet::<$position>::from_iter(to_collapse.iter().copied());
     
                 for pos_to_collapse in to_collapse {
-                    for neighbour_tile in self.pattern_grid.get_neighbours(pos_to_collapse).inner().iter().flatten() {
+                    for neighbour_tile in self.pattern_grid.neighbors(pos_to_collapse).inner().iter().flatten() {
                         if !neighbour_tile.as_ref().is_collapsed()
                             || check_provided.contains(&neighbour_tile.grid_position())
                             || check_generated.contains(&neighbour_tile.grid_position())
@@ -447,7 +447,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                 option_data: &$per_option_data,
             ) {
                 for direction in $direction::ALL {
-                    if let Some(mut tile) = grid.get_mut_neighbour_at(collapsed_position, &direction) {
+                    if let Some(mut tile) = grid.neighbor_at_mut(collapsed_position, &direction) {
                         if tile.as_ref().is_collapsed() {
                             continue;
                         }
@@ -485,7 +485,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                 possible_options.resize(num_options, true);
 
                 for direction in $direction::ALL {
-                    if let Some(tile) = grid.get_neighbour_at(position, &direction) {
+                    if let Some(tile) = grid.neighbor_at(position, &direction) {
                         if let Some(collapsed_idx) = tile.as_ref().collapsed_idx() {
                             let enabled = option_data
                                 .get_all_enabled_in_direction(collapsed_idx, direction.opposite());
@@ -520,7 +520,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                     return false;
                 }
 
-                let tile = grid.get_mut_data_at_position(position).unwrap();
+                let tile = grid.data_at_mut(position).unwrap();
                 for (possible, (option_idx, weights)) in
                     possible_options.iter().zip(option_data.iter_weights())
                 {
@@ -542,11 +542,11 @@ macro_rules! __impl_pattern_collapsible_grid {
                 let ways = &options.ways_to_be_option;
                 let mut out = Vec::new();
         
-                for position in collapsed.grid.get_all_positions() {
+                for position in collapsed.grid.positions() {
                     let mut possible_patterns = Vec::new();
                     let tile_type_id = collapsed
                         .grid
-                        .get_tile_at_position(&position)
+                        .tile_at(&position)
                         .unwrap()
                         .as_ref()
                         .tile_type_id();
@@ -554,7 +554,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                         for pos_to_check in $pattern::<$($size_const),*>::secondary_tile_positions(&position) {
                             if let Some(tile_type_id) = collapsed
                                 .grid
-                                .get_tile_at_position(&pos_to_check)
+                                .tile_at(&pos_to_check)
                                 .map(|t| t.as_ref().tile_type_id())
                             {
                                 if tile_type_id != pattern.get_id_for_pos(&position, &pos_to_check) {
@@ -698,7 +698,7 @@ macro_rules! __impl_pattern_frequency_hints {
             }
 
             pub fn analyze_pattern_grid(&mut self, grid: &$pattern_grid<$($size_const),*>) {
-                for tile in grid.inner().iter_tiles() {
+                for tile in grid.inner().tiles() {
                     if let PatternTileData::WithPattern {
                         tile_type_id: _,
                         pattern_id,
@@ -715,7 +715,6 @@ macro_rules! __impl_pattern_frequency_hints {
 macro_rules! __impl_pattern_adjacency_rules {
     (
         struct_name: $name:ident,
-        pattern: $pattern:ident,
         pattern_grid: $pattern_grid:ident,
         collection: $collection:ident,
         adjacency_table: $adjacency_table:ident,
@@ -792,7 +791,6 @@ macro_rules! __impl_pattern_adjacency_rules {
 macro_rules! __impl_pattern_analyzer {
     ( 
         struct_name: $name:ident,
-        pattern: $pattern:ident,
         pattern_grid: $pattern_grid:ident,
         collection: $collection:ident,
         frequency_hints: $frequency_hints:ident,
@@ -963,7 +961,7 @@ macro_rules! __impl_pattern_resolver {
                 while let Some(collapse_position) = queue.get_next_position() {
                     let to_collapse = grid
                         .pattern_grid
-                        .get_mut_data_at_position(&collapse_position)
+                        .data_at_mut(&collapse_position)
                         .unwrap();
 
                     if to_collapse.is_collapsed() {
@@ -1036,7 +1034,7 @@ macro_rules! __impl_pattern_resolver {
                 while let Some(collapse_position) = queue.get_next_position() {
                     let to_collapse = grid
                         .pattern_grid
-                        .get_data_at_position(&collapse_position)
+                        .data_at(&collapse_position)
                         .unwrap();
                     // skip collapsed.
                     if to_collapse.is_collapsed() {
@@ -1059,7 +1057,7 @@ macro_rules! __impl_pattern_resolver {
 
                     let to_collapse = grid
                     .pattern_grid
-                    .get_mut_data_at_position(&collapse_position)
+                    .data_at_mut(&collapse_position)
                     .unwrap();
 
                     to_collapse.collapse_basic(rng, &grid.option_data);

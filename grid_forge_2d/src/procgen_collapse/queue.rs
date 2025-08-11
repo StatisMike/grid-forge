@@ -1,6 +1,6 @@
 use crate::core::{Direction2D, Grid2D, GridPosition2D, TileContainer2D as _};
 use crate::procgen_collapse::option::PerOptionData2D;
-use crate::procgen_collapse::data::CollapsibleTile2D;
+use crate::procgen_collapse::data::CollapsibleData2D;
 use grid_forge_core::utils::OrderedFloat;
 use std::cmp::Ordering;
 use std::collections::{BTreeSet, HashMap, HashSet};
@@ -26,7 +26,7 @@ grid_forge_core::__impl_propagate_item! {
 grid_forge_core::__impl_propagator! {
     struct_name: Propagator2D,
     propagate_item: PropagateItem2D,
-    collapsible_tile_data: CollapsibleTile2D,
+    collapsible_tile_data: CollapsibleData2D,
     per_option_data: PerOptionData2D,
     entrophy_queue: EntrophyQueue2D,
     direction: Direction2D,

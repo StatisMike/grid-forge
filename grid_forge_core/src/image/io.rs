@@ -38,7 +38,7 @@ P: PixelWithDefault + 'static,
     {
         let size = check_grid_vis_size(image, (WIDTH, HEIGHT))?;
         let mut grid = GridMap2D::<T>::new(size);
-        for (pos, pix) in grid.indexed_iter_mut() {
+        for (pos, pix) in grid.enumerate_mut() {
             let mut pix_tile = TilePixConst::<WIDTH, HEIGHT, P>::default();
             read_tile(&mut pix_tile, image, &pos)?;
             match pix {
@@ -84,7 +84,7 @@ P: PixelWithDefault + 'static,
             pix_id_map.insert(pix.tile_pixels().pix_hash(), *id);
         }
 
-        for (pos, tile_slot) in grid.indexed_iter_mut() {
+        for (pos, tile_slot) in grid.enumerate_mut() {
             let mut pix_tile = TilePixConst::<WIDTH, HEIGHT, P>::default();
             read_tile(&mut pix_tile, image, &pos)?;
             match pix_id_map.get(&pix_tile.pix_hash()) {
@@ -115,7 +115,7 @@ P: PixelWithDefault + 'static,
         let size = check_grid_vis_size(image, (WIDTH, HEIGHT))?;
         let mut grid = GridMap2D::new(size);
 
-        for (pos, tile_slot) in grid.indexed_iter_mut() {
+        for (pos, tile_slot) in grid.enumerate_mut() {
             let mut pix_tile = TilePixConst::<WIDTH, HEIGHT, P>::default();
             read_tile(&mut pix_tile, image, &pos)?;
             let tile_id = pix_tile.pix_hash();

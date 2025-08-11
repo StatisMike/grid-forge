@@ -18,19 +18,19 @@ use grid_forge_core::procgen_collapse::option::OptionWeights;
 use crate::core::{Direction2D, Grid2D as _, GridMap2D, GridPosition2D, GridSize2D, Tile2D, TileContainer2D as _};
 use crate::procgen_collapse::option::{AdjacencyTable2D, PerOptionData2D};
 use crate::procgen_collapse::queue::{EntrophyQueue2D, PositionQueue2D, PropagateItem2D, Propagator2D};
-use crate::procgen_collapse::data::CollapsibleTile2D;
-use crate::procgen_collapse::{CollapseError2D, CollapseHistoryItem2D, CollapseHistorySubscriber2D, CollapsedGrid2D, CollapsibleGridError2D, DebugSubscriber2D};
+use crate::procgen_collapse::data::CollapsibleData2D;
+use crate::procgen_collapse::{CollapseError2D, HistoryItem2D, HistorySubscriber2D, CollapsedGrid2D, CollapsibleGridError2D, DebugSubscriber2D};
 
 grid_forge_core::__impl_pattern_collection! {
     struct_name: Pattern2DCollection,
-    pattern_struct: OverlappingPattern2D,
+    pattern_struct: Pattern2D,
     size_consts: [SIZE_X, SIZE_Y],
 }
 
 grid_forge_core::__impl_pattern_grid! {
-    struct_name: OverlappingPattern2DGrid,
+    struct_name: CollapsiblePattern2DGrid,
     size_consts: [SIZE_X, SIZE_Y],
-    pattern: OverlappingPattern2D,
+    pattern: Pattern2D,
     grid: GridMap2D,
     collection: Pattern2DCollection,
     position: GridPosition2D,
@@ -38,15 +38,14 @@ grid_forge_core::__impl_pattern_grid! {
 }
 
 grid_forge_core::__impl_pattern_frequency_hints! {
-    struct_name: OverlappingPattern2DFrequencyHints,
-    pattern: OverlappingPattern2D,
-    pattern_grid: OverlappingPattern2DGrid,
+    struct_name: Pattern2DFrequencyHints,
+    pattern: Pattern2D,
+    pattern_grid: CollapsiblePattern2DGrid,
     size_consts: [SIZE_X, SIZE_Y],
 }
 
 grid_forge_core::__impl_pattern_adjacency_rules! {
-    struct_name: OverlappingPattern2DAdjacencyRules,
-    pattern: OverlappingPattern2D,
+    struct_name: Pattern2DAdjacencyRules,
     pattern_grid: OverlappingPattern2DGrid,
     collection: Pattern2DCollection,
     adjacency_table: AdjacencyTable2D,
@@ -55,30 +54,29 @@ grid_forge_core::__impl_pattern_adjacency_rules! {
 }
 
 grid_forge_core::__impl_pattern_analyzer! {
-    struct_name: OverlappingPattern2DAnalyzer,
-    pattern: OverlappingPattern2D,
-    pattern_grid: OverlappingPattern2DGrid,
+    struct_name: Pattern2DAnalyzer,
+    pattern_grid: CollapsiblePattern2DGrid,
     collection: Pattern2DCollection,
-    frequency_hints: OverlappingPattern2DFrequencyHints,
-    adjacency_rules: OverlappingPattern2DAdjacencyRules,
+    frequency_hints: Pattern2DFrequencyHints,
+    adjacency_rules: Pattern2DAdjacencyRules,
     grid: GridMap2D,
     size_consts: [SIZE_X, SIZE_Y],
 }
 
 grid_forge_core::__impl_pattern_subscriber_trait! {
-    trait_name: OverlappingPattern2DSubscriber,
+    trait_name: Pattern2DSubscriber,
     position: GridPosition2D,
 }
 
 grid_forge_core::__impl_pattern_collapsible_grid! {
     struct_name: CollapsiblePatternGrid2D,
-    pattern: OverlappingPattern2D,
-    collapsible_data: CollapsibleTile2D,
+    pattern: Pattern2D,
+    collapsible_data: CollapsibleData2D,
     collection: Pattern2DCollection,
     propagate_item: PropagateItem2D,
     per_option_data: PerOptionData2D,
-    adjacency_rules: OverlappingPattern2DAdjacencyRules,
-    frequency_hints: OverlappingPattern2DFrequencyHints,
+    adjacency_rules: Pattern2DAdjacencyRules,
+    frequency_hints: Pattern2DFrequencyHints,
     collapsible_grid_error: CollapsibleGridError2D,
     collapsed_grid: CollapsedGrid2D,
     grid: GridMap2D,
@@ -90,10 +88,10 @@ grid_forge_core::__impl_pattern_collapsible_grid! {
 }
 
 grid_forge_core::__impl_pattern_resolver! {
-    struct_name: OverlappingPattern2DResolver,
-    subscriber_trait: OverlappingPattern2DSubscriber,
+    struct_name: Pattern2DResolver,
+    subscriber_trait: Pattern2DSubscriber,
     collapsible_grid: CollapsiblePatternGrid2D,
-    collapsible_tile: CollapsibleTile2D,
+    collapsible_tile: CollapsibleData2D,
     propagate_item: PropagateItem2D,
     propagator: Propagator2D,
     entrophy_queue: EntrophyQueue2D,
@@ -105,25 +103,25 @@ grid_forge_core::__impl_pattern_resolver! {
 
 grid_forge_core::__impl_pattern_debug_subscriber! {
     struct_name: DebugSubscriber2D,
-    trait_name: OverlappingPattern2DSubscriber,
+    trait_name: Pattern2DSubscriber,
     position: GridPosition2D,
 }
 
 grid_forge_core::__impl_pattern_history_subscriber! {
-    struct_name: CollapseHistorySubscriber2D,
-    history_item_name: CollapseHistoryItem2D,
-    trait_name: OverlappingPattern2DSubscriber,
+    struct_name: HistorySubscriber2D,
+    history_item_name: HistoryItem2D,
+    trait_name: Pattern2DSubscriber,
     position: GridPosition2D,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct OverlappingPattern2D<const SIZE_X: usize, const SIZE_Y: usize> { 
+pub struct Pattern2D<const SIZE_X: usize, const SIZE_Y: usize> { 
     pattern_id: u64,
     tile_type_id: u64,
     tile_type_ids: [[u64; SIZE_X]; SIZE_Y], 
 }
 
-impl <const SIZE_X: usize, const SIZE_Y: usize> OverlappingPattern2D<SIZE_X, SIZE_Y> { 
+impl <const SIZE_X: usize, const SIZE_Y: usize> Pattern2D<SIZE_X, SIZE_Y> { 
     /// Gets `tile_type_id` for a [`TileData`](grid_forge_core::TileData) of a tile present in the pattern, 
     /// given the [`GridPosition2D`] of the primary tile (`anchor_pos`) and specific position (`pos`).
     ///
@@ -257,7 +255,7 @@ impl <const SIZE_X: usize, const SIZE_Y: usize> OverlappingPattern2D<SIZE_X, SIZ
     }
 }
 
-impl <const SIZE_X: usize, const SIZE_Y: usize> Hash for OverlappingPattern2D<SIZE_X, SIZE_Y> {
+impl <const SIZE_X: usize, const SIZE_Y: usize> Hash for Pattern2D<SIZE_X, SIZE_Y> {
 
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.tile_type_ids.hash(state);
@@ -268,7 +266,7 @@ impl <const SIZE_X: usize, const SIZE_Y: usize> Hash for OverlappingPattern2D<SI
 mod test {
     use grid_forge_core::{procgen_collapse::{pattern::PatternTileData, data::CollapsedTileData}};
 
-    use crate::{core::{Direction2D, Grid2D as _, GridMap2D, GridPosition2D, GridSize2D, Tile2D}, procgen_collapse::pattern::{OverlappingPattern2DAnalyzer, OverlappingPattern2DGrid}};
+    use crate::{core::{Direction2D, Grid2D as _, GridMap2D, GridPosition2D, GridSize2D, Tile2D}, procgen_collapse::pattern::{Pattern2DAnalyzer, CollapsiblePattern2DGrid}};
 
 
     /// ```text
@@ -299,7 +297,7 @@ mod test {
             Tile2D::new(GridPosition2D::new(3, 2), CollapsedTileData::new(0)),
             Tile2D::new(GridPosition2D::new(3, 3), CollapsedTileData::new(1)),
         ] {
-            map.insert_tile(tile);
+            map.insert(tile);
         }
         map
     }
@@ -359,16 +357,16 @@ mod test {
             Tile2D::new(GridPosition2D::new(4, 5), CollapsedTileData::new(0)),
             Tile2D::new(GridPosition2D::new(5, 5), CollapsedTileData::new(1)),
         ] {
-            map.insert_tile(tile);
+            map.insert(tile);
         }
         map
     }
 
     fn retrieve_pattern<const SIZE_X: usize, const SIZE_Y: usize>(
         position: &GridPosition2D,
-        map: &OverlappingPattern2DGrid<SIZE_X, SIZE_Y>,
+        map: &CollapsiblePattern2DGrid<SIZE_X, SIZE_Y>,
     ) -> (u64, u64) {
-        let Some(data) = map.inner.get_data_at_position(position) else {
+        let Some(data) = map.inner.data_at(position) else {
             panic!("Can't get tile at {position:?}");
         };
         let PatternTileData::WithPattern {
@@ -383,7 +381,7 @@ mod test {
 
     #[test]
     fn correct_adjacency_2d_2x2() {
-        let mut analyzer = OverlappingPattern2DAnalyzer::<2, 2, CollapsedTileData>::default();
+        let mut analyzer = Pattern2DAnalyzer::<2, 2, CollapsedTileData>::default();
         let pattern_grid = analyzer.analyze(&test_grid_2d_2x2());
 
         let adjacency_rules = analyzer.get_adjacency();
@@ -407,7 +405,7 @@ mod test {
 
     #[test]
     fn correct_adjacency_2d_3x3() {
-        let mut analyzer = OverlappingPattern2DAnalyzer::<3, 3, CollapsedTileData>::default();
+        let mut analyzer = Pattern2DAnalyzer::<3, 3, CollapsedTileData>::default();
         let pattern_grid = analyzer.analyze(&test_grid_2d_3x3());
         let adjacency_rules = analyzer.get_adjacency();
 

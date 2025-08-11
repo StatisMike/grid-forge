@@ -5,11 +5,11 @@ use criterion::*;
 use grid_forge_2d::core::GridSize2D;
 use grid_forge_2d::image::ops::load_from_image_const_typed_auto;
 use grid_forge_2d::image::TilePixConst;
-use grid_forge_2d::procgen_collapse::pattern::{CollapsiblePatternGrid2D, OverlappingPattern2D, OverlappingPattern2DAnalyzer, OverlappingPattern2DResolver};
+use grid_forge_2d::procgen_collapse::pattern::{CollapsiblePatternGrid2D, Pattern2D, Pattern2DAnalyzer, Pattern2DResolver};
 use grid_forge_2d::procgen_collapse::queue::PositionQueue2D;
 use grid_forge_2d::procgen_collapse::tile::{
-    CollapsibleTileGrid2D, FrequencyHints2D, SingularBorderAnalyzer2D, SingularIdentityAnalyzer2D,
-    SingularResolver2D,
+    CollapsibleTileGrid2D, FrequencyHints2D, TileBorderAnalyzer2D, SingularIdentityAnalyzer2D,
+    TileResolver2D,
 };
 use grid_forge_core::id::{BasicTypedData, IdentTileDefaultBuilder, TypeIdMap};
 use grid_forge_core::utils::dev::RngHelper;
@@ -31,7 +31,7 @@ fn analyze_adjacency_pattern_2x2(c: &mut Criterion) {
 
     c.bench_function("analyze_adjacency_pattern_2x2", |b| {
         b.iter(|| {
-            let mut analyzer = OverlappingPattern2DAnalyzer::<2, 2, BasicTypedData>::default();
+            let mut analyzer = Pattern2DAnalyzer::<2, 2, BasicTypedData>::default();
             analyzer.analyze(&seas_grid);
         });
     });
@@ -48,7 +48,7 @@ fn analyze_adjacency_pattern_3x3(c: &mut Criterion) {
 
     c.bench_function("analyze_adjacency_pattern_3x3", |b| {
         b.iter(|| {
-            let mut analyzer = OverlappingPattern2DAnalyzer::<3, 3, BasicTypedData>::default();
+            let mut analyzer = Pattern2DAnalyzer::<3, 3, BasicTypedData>::default();
             analyzer.analyze(&seas_grid);
         });
     });
@@ -63,7 +63,7 @@ fn analyze_build_collapsible_pattern_grid(c: &mut Criterion) {
     let map_grid =
         load_from_image_const_typed_auto(&map_img, &builder, &mut id_pixel_map).unwrap();
 
-    let mut analyzer = OverlappingPattern2DAnalyzer::<3, 3, BasicTypedData>::default();
+    let mut analyzer = Pattern2DAnalyzer::<3, 3, BasicTypedData>::default();
     analyzer.analyze(&map_grid);
     let adj_rules = analyzer.get_adjacency();
     let freq_hints = analyzer.get_frequency();
@@ -88,7 +88,7 @@ fn generate_10x10_pattern_2x2_entrophy(c: &mut Criterion) {
 
     let mut id_pixel_map = TypeIdMap::<TilePixConst<4, 4, Rgb<u8>>>::default();
 
-    let mut analyzer = OverlappingPattern2DAnalyzer::<2, 2, BasicTypedData>::default();
+    let mut analyzer = Pattern2DAnalyzer::<2, 2, BasicTypedData>::default();
 
     let img = image::open(MAP).unwrap().into_rgb8();
 
@@ -111,7 +111,7 @@ fn generate_10x10_pattern_2x2_entrophy(c: &mut Criterion) {
         b.iter(|| {
             let mut rng: ChaChaRng = RngHelper::init_str("overlap_bench", 1).into();
 
-            let mut resolver = OverlappingPattern2DResolver::default();
+            let mut resolver = Pattern2DResolver::default();
             let res = resolver.generate_entrophy(grid.clone(), &mut rng, &positions);
 
             assert!(res.is_ok());
@@ -124,7 +124,7 @@ fn generate_10x10_pattern_3x3_entrophy(c: &mut Criterion) {
 
     let mut id_pixel_map = TypeIdMap::<TilePixConst<4, 4, Rgb<u8>>>::default();
 
-    let mut analyzer = OverlappingPattern2DAnalyzer::<3, 3, BasicTypedData>::default();
+    let mut analyzer = Pattern2DAnalyzer::<3, 3, BasicTypedData>::default();
 
     let img = image::open(MAP).unwrap().into_rgb8();
 
@@ -147,7 +147,7 @@ fn generate_10x10_pattern_3x3_entrophy(c: &mut Criterion) {
         b.iter(|| {
             let mut rng: ChaChaRng = RngHelper::init_str("overlap_bench", 1).into();
 
-            let mut resolver = OverlappingPattern2DResolver::default();
+            let mut resolver = Pattern2DResolver::default();
             let res = resolver.generate_entrophy(grid.clone(), &mut rng, &positions);
 
             assert!(res.is_ok());
@@ -160,7 +160,7 @@ fn generate_10x10_pattern_2x2_position(c: &mut Criterion) {
 
     let mut id_pixel_map = TypeIdMap::<TilePixConst<4, 4, Rgb<u8>>>::default();
 
-    let mut analyzer = OverlappingPattern2DAnalyzer::<2, 2, BasicTypedData>::default();
+    let mut analyzer = Pattern2DAnalyzer::<2, 2, BasicTypedData>::default();
 
     let img = image::open(MAP).unwrap().into_rgb8();
 
@@ -183,7 +183,7 @@ fn generate_10x10_pattern_2x2_position(c: &mut Criterion) {
         b.iter(|| {
             let mut rng: ChaChaRng = RngHelper::init_str("overlap_position", 0).into();
 
-            let mut resolver = OverlappingPattern2DResolver::default();
+            let mut resolver = Pattern2DResolver::default();
             let res = resolver.generate_position(grid.clone(), &mut rng, &positions, PositionQueue2D::default());
 
             assert!(res.is_ok());
@@ -196,7 +196,7 @@ fn generate_10x10_pattern_3x3_position(c: &mut Criterion) {
 
     let mut id_pixel_map = TypeIdMap::<TilePixConst<4, 4, Rgb<u8>>>::default();
 
-    let mut analyzer = OverlappingPattern2DAnalyzer::<3, 3, BasicTypedData>::default();
+    let mut analyzer = Pattern2DAnalyzer::<3, 3, BasicTypedData>::default();
 
     let img = image::open(MAP).unwrap().into_rgb8();
 
@@ -221,7 +221,7 @@ fn generate_10x10_pattern_3x3_position(c: &mut Criterion) {
                 .with_pos(3767)
                 .into();
 
-            let mut resolver = OverlappingPattern2DResolver::default();
+            let mut resolver = Pattern2DResolver::default();
             let res = resolver.generate_position(grid.clone(), &mut rng, &positions, PositionQueue2D::default());
 
             assert!(res.is_ok());

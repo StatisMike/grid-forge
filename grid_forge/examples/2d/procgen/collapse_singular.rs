@@ -37,7 +37,7 @@ fn main() {
 
     // Create Identity (for `identity_entrophy`) and Border (for `border_position`) analyzers and FrequencyRules.
     let mut identity_analyzer = SingularIdentityAnalyzer2D::default();
-    let mut border_analyzer = SingularBorderAnalyzer2D::default();
+    let mut border_analyzer = TileBorderAnalyzer2D::default();
     let mut frequency_hints = FrequencyHints2D::default();
 
     // Analyze the loaded maps, recording the `AdjacencyRules` in analyzers.
@@ -50,7 +50,7 @@ fn main() {
     let outputs_size = GridSize2D::new(30, 30);
 
     // Resolver can be reused, as it is used for the same tile type.
-    let mut resolver = SingularResolver2D::default();
+    let mut resolver = TileResolver2D::default();
 
     // ----- Singular with Entrophy Queue ----- //
     //

@@ -7,8 +7,8 @@ use grid_forge_2d::image::ops::load_from_image_const_typed_auto;
 use grid_forge_2d::image::TilePixConst;
 use grid_forge_2d::procgen_collapse::queue::PositionQueue2D;
 use grid_forge_2d::procgen_collapse::tile::{
-    CollapsibleTileGrid2D, FrequencyHints2D, SingularBorderAnalyzer2D, SingularIdentityAnalyzer2D,
-    SingularResolver2D,
+    CollapsibleTileGrid2D, FrequencyHints2D, TileBorderAnalyzer2D, SingularIdentityAnalyzer2D,
+    TileResolver2D,
 };
 use grid_forge_core::id::{BasicTypedData, IdentTileDefaultBuilder, TypeIdMap};
 use grid_forge_core::utils::dev::RngHelper;
@@ -46,7 +46,7 @@ fn analyze_adjacency_border_10x10(c: &mut Criterion) {
 
     c.bench_function("analyze_adjacency_border_10x10", |b| {
         b.iter(|| {
-            let mut analyzer = SingularBorderAnalyzer2D::default();
+            let mut analyzer = TileBorderAnalyzer2D::default();
             analyzer.analyze(&seas_grid);
         });
     });
@@ -78,7 +78,7 @@ fn analyze_build_collapsible_grid(c: &mut Criterion) {
     let seas_grid =
         load_from_image_const_typed_auto(&seas_img, &builder, &mut id_pixel_map).unwrap();
 
-    let mut analyzer = SingularBorderAnalyzer2D::default();
+    let mut analyzer = TileBorderAnalyzer2D::default();
     analyzer.analyze(&seas_grid);
     let adj_rules = analyzer.adjacency_rules();
     let mut freq_hints = FrequencyHints2D::default();
@@ -120,7 +120,7 @@ fn gen_identity_position_10x10(c: &mut Criterion) {
 
             let mut cloned_grid = grid.clone();
 
-            let mut resolver = SingularResolver2D::default();
+            let mut resolver = TileResolver2D::default();
             resolver
                 .generate_position(
                     &mut cloned_grid,
@@ -158,7 +158,7 @@ fn gen_identity_entrophy_10x10(c: &mut Criterion) {
             let mut rng: ChaCha20Rng = RngHelper::init_str("i am benchmarking", 0).into();
             let mut cloned_grid = grid.clone();
 
-            let mut resolver = SingularResolver2D::default();
+            let mut resolver = TileResolver2D::default();
             resolver
                 .generate_entrophy(
                     &mut cloned_grid,
@@ -174,7 +174,7 @@ fn gen_border_position_10x10(c: &mut Criterion) {
     let builder = IdentTileDefaultBuilder::<BasicTypedData>::default();
     let mut id_pixel_map = TypeIdMap::<TilePixConst<4, 4, Rgb<u8>>>::default();
 
-    let mut analyzer = SingularBorderAnalyzer2D::default();
+    let mut analyzer = TileBorderAnalyzer2D::default();
     let mut frequency_hints = FrequencyHints2D::default();
 
     for path in &[MAP_10X10, MAP_20X20] {
@@ -195,7 +195,7 @@ fn gen_border_position_10x10(c: &mut Criterion) {
             let mut rng: ChaChaRng = RngHelper::init_str("singular_border", 15).into();
             let mut cloned_grid = grid.clone();
 
-            let mut resolver = SingularResolver2D::default();
+            let mut resolver = TileResolver2D::default();
             resolver
                 .generate_position(
                     &mut cloned_grid,
@@ -212,7 +212,7 @@ fn gen_border_entrophy_10x10(c: &mut Criterion) {
     let builder = IdentTileDefaultBuilder::<BasicTypedData>::default();
     let mut id_pixel_map = TypeIdMap::<TilePixConst<4, 4, Rgb<u8>>>::default();
 
-    let mut analyzer = SingularBorderAnalyzer2D::default();
+    let mut analyzer = TileBorderAnalyzer2D::default();
     let mut frequency_hints = FrequencyHints2D::default();
 
     for path in &[MAP_10X10, MAP_20X20] {
@@ -233,7 +233,7 @@ fn gen_border_entrophy_10x10(c: &mut Criterion) {
             let mut rng: ChaCha20Rng = RngHelper::init_str("collapse_gen_example", 0).into();
             let mut cloned_grid = grid.clone();
 
-            let mut resolver = SingularResolver2D::default();
+            let mut resolver = TileResolver2D::default();
             resolver
                 .generate_entrophy(
                     &mut cloned_grid,

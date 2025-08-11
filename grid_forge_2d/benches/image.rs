@@ -183,7 +183,7 @@ fn write_gridmap_const_shared(c: &mut Criterion) {
     let grid_map = load_from_image_const_typed_auto(&image, &builder, &mut pixel_map).unwrap();
 
     let mut grid_map = GridMapShared2D::from_regular(grid_map);
-    grid_map.import_shared_data(pixel_map);
+    grid_map.import_shared(pixel_map);
 
     c.bench_function("write_gridmap_const_shared", |b| {
         b.iter(|| {
@@ -204,7 +204,7 @@ fn write_gridmap_var_shared(c: &mut Criterion) {
         load_from_image_var_typed_auto(&image, &builder, (4, 4), &mut pixel_map).unwrap();
 
     let mut grid_map = GridMapShared2D::from_regular(grid_map);
-    grid_map.import_shared_data(pixel_map);
+    grid_map.import_shared(pixel_map);
 
     c.bench_function("write_gridmap_var_shared", |b| {
         b.iter(|| {

@@ -50,7 +50,7 @@ where
             super::collection::VisCollectionOutcome::Empty => {
                 continue;
             }
-            _ => grid.insert_tile(tile),
+            _ => grid.insert(tile),
         };
     }
     Ok(grid)
@@ -136,9 +136,9 @@ where
     Data: VisTileData<P, WIDTH, HEIGHT>,
     P: PixelWithDefault + 'static,
 {
-    for position in grid_map.get_all_positions() {
+    for position in grid_map.positions() {
         let data = grid_map
-            .get_data_at_position(&position)
+            .data_at(&position)
             .expect("cannot get tile");
         TileRef2D::new(position, data).vis_to_buffer(image_buffer)?;
     }

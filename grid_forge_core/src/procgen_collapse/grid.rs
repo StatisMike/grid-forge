@@ -130,7 +130,7 @@ macro_rules! __impl_collapsible_grid {
 
                     let mut grid = GridMap2D::new(*collapsed.grid.size());
 
-                    for tile in collapsed.grid.iter_tiles() {
+                    for tile in collapsed.grid.tiles() {
                         grid.insert_data(
                             &tile.grid_position(),
                             $collapsible_data::new_collapsed_data(
@@ -193,7 +193,7 @@ macro_rules! __impl_collapsible_grid {
                         return Err($collapsible_error::new_missing(missing_ids));
                     }
 
-                    for tile in collapsed.grid.iter_tiles() {
+                    for tile in collapsed.grid.tiles() {
                         self.grid.insert_data(
                             &tile.grid_position(),
                             $collapsible_data::new_collapsed_data(
@@ -211,7 +211,7 @@ macro_rules! __impl_collapsible_grid {
             pub fn retrieve_collapsed(&self) -> $collapsed_grid {
                 let mut out = $collapsed_grid::new(self.grid.size().clone());
         
-                for tile in self.grid.iter_tiles() {
+                for tile in self.grid.tiles() {
                     if !tile.data().is_collapsed() {
                         continue;
                     }
@@ -244,7 +244,7 @@ macro_rules! __impl_collapsible_grid {
             { 
                 let mut out = $grid::<InputTile>::new(*self.grid.size());
         
-                for tile in self.grid.iter_tiles() {
+                for tile in self.grid.tiles() {
                     if !tile.data().is_collapsed() {
                         continue;
                     }
@@ -272,7 +272,7 @@ macro_rules! __impl_collapsible_grid {
             {
                 let mut out = $grid::<InputTile>::new(*self.grid.size());
         
-                for tile in self.grid.iter_tiles() {
+                for tile in self.grid.tiles() {
                     if !tile.data().is_collapsed() {
                         continue;
                     }
@@ -296,7 +296,7 @@ macro_rules! __impl_collapsible_grid {
         
             /// Returns all empty positions in the internal grid.
             pub fn empty_positions(&self) -> Vec<$position> {
-                self.grid.get_all_empty_positions()
+                self.grid.empty_positions()
             }
         
             /// Returns all possitions in the internal grid holding either collapsed or uncollapsed tiles.
@@ -307,7 +307,7 @@ macro_rules! __impl_collapsible_grid {
                     |d| !d.is_collapsed()
                 };
                 self.grid
-                    .indexed_iter()
+                    .enumerate()
                     .filter_map(|t| {
                         if let Some(d) = t.1 {
                             if func(d) {
@@ -337,7 +337,7 @@ macro_rules! __impl_collapsible_grid {
                 let check_provided: HashSet<_> = HashSet::from_iter(to_collapse.iter());
     
                 for pos_to_collapse in to_collapse {
-                    for neighbour_tile in self.grid.get_neighbours(pos_to_collapse).inner().iter().flatten() {
+                    for neighbour_tile in self.grid.neighbors(pos_to_collapse).inner().iter().flatten() {
                         if !neighbour_tile.as_ref().is_collapsed()
                             || check_provided.contains(&neighbour_tile.grid_position())
                             || check_generated.contains(&neighbour_tile.grid_position())
@@ -369,7 +369,7 @@ macro_rules! __impl_collapsible_grid {
                 option_data: &$per_option_data,
             ) {
                 for direction in $direction::ALL {
-                    if let Some(mut tile) = grid.get_mut_neighbour_at(collapsed_position, &direction) {
+                    if let Some(mut tile) = grid.neighbor_at_mut(collapsed_position, &direction) {
                         if tile.as_ref().is_collapsed() {
                             continue;
                         }
@@ -407,7 +407,7 @@ macro_rules! __impl_collapsible_grid {
                 possible_options.resize(num_options, true);
     
                 for direction in $direction::ALL {
-                    if let Some(tile) = grid.get_neighbour_at(position, &direction) {
+                    if let Some(tile) = grid.neighbor_at(position, &direction) {
                         if let Some(collapsed_idx) = tile.as_ref().collapsed_idx() {
                             let enabled = option_data
                                 .get_all_enabled_in_direction(collapsed_idx, direction.opposite());
@@ -442,7 +442,7 @@ macro_rules! __impl_collapsible_grid {
                     return false;
                 }
     
-                let tile = grid.get_mut_data_at_position(position).unwrap();
+                let tile = grid.data_at_mut(position).unwrap();
                 for (possible, (option_idx, weights)) in
                     possible_options.iter().zip(option_data.iter_weights())
                 {

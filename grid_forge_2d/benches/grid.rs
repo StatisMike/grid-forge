@@ -36,6 +36,7 @@ pub struct DefaultTileShared {
 }
 
 impl DefaultTileShared {
+    #[allow(dead_code)]
     pub fn new(tile_type_id: u64) -> Self {
         Self {
             foo: tile_type_id % 2 == 0,
@@ -77,7 +78,7 @@ pub fn grid_access_100x100(c: &mut Criterion) {
     c.bench_function("grid_access_100x100", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tile = grid.get_tile_at_position(pos).unwrap();
+                let tile = grid.tile_at(pos).unwrap();
                 black_box(tile);
             }
         })
@@ -93,7 +94,7 @@ pub fn grid_access_100x100_mut(c: &mut Criterion) {
         b.iter(|| {
             for pos in possible_positions.iter() {
                 let mut tile: TileMut2D<DefaultTile> =
-                    grid.get_mut_tile_at_position(pos).unwrap().into();
+                    grid.tile_at_mut(pos).unwrap().into();
                 tile.data().offset = 1;
             }
         })
@@ -109,7 +110,7 @@ pub fn grid_access_100x100_mut_track(c: &mut Criterion) {
     c.bench_function("grid_access_100x100_mut_track", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let mut tile = grid.get_mut_tile_at_position(pos).unwrap();
+                let mut tile = grid.tile_at_mut(pos).unwrap();
                 tile.data().offset = 1;
             }
         })
@@ -125,14 +126,14 @@ pub fn grid_access_100x100_shared(c: &mut Criterion) {
     for id in 0..DefaultTile::TYPE_COUNT {
         shared_container.insert(id, DefaultTileShared::new(id));
     }
-    grid.import_shared_data(shared_container);
+    grid.import_shared(shared_container);
 
     let possible_positions = size.get_all_possible_positions();
 
     c.bench_function("grid_access_100x100_shared", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tile = grid.get_tile_with_shared_at_position(pos).unwrap();
+                let tile = grid.tile_with_shared_at(pos).unwrap();
                 black_box(tile);
             }
         })
@@ -148,14 +149,14 @@ pub fn grid_access_100x100_shared_data(c: &mut Criterion) {
     for id in 0..DefaultTile::TYPE_COUNT {
         shared_container.insert(id, DefaultTileShared::new(id));
     }
-    grid.import_shared_data(shared_container);
+    grid.import_shared(shared_container);
 
     let possible_positions = size.get_all_possible_positions();
 
     c.bench_function("grid_access_100x100_shared_data", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let data = grid.get_shared_data_at_position(pos).unwrap();
+                let data = grid.shared_at(pos).unwrap();
                 black_box(data);
             }
         })
@@ -170,7 +171,7 @@ pub fn grid_access_100x100_neighbour(c: &mut Criterion) {
     c.bench_function("grid_access_100x100_neighbour_up", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tile = grid.get_neighbour_at(pos, &Direction2D::Up);
+                let tile = grid.neighbor_at(pos, &Direction2D::Up);
                 black_box(tile);
             }
         })
@@ -179,7 +180,7 @@ pub fn grid_access_100x100_neighbour(c: &mut Criterion) {
     c.bench_function("grid_access_100x100_neighbour_down", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tile = grid.get_neighbour_at(pos, &Direction2D::Down);
+                let tile = grid.neighbor_at(pos, &Direction2D::Down);
                 black_box(tile);
             }
         })
@@ -188,7 +189,7 @@ pub fn grid_access_100x100_neighbour(c: &mut Criterion) {
     c.bench_function("grid_access_100x100_neighbour_left", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tile = grid.get_neighbour_at(pos, &Direction2D::Left);
+                let tile = grid.neighbor_at(pos, &Direction2D::Left);
                 black_box(tile);
             }
         })
@@ -197,7 +198,7 @@ pub fn grid_access_100x100_neighbour(c: &mut Criterion) {
     c.bench_function("grid_access_100x100_neighbour_right", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tile = grid.get_neighbour_at(pos, &Direction2D::Right);
+                let tile = grid.neighbor_at(pos, &Direction2D::Right);
                 black_box(tile);
             }
         })
@@ -212,7 +213,7 @@ pub fn grid_access_100x100_all_neighbours(c: &mut Criterion) {
     c.bench_function("grid_access_100x100_all_neighbours", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tiles = grid.get_neighbours(pos);
+                let tiles = grid.neighbors(pos);
                 black_box(tiles);
             }
         })

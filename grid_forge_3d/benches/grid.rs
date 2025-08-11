@@ -49,7 +49,7 @@ pub fn grid_access_10000(c: &mut Criterion) {
     c.bench_function("grid_access_10000", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tile = grid.get_tile_at_position(pos).unwrap();
+                let tile = grid.tile_at(pos).unwrap();
                 black_box(tile);
             }
         })
@@ -65,7 +65,7 @@ pub fn grid_access_10000_mut(c: &mut Criterion) {
         b.iter(|| {
             for pos in possible_positions.iter() {
                 let mut tile: TileMut3D<DefaultTile> =
-                    grid.get_mut_tile_at_position(pos).unwrap().into();
+                    grid.tile_at_mut(pos).unwrap().into();
                 tile.data().offset = 1;
             }
         })
@@ -82,7 +82,7 @@ pub fn grid_access_10000_mut_track(c: &mut Criterion) {
         b.iter(|| {
             for pos in possible_positions.iter() {
                 let mut tile: TileMut3D<DefaultTile> =
-                    grid.get_mut_tile_at_position(pos).unwrap().into();
+                    grid.tile_at_mut(pos).unwrap().into();
                 tile.data().offset = 1;
             }
         })
@@ -97,7 +97,7 @@ pub fn grid_access_10000_neighbour(c: &mut Criterion) {
     c.bench_function("grid_access_10000_neighbour_up", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tile = grid.get_neighbour_at(pos, &Direction3D::Up);
+                let tile = grid.neighbor_at(pos, &Direction3D::Up);
                 black_box(tile);
             }
         })
@@ -106,7 +106,7 @@ pub fn grid_access_10000_neighbour(c: &mut Criterion) {
     c.bench_function("grid_access_10000_neighbour_down", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tile = grid.get_neighbour_at(pos, &Direction3D::Down);
+                let tile = grid.neighbor_at(pos, &Direction3D::Down);
                 black_box(tile);
             }
         })
@@ -115,7 +115,7 @@ pub fn grid_access_10000_neighbour(c: &mut Criterion) {
     c.bench_function("grid_access_10000_neighbour_left", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tile = grid.get_neighbour_at(pos, &Direction3D::Left);
+                let tile = grid.neighbor_at(pos, &Direction3D::Left);
                 black_box(tile);
             }
         })
@@ -124,7 +124,7 @@ pub fn grid_access_10000_neighbour(c: &mut Criterion) {
     c.bench_function("grid_access_10000_neighbour_right", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tile = grid.get_neighbour_at(pos, &Direction3D::Right);
+                let tile = grid.neighbor_at(pos, &Direction3D::Right);
                 black_box(tile);
             }
         })
@@ -134,7 +134,7 @@ pub fn grid_access_10000_neighbour(c: &mut Criterion) {
     c.bench_function("grid_access_10000_neighbour_lower", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tile = grid.get_neighbour_at(pos, &Direction3D::Lower);
+                let tile = grid.neighbor_at(pos, &Direction3D::Lower);
                 black_box(tile);
             }
         })
@@ -143,7 +143,7 @@ pub fn grid_access_10000_neighbour(c: &mut Criterion) {
     c.bench_function("grid_access_10000_neighbour_higher", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tile = grid.get_neighbour_at(pos, &Direction3D::Higher);
+                let tile = grid.neighbor_at(pos, &Direction3D::Higher);
                 black_box(tile);
             }
         })
@@ -158,7 +158,7 @@ pub fn grid_access_10000_all_neighbours(c: &mut Criterion) {
     c.bench_function("grid_access_10000_all_neighbours", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let tiles = grid.get_neighbours(pos);
+                let tiles = grid.neighbors(pos);
                 black_box(tiles);
             }
         })

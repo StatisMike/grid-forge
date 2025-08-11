@@ -1,5 +1,5 @@
 use grid_forge::{id::{BasicTypedData, TypeIdMap}, image::{ops::{init_map_image_buffer, write_to_image_const_typed}, TilePixConst}, procgen_collapse::PositionQueue2D};
-use grid_forge_2d::procgen_collapse::pattern::{CollapsiblePatternGrid2D, OverlappingPattern2DAnalyzer, OverlappingPattern2DResolver};
+use grid_forge_2d::procgen_collapse::pattern::{CollapsiblePatternGrid2D, Pattern2DAnalyzer, Pattern2DResolver};
 use grid_forge::prelude::*;
 use image::Rgb;
 use rand_chacha::ChaChaRng;
@@ -28,14 +28,14 @@ fn main() {
     if !args.skip_entrophy() {
 
         // Create overlap analyzer.
-        let mut analyzer = OverlappingPattern2DAnalyzer::<3, 3, BasicTypedData>::default();
+        let mut analyzer = Pattern2DAnalyzer::<3, 3, BasicTypedData>::default();
 
         for map in maps.iter() {
             analyzer.analyze(map);
         }
 
         // Resolver can be reused, as it is used for the same tile type.
-        let mut resolver = OverlappingPattern2DResolver::default();
+        let mut resolver = Pattern2DResolver::default();
 
         // Save the collapse process as a GIF.
         if args.gif() {
@@ -109,11 +109,11 @@ fn main() {
         // AdjacencyRules. The success rate will be still moderately high - and
         // errors can be mitigated by just retrying, as non-propagating queue is faster.
 
-        let mut analyzer = OverlappingPattern2DAnalyzer::<2, 2, BasicTypedData>::default();
+        let mut analyzer = Pattern2DAnalyzer::<2, 2, BasicTypedData>::default();
         for map in maps.iter() {
             analyzer.analyze(map);
         }
-        let mut resolver = OverlappingPattern2DResolver::default();
+        let mut resolver = Pattern2DResolver::default();
 
         // Save the collapse process as a GIF.
         if args.gif() {

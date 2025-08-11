@@ -22,8 +22,8 @@ grid_forge_core::__impl_debug_subscriber! {
 }
 
 grid_forge_core::__impl_collapse_history_subscriber! {
-    struct_name: CollapseHistorySubscriber2D,
-    history_item_name: CollapseHistoryItem2D,
+    struct_name: HistorySubscriber2D,
+    history_item_name: HistoryItem2D,
     position: GridPosition2D,
 }
 

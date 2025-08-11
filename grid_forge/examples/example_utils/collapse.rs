@@ -1,7 +1,7 @@
 use std::fs::File;
 
-use grid_forge::{core::{GridPosition2D, GridSize2D}, id::{TypeIdMap, TypedData}, image::{ops::{init_map_image_buffer, write_tile}, TilePixConst}, procgen_collapse::{singular::{CollapsibleTileGrid2D, SingularSubscriber2D}, CollapseError2D, CollapsedGrid2D}};
-use grid_forge_2d::procgen_collapse::pattern::{CollapsiblePatternGrid2D, OverlappingPattern2DSubscriber};
+use grid_forge::{core::{GridPosition2D, GridSize2D}, id::{TypeIdMap, TypedData}, image::{ops::{init_map_image_buffer, write_tile}, TilePixConst}, procgen_collapse::{singular::{CollapsibleTileGrid2D, TileSubscriber2D}, CollapseError2D, CollapsedGrid2D}};
+use grid_forge_2d::procgen_collapse::pattern::{CollapsiblePatternGrid2D, Pattern2DSubscriber};
 use image::{ImageBuffer, Rgb};
 
 #[derive(Debug)]
@@ -162,7 +162,7 @@ impl GifSubscriber {
     }
 }
 
-impl SingularSubscriber2D for GifSubscriber {
+impl TileSubscriber2D for GifSubscriber {
     fn on_collapse(&mut self, position: &GridPosition2D, tile_type_id: u64) {
         if self.encoder.is_none() {
             self.begin()
@@ -177,7 +177,7 @@ impl SingularSubscriber2D for GifSubscriber {
     }
 }
 
-impl OverlappingPattern2DSubscriber for GifSubscriber {
+impl Pattern2DSubscriber for GifSubscriber {
     fn on_collapse(&mut self, position: &GridPosition2D, tile_type_id: u64, _pattern_id: u64) {
         if self.encoder.is_none() {
             self.begin()

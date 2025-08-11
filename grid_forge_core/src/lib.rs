@@ -56,7 +56,7 @@
 //!         TileColor::Green
 //!     };
 //!     let tile = GridTile::new(pos, TwoColoredTile { color });
-//!     map.insert_tile(tile);
+//!     map.insert(tile);
 //! }
 //! ```
 //!
@@ -89,18 +89,18 @@
 //! #         TileColor::Green
 //! #     };
 //! #     let tile = GridTile::new(pos, TwoColoredTile { color });
-//! #     map.insert_tile(tile);
+//! #     map.insert(tile);
 //! # }
 //!
 //! let pos = GridPosition::new_xy(10, 10);
-//! let tile: GridTileRef<TwoColoredTile> = map.get_tile_at_position(&pos).unwrap();
+//! let tile: GridTileRef<TwoColoredTile> = map.tile_at(&pos).unwrap();
 //! assert_eq!(tile.grid_position(), pos);
 //!
-//! let mut tile: GridTileRefMut<TwoColoredTile> = map.get_mut_tile_at_position(&pos).unwrap();
+//! let mut tile: GridTileRefMut<TwoColoredTile> = map.tile_at_mut(&pos).unwrap();
 //! assert_eq!(tile.grid_position(), pos);
 //! tile.as_mut().color = TileColor::Blue;
 //!
-//! let tile: GridTileRef<TwoColoredTile> = map.get_tile_at_position(&pos).unwrap();
+//! let tile: GridTileRef<TwoColoredTile> = map.tile_at(&pos).unwrap();
 //! assert_eq!(tile.as_ref().color, TileColor::Blue);
 //! ```
 //!

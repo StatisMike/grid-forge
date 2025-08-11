@@ -105,7 +105,7 @@ fn test_border_analyzer_simple() {
         grid.insert_data(&position, data);
     }
 
-    let mut analyzer = tile::SingularBorderAnalyzer2D::default();
+    let mut analyzer = tile::TileBorderAnalyzer2D::default();
     analyzer.analyze(&grid);
     let rules = analyzer.adjacency_rules();
 
@@ -136,7 +136,7 @@ fn test_border_analyzer_three_tile() {
         grid.insert_data(&position, data);
     }
 
-    let mut analyzer = tile::SingularBorderAnalyzer2D::default();
+    let mut analyzer = tile::TileBorderAnalyzer2D::default();
     analyzer.analyze(&grid);
     let rules = analyzer.adjacency_rules();
 

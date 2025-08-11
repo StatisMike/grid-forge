@@ -39,7 +39,7 @@ impl<T: TileData> GridMap2D<T> {
     // {
     //     let size = check_grid_vis_size(image, (WIDTH, HEIGHT))?;
     //     let mut grid = Self::new(size);
-    //     for (pos, pix) in grid.indexed_iter_mut() {
+    //     for (pos, pix) in grid.enumerate_mut() {
     //         let mut pix_tile = TilePixConst::<WIDTH, HEIGHT, P>::default();
     //         read_tile(&mut pix_tile, image, &pos)?;
     //         match pix {
@@ -80,7 +80,7 @@ impl<T: TileData> GridMap2D<T> {
     //     let size = check_grid_vis_size(image, pixel_size)?;
     //     let mut grid = Self::new(size);
     //     let mut checked = false;
-    //     for (pos, pix) in grid.indexed_iter_mut() {
+    //     for (pos, pix) in grid.enumerate_mut() {
     //         let mut pix_tile = TilePixVar::<P>::new_empty(pixel_size.0, pixel_size.1);
 
     //         if !checked {
@@ -157,7 +157,7 @@ impl<T: TileData> GridMap2D<T> {
     //         pix_id_map.insert(pix.tile_pixels().pix_hash(), *id);
     //     }
 
-    //     for (pos, tile_slot) in grid.indexed_iter_mut() {
+    //     for (pos, tile_slot) in grid.enumerate_mut() {
     //         let mut pix_tile = TilePixConst::<WIDTH, HEIGHT, P>::default();
     //         read_tile(&mut pix_tile, image, &pos)?;
     //         match pix_id_map.get(&pix_tile.pix_hash()) {
@@ -213,7 +213,7 @@ impl<T: TileData> GridMap2D<T> {
     //     let size = check_grid_vis_size(image, (WIDTH, HEIGHT))?;
     //     let mut grid = GridMap2D::new(size);
 
-    //     for (pos, tile_slot) in grid.indexed_iter_mut() {
+    //     for (pos, tile_slot) in grid.enumerate_mut() {
     //         let mut pix_tile = TilePixConst::<WIDTH, HEIGHT, P>::default();
     //         read_tile(&mut pix_tile, image, &pos)?;
     //         let tile_id = pix_tile.pix_hash();
@@ -285,7 +285,7 @@ impl<T: TileData> GridMap2D<T> {
     //         pix_id_map.insert(pix.tile_pixels().pix_hash(), *id);
     //     }
 
-    //     for (pos, tile_slot) in grid.indexed_iter_mut() {
+    //     for (pos, tile_slot) in grid.enumerate_mut() {
     //         let mut pix_tile = TilePixVar::<P>::new_empty(pix_size.0, pix_size.1);
     //         read_tile(&mut pix_tile, image, &pos)?;
     //         match pix_id_map.get(&pix_tile.pix_hash()) {
@@ -344,7 +344,7 @@ impl<T: TileData> GridMap2D<T> {
 
     //     let mut checked = false;
 
-    //     for (pos, tile_slot) in grid.indexed_iter_mut() {
+    //     for (pos, tile_slot) in grid.enumerate_mut() {
     //         let mut pix_tile = TilePixVar::new_empty(pix_size.0, pix_size.1);
 
     //         if !checked {
@@ -383,7 +383,7 @@ impl<T: TileData> GridMap2D<T> {
         P: PixelWithDefault + 'static,
     {
         check_grid_image_size(image, (WIDTH, HEIGHT), self.size())?;
-        for (pos, slot) in self.indexed_iter() {
+        for (pos, slot) in self.enumerate() {
             let Some(tile) = slot else { continue };
             write_tile(image, pos, tile.tile_pixels())?;
         }
@@ -400,7 +400,7 @@ impl<T: TileData> GridMap2D<T> {
         P: PixelWithDefault + 'static,
     {
         check_grid_image_size(image, pix_size, self.size())?;
-        for (pos, slot) in self.indexed_iter() {
+        for (pos, slot) in self.enumerate() {
             let Some(tile) = slot else { continue };
             write_tile(image, pos, tile.tile_pixels())?;
         }
@@ -418,7 +418,7 @@ impl<T: TileData> GridMap2D<T> {
         P: PixelWithDefault + 'static,
     {
         check_grid_image_size(image, (WIDTH, HEIGHT), self.size())?;
-        for (pos, slot) in self.indexed_iter() {
+        for (pos, slot) in self.enumerate() {
             let Some(tile) = slot else { continue };
             let tile_id = tile.tile_type_id();
             let Some(tile_pix) = tile_pixels.get(&tile_id) else {
@@ -441,7 +441,7 @@ impl<T: TileData> GridMap2D<T> {
         P: PixelWithDefault + 'static,
     {
         check_grid_image_size(image, pix_size, self.size())?;
-        for (pos, slot) in self.indexed_iter() {
+        for (pos, slot) in self.enumerate() {
             let Some(tile) = slot else { continue };
             let tile_id = tile.tile_type_id();
             let Some(tile_pix) = tile_pixels.get(&tile_id) else {
@@ -468,8 +468,8 @@ where
         P: PixelWithDefault + 'static,
     {
         check_grid_image_size(image, (WIDTH, HEIGHT), self.size())?;
-        for position in self.iter_all_positions() {
-            let Some(tile_pix) = self.get_shared_data_at_position(&position) else {
+        for position in self.iter_positions() {
+            let Some(tile_pix) = self.shared_at(&position) else {
                 continue;
             };
             write_tile(image, position, tile_pix.tile_pixels())?;
@@ -487,8 +487,8 @@ where
         P: PixelWithDefault + 'static,
     {
         check_grid_image_size(image, pix_size, self.size())?;
-        for position in self.iter_all_positions() {
-            let Some(tile_pix) = self.get_shared_data_at_position(&position) else {
+        for position in self.iter_positions() {
+            let Some(tile_pix) = self.shared_at(&position) else {
                 continue;
             };
             check_tile_vis_size(pix_size, tile_pix.tile_pixels())?;

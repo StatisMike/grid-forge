@@ -215,7 +215,7 @@ impl TileGenerator {
         if !collapsed.is_empty() {
             let mut grid = CollapsedGrid::new(size);
             for (pos, single_tile) in collapsed.iter() {
-                grid.insert_tile(GridTile::new(
+                grid.insert(GridTile::new(
                     *pos,
                     CollapsedTileData::new(single_tile.bind().get_tile_type_id() as u64),
                 ));
@@ -414,7 +414,7 @@ impl GenerationHistoryState {
             godot_error!("Cannot draw frame, because history is empty");
             return false;
         };
-        collection.bind().insert_tile(
+        collection.bind().insert(
             map.clone(),
             item.tile_type_id,
             item.position.get_godot_coords(),
