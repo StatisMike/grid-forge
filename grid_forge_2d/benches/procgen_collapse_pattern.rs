@@ -508,19 +508,19 @@ criterion_group!(
     analyze_adjacency_pattern_3x3,
     analyze_build_collapsible_pattern_grid
 );
-criterion_group! {
-  name = generate;
-  config = Criterion::default().measurement_time(Duration::from_secs(10));
-  targets =
-    // generate_10x10_pattern_2x2_entrophy,
-    // generate_10x10_pattern_3x3_entrophy,
-    // generate_10x10_pattern_2x2_position,
-    generate_10x10_pattern_3x3_position,
-    // gen_border_position_10x10,
-    // gen_identity_entrophy_10x10,
-    // gen_border_entrophy_10x10
-}
+// criterion_group! {
+//   name = generate;
+//   config = Criterion::default().measurement_time(Duration::from_secs(10));
+//   targets =
+//     // generate_10x10_pattern_2x2_entrophy,
+//     // generate_10x10_pattern_3x3_entrophy,
+//     // generate_10x10_pattern_2x2_position,
+//     // generate_10x10_pattern_3x3_position,
+//     // gen_border_position_10x10,
+//     // gen_identity_entrophy_10x10,
+//     // gen_border_entrophy_10x10
+// }
 criterion_main!(
-    // analyze, 
-    generate
+    analyze, 
+    // generate
 );

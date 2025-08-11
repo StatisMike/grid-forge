@@ -144,39 +144,27 @@ macro_rules! __impl_grid_shared_trait {
         grid_shared_trait: $grid_shared_trait:ident,
         grid_map_trait: $grid_map_trait:ident,
 
-        direction: $direction_type:ty,
-        direction_table: $direction_table:ident,
-        size: $size_type:ty,
         position: $position_type:ty,
-        tile: $tile_type:ident,
-        tile_ref: $tile_ref_type:ident,
-        tile_mut: $tile_mut_type:ident,
-        tile_container_trait: $tile_container_trait:ident,
-        neighbours_count: $neighbour_size:literal,
+        tile_ref_shared: $tile_ref_shared:ident,
+        tile_mut_shared: $tile_mut_shared:ident,
 
-        $(generic_grid_params: [$($generic_grid_param:tt)*],)?
-        $(generic_shared_params: [$($generic_shared_param:tt)*],)?
+        $(generic_params: [$($generic_param:tt)*],)?
         $(where_clause: [$($where_clause:tt)*],)?
-        $(other_mut_access: [$($other_mut_access:tt => $other_mut_access_translate:tt)*],)?
     )
     => {
 
-        #[allow(unused_imports)]
-        use crate::core::$tile_container_trait as _;
-        #[allow(unused_imports)]
-        use std::default::Default as _;
+        macro_rules! __tile_ref_shared_type { () => { $tile_ref_shared<'a, Data, Shared> }; }
+        macro_rules! __tile_mut_shared_type { () => { $tile_mut_shared<'a, Data, Shared> }; }
 
-        macro_rules! __tile_type { () => { $tile_type<Data> }; }
-        macro_rules! __tile_ref_type { () => { $tile_ref_type<'a, Data> }; }
-        macro_rules! __tile_mut_type { () => { $tile_mut_type<'a, Data> }; }
-
-        /// Trait for basic grid map operations.
+        /// Trait for grid map operations with shared data.
         /// 
-        /// Encapsulates all operations on the grid map and data stored in its tiles.
+        /// Encapsulates all operations on the grid map containing some [`SharedData`](crate::id::SharedData).
         /// 
         /// For documentation of each method, refer to the documentation on the concrete type implementing this trait.
-        pub trait $grid_shared_trait<$($($generic_shared_param)*)?> : $grid_map_trait<($($generic_shared_param)*)?>
-        $(where $($where_clause)*)?
+        pub trait $grid_shared_trait<$($($generic_param)*)?, Shared> : $grid_map_trait<$($($generic_param)*)?>
+        where 
+            $($($where_clause)*)?,
+            Shared: grid_forge_core::id::SharedData,
         {
             fn import_shared_data(&mut self, shared_data: grid_forge_core::id::TypeIdMap<Shared>);
 
@@ -191,15 +179,13 @@ macro_rules! __impl_grid_shared_trait {
 
             fn remove_shared_data(&mut self, type_id: u64);
 
-            fn get_mut_shared_data(&mut self, type_id: u64) -> Option<&mut Shared> {
-                self.shared_data.get_shared_data_mut(&type_id)
-            }
+            fn get_mut_shared_data(&mut self, type_id: u64) -> Option<&mut Shared>;
 
-            fn get_shared_data_at_position(&self, position: &$position) -> Option<&Shared>;
+            fn get_shared_data_at_position(&self, position: &$position_type) -> Option<&Shared>;
 
-            fn get_tile_with_shared_at_position<'a>(&'a self, position: &$position) -> Option<__tile_ref_shared_type!()>;
+            fn get_tile_with_shared_at_position<'a>(&'a self, position: &$position_type) -> Option<__tile_ref_shared_type!()>;
 
-            fn get_mut_tile_with_shared_at_position<'a>(&'a mut self, position: &$position) -> Option<__tile_mut_shared_type!()>;
+            fn get_mut_tile_with_shared_at_position<'a>(&'a mut self, position: &$position_type) -> Option<__tile_mut_shared_type!()>;
         }
     }
 }
@@ -779,6 +765,7 @@ macro_rules! __impl_grid_with_shared {
         neighbours_count: $neighbours_count:literal $(,)?
 
         grid_map_trait: $grid_map_trait:ident,
+        grid_shared_trait: $grid_shared_trait:ident,
 
         tile_ref_shared: $tile_ref_shared:ident,
         tile_mut_shared: $tile_mut_shared:ident,
@@ -824,7 +811,7 @@ macro_rules! __impl_grid_with_shared {
         macro_rules! __tile_ref_shared_type { () => { $tile_ref_shared<'a, Data, Shared> }; }
         macro_rules! __tile_mut_shared_type { () => { $tile_mut_shared<'a, Data, Shared> }; }
 
-        impl <$($($generic_param)*)?, Shared> $struct_name<$($($generic_param)*)?, Shared>
+        impl <$($($generic_param)*)?, Shared> $grid_shared_trait<$($($generic_param)*)?, Shared> for $struct_name<$($($generic_param)*)?, Shared>
         where
             $($($where_clause)*, )?
             Shared: grid_forge_core::id::SharedData,
@@ -838,7 +825,7 @@ macro_rules! __impl_grid_with_shared {
             /// While importing shared data, even if `mut_access_tracking` is enabled, the shared data inclusion
             /// will not be tracked. In these scenarios it is implied that all tiles were modified and all
             /// objects dependent on the shared data should be updated.
-            pub fn import_shared_data(&mut self, shared_data: grid_forge_core::id::TypeIdMap<Shared>)
+            fn import_shared_data(&mut self, shared_data: grid_forge_core::id::TypeIdMap<Shared>)
             {
                 for (type_id, data) in shared_data {
                     self.shared_data.replace_shared_data(type_id, Some(data), false);
@@ -854,7 +841,7 @@ macro_rules! __impl_grid_with_shared {
             /// While exporting shared data, even if `mut_access_tracking` is enabled, the shared data mut access
             /// will not be tracked. In these scenarios it is implied that all tiles were modified and all
             /// objects dependent on the shared data should be updated.
-            pub fn export_shared_data(&mut self) -> grid_forge_core::id::TypeIdMap<Shared> {
+            fn export_shared_data(&mut self) -> grid_forge_core::id::TypeIdMap<Shared> {
                 self.shared_data.drain_shared_data()
             }
 
@@ -862,7 +849,7 @@ macro_rules! __impl_grid_with_shared {
             ///
             /// Returns vector of all tile_type_ids present in the grid which don't have
             /// corresponding shared data registered.
-            pub fn check_shared_data(&self) -> Vec<u64> {
+            fn check_shared_data(&self) -> Vec<u64> {
                 let mut checked = std::collections::HashSet::new();
                 let mut missing = Vec::new();
                 for tile in self.iter_tiles() {
@@ -882,7 +869,7 @@ macro_rules! __impl_grid_with_shared {
             /// Clones shared data from the grid.
             ///
             /// This method will export all shared data by cloning them, keeping existing shared data intact.
-            pub fn clone_shared_data(&self) -> grid_forge_core::id::TypeIdMap<Shared>
+            fn clone_shared_data(&self) -> grid_forge_core::id::TypeIdMap<Shared>
             where Shared: Clone {
                 self.shared_data.iter_shared_data().map(|(type_id, data)| (*type_id, data.clone())).collect()
             }
@@ -891,14 +878,14 @@ macro_rules! __impl_grid_with_shared {
             ///
             /// If there were some shared data already present with the same `type_id`, it will be overwritten.
             /// When `mut_access_tracking` is enabled, the shared data inclusion will be tracked.
-            pub fn insert_shared_data(&mut self, type_id: u64, data: Shared) {
+            fn insert_shared_data(&mut self, type_id: u64, data: Shared) {
                 self.shared_data.replace_shared_data(type_id, Some(data), true);
             }
 
             /// Removes shared data from the grid for the specified `type_id`.
             ///
             /// When `mut_access_tracking` is enabled, the shared data removal will be tracked.
-            pub fn remove_shared_data(&mut self, type_id: u64) {
+            fn remove_shared_data(&mut self, type_id: u64) {
                 self.shared_data.replace_shared_data(type_id, None, true);
             }
 
@@ -907,14 +894,14 @@ macro_rules! __impl_grid_with_shared {
             /// When `mut_access_tracking` is enabled, the shared data mutable access will be tracked.
             ///
             /// Returns `None` if there is no shared data with the specified `type_id`.
-            pub fn get_mut_shared_data(&mut self, type_id: u64) -> Option<&mut Shared> {
+            fn get_mut_shared_data(&mut self, type_id: u64) -> Option<&mut Shared> {
                 self.shared_data.get_shared_data_mut(&type_id)
             }
 
             /// Gets shared data for the specified position.
             ///
             /// Returns `None` if there is no shared data for the tile type at the specified position.
-            pub fn get_shared_data_at_position(&self, position: &$position) -> Option<&Shared> {
+            fn get_shared_data_at_position(&self, position: &$position) -> Option<&Shared> {
                 let Some(tile) = self.get_tile_at_position(position) else { return None };
 
                 self.shared_data.get_shared_data(&tile.data().tile_type_id())
@@ -925,7 +912,7 @@ macro_rules! __impl_grid_with_shared {
             /// Returns a composite struct containing the tile position and immutable references to the tile and shared data.
             ///
             /// Returns `None` if there is no tile at the specified position or no shared data for its tile type.
-            pub fn get_tile_with_shared_at_position<'a>(&'a self, position: &$position) -> Option<__tile_ref_shared_type!()> {
+            fn get_tile_with_shared_at_position<'a>(&'a self, position: &$position) -> Option<__tile_ref_shared_type!()> {
                 let Some(tile) = self.get_tile_at_position(position) else { return None };
                 let Some(shared) = self.shared_data.get_shared_data(&tile.data().tile_type_id()) else { return None };
                 Some((tile, shared).into())
@@ -942,7 +929,7 @@ macro_rules! __impl_grid_with_shared {
             /// If `mut_access_tracking` is enabled, the position will be tracked as mutably accessed.
             ///
             /// Returns `None` if there is no tile at the specified position or no shared data for its tile type.
-            pub fn get_mut_tile_with_shared_at_position<'a>(&'a mut self, position: &$position) -> Option<__tile_mut_shared_type!()> {
+            fn get_mut_tile_with_shared_at_position<'a>(&'a mut self, position: &$position) -> Option<__tile_mut_shared_type!()> {
                 if !self.size.is_position_valid(position) {
                     return None;
                 }
@@ -963,7 +950,13 @@ macro_rules! __impl_grid_with_shared {
                 };
                 Some((*position, data, shared).into())
             }
+        }
 
+        impl <$($($generic_param)*)?, Shared> $struct_name<$($($generic_param)*)?, Shared>
+        where
+            $($($where_clause)*, )?
+            Shared: grid_forge_core::id::SharedData,
+        {
             fn shared_data_mut_access_translate(
                 &self,
                 mut_accessed_tiles: &mut std::collections::HashSet<$position>,

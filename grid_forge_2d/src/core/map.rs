@@ -17,6 +17,18 @@ grid_forge_core::__impl_grid_trait! {
     where_clause: [Data: grid_forge_core::TileData],
 }
 
+grid_forge_core::__impl_grid_shared_trait! {
+    grid_shared_trait: GridShared2D,
+    grid_map_trait: Grid2D,
+
+    position: GridPosition2D,
+    tile_ref_shared: TileRefShared2D,
+    tile_mut_shared: TileMutShared2D,
+
+    generic_params: [Data],
+    where_clause: [Data: grid_forge_core::id::TypedData],
+}
+
 grid_forge_core::__impl_grid! {
 
     #[derive(Clone, Debug)]
@@ -53,6 +65,7 @@ grid_forge_core::__impl_grid_with_shared! {
     neighbours_count: 4,
 
     grid_map_trait: Grid2D,
+    grid_shared_trait: GridShared2D,
 
     tile_ref_shared: TileRefShared2D,
     tile_mut_shared: TileMutShared2D,
@@ -139,6 +152,7 @@ mod tests {
 
     mod shared {
         use super::super::Grid2D as _;
+        use super::super::GridShared2D as _;
         use crate::core::*;
 
         grid_forge_core::__impl_shared_grid_tests!(

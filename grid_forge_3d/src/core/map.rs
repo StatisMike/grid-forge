@@ -3,7 +3,7 @@ use super::*;
 #[cfg(feature = "2d")]
 use grid_forge_2d::core::{GridPosition2D, GridSize2D, Tile2D, GridMap2D, Grid2D as _};
 
-use grid_forge_core::TileData;
+use grid_forge_core::{procgen_collapse::grid, TileData};
 
 grid_forge_core::__impl_grid_trait! {
     grid_map_trait: Grid3D,
@@ -20,6 +20,19 @@ grid_forge_core::__impl_grid_trait! {
 
     generic_params: [Data],
     where_clause: [Data: grid_forge_core::TileData],
+}
+
+grid_forge_core::__impl_grid_shared_trait! {
+    grid_shared_trait: GridShared3D,
+
+    grid_map_trait: Grid3D,
+
+    position: GridPosition3D,
+    tile_ref_shared: TileRefShared3D,
+    tile_mut_shared: TileMutShared3D,
+
+    generic_params: [Data],
+    where_clause: [Data: grid_forge_core::id::TypedData],
 }
 
 grid_forge_core::__impl_grid! {
@@ -56,6 +69,7 @@ grid_forge_core::__impl_grid_with_shared! {
     neighbours_count: 6,
 
     grid_map_trait: Grid3D,
+    grid_shared_trait: GridShared3D,
 
     tile_ref_shared: TileRefShared3D,
     tile_mut_shared: TileMutShared3D,

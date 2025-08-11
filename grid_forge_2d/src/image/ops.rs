@@ -4,7 +4,7 @@ use std::collections::hash_map::Entry;
 
 use image::{ImageBuffer, Pixel};
 
-use crate::core::{Grid2D, GridMap2D, GridMapShared2D, GridPosition2D, GridSize2D};
+use crate::core::{Grid2D, GridShared2D, GridMap2D, GridMapShared2D, GridPosition2D, GridSize2D};
 use grid_forge_core::id::{IdentTileBuilder, SharedData, TypeIdMap, TypedData};
 use grid_forge_core::image::PixelWithDefault;
 use grid_forge_core::TileData;

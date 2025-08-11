@@ -1,5 +1,5 @@
 use criterion::*;
-use grid_forge_2d::core::{Grid2D as _, GridMap2D, GridMapShared2D};
+use grid_forge_2d::core::{Grid2D as _, GridMap2D, GridMapShared2D, GridShared2D as _};
 use grid_forge_2d::image::{TilePixConst, TilePixVar};
 use grid_forge_core::id::{BasicTypedData, IdentTileDefaultBuilder, TypeIdMap};
 use image::Rgb;

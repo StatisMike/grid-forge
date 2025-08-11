@@ -93,6 +93,7 @@
 pub mod core;
 pub mod prelude {
     pub use crate::core::Grid2D as _;
+    pub use crate::core::GridShared2D as _;
     pub use crate::core::*;
 }
 

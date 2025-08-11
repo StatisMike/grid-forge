@@ -3,23 +3,47 @@ use std::time::Duration;
 
 use criterion::*;
 use grid_forge_2d::prelude::*;
+use grid_forge_core::id::{SharedData, TypeIdMap, TypedData};
 use grid_forge_core::TileData;
 
 pub struct DefaultTile {
     offset: usize,
+    tile_id: u64,
 }
 
 impl TileData for DefaultTile {}
 
 impl DefaultTile {
+    const TYPE_COUNT: u64 = 10;
+
     pub fn new(offset: usize) -> Self {
-        Self { offset }
+        Self { offset, tile_id: tile_id_from_offset(offset) }
     }
 
     pub fn offset_matches(&self, offset: usize) -> bool {
         self.offset == offset
     }
 }
+
+impl TypedData for DefaultTile {
+    fn tile_type_id(&self) -> u64 {
+        self.tile_id
+    }
+}
+
+pub struct DefaultTileShared {
+    foo: bool,
+}
+
+impl DefaultTileShared {
+    pub fn new(tile_type_id: u64) -> Self {
+        Self {
+            foo: tile_type_id % 2 == 0,
+        }
+    }
+}
+
+impl SharedData for DefaultTileShared {}
 
 fn create_default_2d_grid(size: GridSize2D) -> GridMap2D<DefaultTile> {
     let mut grid = GridMap2D::new(size);
@@ -32,6 +56,10 @@ fn create_default_2d_grid(size: GridSize2D) -> GridMap2D<DefaultTile> {
         grid.insert_data(pos, DefaultTile::new(*offset));
     }
     grid
+}
+
+fn tile_id_from_offset(offset: usize) -> u64 {
+    offset as u64 % DefaultTile::TYPE_COUNT
 }
 
 pub fn create_grid_100x100(c: &mut Criterion) {
@@ -81,9 +109,54 @@ pub fn grid_access_100x100_mut_track(c: &mut Criterion) {
     c.bench_function("grid_access_100x100_mut_track", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let mut tile: TileMut2D<DefaultTile> =
-                    grid.get_mut_tile_at_position(pos).unwrap().into();
+                let mut tile = grid.get_mut_tile_at_position(pos).unwrap();
                 tile.data().offset = 1;
+            }
+        })
+    });
+}
+
+pub fn grid_access_100x100_shared(c: &mut Criterion) {
+    let size = GridSize2D::new(100, 100);
+    let grid = create_default_2d_grid(size.clone());
+    let mut grid = GridMapShared2D::from_regular(grid);
+    let mut shared_container = TypeIdMap::<DefaultTileShared>::default();
+
+    for id in 0..DefaultTile::TYPE_COUNT {
+        shared_container.insert(id, DefaultTileShared::new(id));
+    }
+    grid.import_shared_data(shared_container);
+
+    let possible_positions = size.get_all_possible_positions();
+
+    c.bench_function("grid_access_100x100_shared", |b| {
+        b.iter(|| {
+            for pos in possible_positions.iter() {
+                let tile = grid.get_tile_with_shared_at_position(pos).unwrap();
+                black_box(tile);
+            }
+        })
+    });
+}
+
+pub fn grid_access_100x100_shared_data(c: &mut Criterion) {
+    let size = GridSize2D::new(100, 100);
+    let grid = create_default_2d_grid(size.clone());
+    let mut grid = GridMapShared2D::from_regular(grid);
+    let mut shared_container = TypeIdMap::<DefaultTileShared>::default();
+
+    for id in 0..DefaultTile::TYPE_COUNT {
+        shared_container.insert(id, DefaultTileShared::new(id));
+    }
+    grid.import_shared_data(shared_container);
+
+    let possible_positions = size.get_all_possible_positions();
+
+    c.bench_function("grid_access_100x100_shared_data", |b| {
+        b.iter(|| {
+            for pos in possible_positions.iter() {
+                let data = grid.get_shared_data_at_position(pos).unwrap();
+                black_box(data);
             }
         })
     });
@@ -152,6 +225,8 @@ criterion_group!(
     targets =   grid_access_100x100,
                 grid_access_100x100_mut,
                 grid_access_100x100_mut_track,
+                grid_access_100x100_shared,
+                grid_access_100x100_shared_data,
                 create_grid_100x100,
 );
 
