@@ -113,30 +113,30 @@ fn test_from_grindmap_identical() {
     )
     .expect("cannot load roads to gridmap");
 
-    for position in roads_map.get_all_positions() {
+    for position in roads_map.positions() {
         assert_eq!(
             roads_map
-                .get_tile_at_position(&position)
+                .tile_at(&position)
                 .unwrap()
                 .as_ref()
                 .tile_type_id(),
             second_roads
-                .get_tile_at_position(&position)
+                .tile_at(&position)
                 .unwrap()
                 .as_ref()
                 .tile_type_id()
         );
     }
 
-    for position in seas_map.get_all_positions() {
+    for position in seas_map.positions() {
         assert_eq!(
             seas_map
-                .get_tile_at_position(&position)
+                .tile_at(&position)
                 .unwrap()
                 .as_ref()
                 .tile_type_id(),
             second_seas
-                .get_tile_at_position(&position)
+                .tile_at(&position)
                 .unwrap()
                 .as_ref()
                 .tile_type_id()

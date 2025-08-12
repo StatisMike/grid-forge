@@ -187,7 +187,7 @@ impl TileCollections {
     }
 
     #[func]
-    pub fn insert_tile(&self, tilemap: Gd<TileMap>, tile_type_id: u64, coords: Vector2i) {
+    pub fn insert(&self, tilemap: Gd<TileMap>, tile_type_id: u64, coords: Vector2i) {
         let mut tilemap = tilemap.clone();
         self.godot_collection
             .as_ref()

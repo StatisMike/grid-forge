@@ -1,0 +1,51 @@
+[package]
+name = "grid_forge_2d"
+description = "2D rectangular tile dimension"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+bench = false
+
+[features]
+default = ['image', 'procgen']
+image = ["grid_forge_core/image","dep:image"]
+procgen = ["grid_forge_core/procgen", "dep:rand"]
+serde = ["dep:serde"]
+
+# Utilities for benchmarks, tests and examples
+dev_utils = ["grid_forge_core/dev_utils"]
+
+[dependencies]
+grid_forge_core = { path = "../grid_forge_core" }
+image = { workspace = true, optional = true }
+rand = { workspace = true, optional = true }
+nohash-hasher = { workspace = true }
+serde = { workspace = true, optional = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+image = { workspace = true, features = ["png"]}
+rand_chacha = { workspace = true }
+
+[[bench]]
+name = "grid"
+harness = false
+
+[[bench]]
+name = "image"
+harness = false
+required-features = ["image"]
+
+[[bench]]
+name = "procgen_collapse_tile"
+harness = false
+required-features = ["procgen", "image", "dev_utils"]
+
+[[bench]]
+name = "procgen_collapse_pattern"
+harness = false
+required-features = ["procgen", "image", "dev_utils"]

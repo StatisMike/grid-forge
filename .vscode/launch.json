@@ -1,0 +1,424 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'grid_forge_core'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=grid_forge_core"
+                ],
+                "filter": {
+                    "name": "grid_forge_core",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'gen_walker'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=gen_walker",
+                    "--package=grid_forge_core"
+                ],
+                "filter": {
+                    "name": "gen_walker",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'gen_walker'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=gen_walker",
+                    "--package=grid_forge_core"
+                ],
+                "filter": {
+                    "name": "gen_walker",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'vis'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=vis",
+                    "--package=grid_forge_core"
+                ],
+                "filter": {
+                    "name": "vis",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'vis'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=vis",
+                    "--package=grid_forge_core"
+                ],
+                "filter": {
+                    "name": "vis",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'collapsible'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=collapsible",
+                    "--package=grid_forge_core"
+                ],
+                "filter": {
+                    "name": "collapsible",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'gen_collapse_overlap'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=gen_collapse_overlap",
+                    "--package=grid_forge_core"
+                ],
+                "filter": {
+                    "name": "gen_collapse_overlap",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'gen_collapse_singular'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=gen_collapse_singular",
+                    "--package=grid_forge_core"
+                ],
+                "filter": {
+                    "name": "gen_collapse_singular",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'gen_walker'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=gen_walker",
+                    "--package=grid_forge_core"
+                ],
+                "filter": {
+                    "name": "gen_walker",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'grid_bench'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=grid_bench",
+                    "--package=grid_forge_core"
+                ],
+                "filter": {
+                    "name": "grid_bench",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'overlap'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=overlap",
+                    "--package=grid_forge_core"
+                ],
+                "filter": {
+                    "name": "overlap",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'vis'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=vis",
+                    "--package=grid_forge_core"
+                ],
+                "filter": {
+                    "name": "vis",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'walker'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=walker",
+                    "--package=grid_forge_core"
+                ],
+                "filter": {
+                    "name": "walker",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'grid_forge_2d'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=grid_forge_2d"
+                ],
+                "filter": {
+                    "name": "grid_forge_2d",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'grid'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=grid",
+                    "--package=grid_forge_2d"
+                ],
+                "filter": {
+                    "name": "grid",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'image'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=image",
+                    "--package=grid_forge_2d"
+                ],
+                "filter": {
+                    "name": "image",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'procgen_collapse_singular'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=procgen_collapse_singular",
+                    "--package=grid_forge_2d"
+                ],
+                "filter": {
+                    "name": "procgen_collapse_singular",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'grid_forge_3d'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=grid_forge_3d"
+                ],
+                "filter": {
+                    "name": "grid_forge_3d",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'grid'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=grid",
+                    "--package=grid_forge_3d"
+                ],
+                "filter": {
+                    "name": "grid",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'grid_forge'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=grid_forge"
+                ],
+                "filter": {
+                    "name": "grid_forge",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example '2d_collapse_singular'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=2d_collapse_singular",
+                    "--package=grid_forge",
+                    "--features=2d procgen image"
+                ],
+                "filter": {
+                    "name": "2d_collapse_singular",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example '2d_collapse_singular'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=2d_collapse_singular",
+                    "--package=grid_forge"
+                ],
+                "filter": {
+                    "name": "2d_collapse_singular",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

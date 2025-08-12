@@ -1,0 +1,31 @@
+[package]
+name = "grid_forge_3d"
+description = "3D cubic tile dimension"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+bench = false
+
+[features]
+2d = ["grid_forge_2d"]
+default = ['procgen']
+procgen = ["grid_forge_core/procgen", "dep:rand"]
+serde = ["dep:serde"]
+
+[dependencies]
+grid_forge_core = { path = "../grid_forge_core" }
+grid_forge_2d = { path = "../grid_forge_2d", optional = true }
+nohash-hasher = { workspace = true }
+rand = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+
+[[bench]]
+name = "grid"
+harness = false

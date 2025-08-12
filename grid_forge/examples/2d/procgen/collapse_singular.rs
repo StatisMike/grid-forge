@@ -1,0 +1,176 @@
+#[path = "../../example_utils/mod.rs"]
+mod utils;
+
+use std::fs::File;
+
+use grid_forge::id::TypeIdMap;
+use grid_forge::image::ops::{init_map_image_buffer, write_to_image_const_typed};
+use grid_forge::image::TilePixConst;
+use grid_forge::prelude::*;
+use grid_forge::procgen_collapse::{tile::*, DebugSubscriber2D};
+use grid_forge::procgen_collapse::PositionQueue2D;
+
+use image::Rgb;
+use rand_chacha::ChaChaRng;
+
+use utils::collapse::ArgHelper;
+use utils::image::*;
+use utils::RngHelper;
+
+use crate::utils::collapse::GifSubscriber;
+
+const MAP_10X10: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../assets/samples/seas.png");
+const MAP_20X20: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../assets/samples/roads.png");
+
+const OUTPUTS_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/examples/2d/procgen/output/");
+
+fn main() {
+    let args = ArgHelper::gather();
+
+    // Map for TileId and Pixel ID to handle Image <-> GridMap2D roundabouts
+    // Use `TilePixConst` to handle pixel data if its size is known at compile time.
+    let mut id_pixel_map = TypeIdMap::<TilePixConst<4, 4, Rgb<u8>>>::default();
+
+    // Load two sample maps with 90 deegrees rotation to increase variety of rules.
+    let maps = VisGridLoaderHelper::new(&mut id_pixel_map).load_w_rotate(
+        &[MAP_10X10, MAP_20X20],
+        &[VisRotate::None, VisRotate::R90, VisRotate::R180],
+    );
+
+    // Create Identity (for `identity_entrophy`) and Border (for `border_position`) analyzers and FrequencyRules.
+    let mut identity_analyzer = TileIdentityAnalyzer2D::default();
+    let mut border_analyzer = TileBorderAnalyzer2D::default();
+    let mut frequency_hints = FrequencyHints2D::default();
+
+    // Analyze the loaded maps, recording the `AdjacencyRules` in analyzers.
+    for map in maps {
+        identity_analyzer.analyze(&map);
+        border_analyzer.analyze(&map);
+        frequency_hints.analyze(&map);
+    }
+
+    let outputs_size = GridSize2D::new(30, 30);
+
+    // Resolver can be reused, as it is used for the same tile type.
+    let mut resolver = TileResolver2D::default();
+
+    // ----- Singular with Entrophy Queue ----- //
+    //
+    // EntrophyQueue will keep higher success rate, but is slower than PositionQueue.
+    if !args.skip_entrophy() {
+        {
+            // Save the collapse process as a GIF.
+            if args.gif() {
+                let file =
+                    std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "identity_entrophy.gif"))
+                        .unwrap();
+                let subscriber =
+                    GifSubscriber::new(file, &outputs_size, id_pixel_map.clone()).with_rescale(3);
+
+                resolver = resolver.with_subscriber(Box::new(subscriber));
+            } else if args.debug() {
+                let subsciber = DebugSubscriber2D::new(Some(
+                    File::create(format!("{}{}", OUTPUTS_DIR, "identity_entrophy_debug.txt"))
+                        .unwrap(),
+                ));
+                resolver = resolver.with_subscriber(Box::new(subsciber));
+            }
+
+            // Using propagating EntrophyQueue, we will use more restrictive `identity`
+            // AdjacencyRules. It will help to keep high success rate, but is a little
+            // slower than PositionQueue.
+            let mut rng: ChaChaRng = RngHelper::init_str("entrophy example", 6).into();
+
+            let mut to_collapse = CollapsibleTileGrid2D::new_empty(
+                outputs_size,
+                &frequency_hints,
+                identity_analyzer.adjacency_rules(),
+            );
+
+            resolver
+                .generate_entrophy(
+                    &mut to_collapse,
+                    &mut rng,
+                    &outputs_size.get_all_possible_positions(),
+                )
+                .unwrap();
+
+            // `CollapsibleTileGrid` can be now transformed into `CollapsedGrid`. If you have custom `IdentifiableTileData`,
+            // you can use `.retrieve_ident()` method.
+            let collapsed = to_collapse.retrieve_collapsed();
+
+            // We will generate output image using the same `VisCollection`.
+            let mut out_buffer = init_map_image_buffer(collapsed.grid().size(), (4, 4));
+            write_to_image_const_typed(&mut out_buffer, collapsed.grid(), &id_pixel_map).unwrap();
+
+            // A little resize as tiles are 4x4 pixels themselves.
+            out_buffer = image::imageops::resize(
+                &out_buffer,
+                outputs_size.x() * 4 * 3,
+                outputs_size.y() * 4 * 3,
+                image::imageops::FilterType::Nearest,
+            );
+            out_buffer
+                .save(format!("{}{}", OUTPUTS_DIR, "identity_entrophy.png"))
+                .unwrap();
+        }
+    }
+
+    if !args.skip_position() {
+        // ------------------------------ Border rules + Position Queue generation ----------------------------------//
+
+        // Using non-propagating PositionQueue, we will use less restrictive `border`
+        // AdjacencyRules. The success rate will be still moderately high - and
+        // errors can be mitigated by just retrying, as non-propagating queue is faster.
+
+        // Save the collapse process as a GIF
+        if args.gif() {
+            let file =
+                std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "border_position.gif")).unwrap();
+            let subscriber =
+                GifSubscriber::new(file, &outputs_size, id_pixel_map.clone()).with_rescale(3);
+
+            resolver = resolver.with_subscriber(Box::new(subscriber));
+        } else if args.debug() {
+            let subsciber = DebugSubscriber2D::new(Some(
+                File::create(format!("{}{}", OUTPUTS_DIR, "border_position_debug.txt")).unwrap(),
+            ));
+            resolver = resolver.with_subscriber(Box::new(subsciber));
+        }
+
+        // Using non-propagating PositionQueue, we will use less restrictive `border`
+        // AdjacencyRules. The success rate will be still moderately high - and
+        // errors can be mitigated by just retrying, as non-propagating queue is faster.
+        let mut rng: ChaChaRng = RngHelper::init_str("singular_border", 5)
+            .with_pos(4818)
+            .into();
+
+        let mut to_collapse = CollapsibleTileGrid2D::new_empty(
+            outputs_size,
+            &frequency_hints,
+            border_analyzer.adjacency_rules(),
+        );
+
+        resolver
+            .generate_position(
+                &mut to_collapse,
+                &mut rng,
+                &outputs_size.get_all_possible_positions(),
+                PositionQueue2D::default(),
+            )
+            .unwrap();
+
+        let collapsed = to_collapse.retrieve_collapsed();
+        let mut out_buffer = init_map_image_buffer(collapsed.grid().size(), (4, 4));
+        write_to_image_const_typed(&mut out_buffer, collapsed.grid(), &id_pixel_map).unwrap();
+        out_buffer = image::imageops::resize(
+            &out_buffer,
+            outputs_size.x() * 4 * 3,
+            outputs_size.y() * 4 * 3,
+            image::imageops::FilterType::Nearest,
+        );
+        out_buffer
+            .save(format!("{}{}", OUTPUTS_DIR, "border_position.png"))
+            .unwrap();
+    }
+}
