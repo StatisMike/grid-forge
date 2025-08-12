@@ -31,7 +31,7 @@ macro_rules! __impl_entrophy_item {
             pos: $position,
             entrophy: OrderedFloat,
         }
-    
+
         impl $name {
             pub fn new(pos: $position, entrophy: f32) -> Self {
                 Self {
@@ -39,11 +39,11 @@ macro_rules! __impl_entrophy_item {
                     entrophy: entrophy.into(),
                 }
             }
-        
+
             pub fn pos(&self) -> $position {
                 self.pos
             }
-        
+
             pub fn entrophy(&self) -> OrderedFloat {
                 self.entrophy
             }
@@ -70,7 +70,7 @@ macro_rules! __impl_entrophy_item {
                     .then_with(|| self.pos.cmp(&other.pos))
             }
         }
-    }
+    };
 }
 
 #[macro_export]
@@ -82,7 +82,6 @@ macro_rules! __impl_entrophy_queue {
         grid: $grid:ident,
         position: $position:ident,
     ) => {
-
         /// Select next position to collapse using smallest entrophy condition.
         ///
         /// Its state will be updated every time after tile entrophy changed by removing some of its options.
@@ -101,7 +100,7 @@ macro_rules! __impl_entrophy_queue {
         }
 
         impl $name {
-            pub (crate) fn get_next_position(&mut self) -> Option<$position> {
+            pub(crate) fn get_next_position(&mut self) -> Option<$position> {
                 if let Some(item) = self.by_entrophy.pop_first() {
                     self.by_pos.remove(&item.pos);
                     return Some(item.pos);
@@ -109,7 +108,7 @@ macro_rules! __impl_entrophy_queue {
                 None
             }
 
-            pub (crate) fn update_queue(&mut self, position: $position, entrophy: f32) {
+            pub(crate) fn update_queue(&mut self, position: $position, entrophy: f32) {
                 let item = $entrophy_item::new(position, entrophy);
                 if let Some(existing_entrophy) = self.by_pos.remove(&item.pos) {
                     self.by_entrophy
@@ -119,11 +118,11 @@ macro_rules! __impl_entrophy_queue {
                 self.by_entrophy.insert(item);
             }
 
-            pub (crate) fn len(&self) -> usize {
+            pub(crate) fn len(&self) -> usize {
                 self.by_entrophy.len()
             }
 
-            pub (crate) fn is_empty(&self) -> bool {
+            pub(crate) fn is_empty(&self) -> bool {
                 self.by_entrophy.is_empty()
             }
         }
@@ -141,7 +140,6 @@ macro_rules! __impl_position_queue {
         position: $position:ident,
         grid: $grid:ident,
     ) => {
-
         /// A queue that collapses tiles consecutively in a fixed direction, based solely on their position.
         pub struct $name {
             cmp_fun: fn(&$position, &$position) -> std::cmp::Ordering,
@@ -184,23 +182,21 @@ macro_rules! __impl_position_queue {
                     self.update_queue(*element);
                 }
             }
-    
+
             pub fn update_queue(&mut self, tile: $position) {
                 if !self.positions.contains(&tile) {
                     self.positions.push(tile);
                 }
                 self.changed = true;
             }
-    
+
             pub fn len(&self) -> usize {
                 self.positions.len()
             }
-    
+
             pub fn is_empty(&self) -> bool {
                 self.positions.is_empty()
             }
         }
-
-
     };
 }

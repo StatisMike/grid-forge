@@ -11,6 +11,7 @@ macro_rules! __impl_direction_table {
         use std::ops::IndexMut;
 
         /// Fast lookup table for the data indexable by the direction.
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[derive(Debug, Clone)]
         pub struct $direction_table_type<T> {
             inner: [T; $direction_count],
@@ -26,30 +27,24 @@ macro_rules! __impl_direction_table {
             }
 
             /// Immutable iterator over data in table.
-            /// 
+            ///
             /// See also: [`iter_mut`](Self::iter_mut) and [`into_iter`](Self::into_iter).
             pub fn iter(&self) -> impl Iterator<Item = ($direction_type, &T)> {
-                $direction_type::ALL
-                    .into_iter()
-                    .zip(self.inner.iter())
+                $direction_type::ALL.into_iter().zip(self.inner.iter())
             }
 
             /// Mutable iterator over data in table.
-            /// 
+            ///
             /// See also: [`iter`](Self::iter) and [`into_iter`](Self::into_iter).
             pub fn iter_mut(&mut self) -> impl Iterator<Item = ($direction_type, &mut T)> {
-                $direction_type::ALL
-                    .into_iter()
-                    .zip(self.inner.iter_mut())
+                $direction_type::ALL.into_iter().zip(self.inner.iter_mut())
             }
 
             /// Consuming iterator over data in table.
-            /// 
+            ///
             /// See also: [`iter`](Self::iter) and [`into_iter`](Self::into_iter).
             pub fn into_iter(self) -> impl Iterator<Item = ($direction_type, T)> {
-                $direction_type::ALL
-                    .into_iter()
-                    .zip(self.inner.into_iter())
+                $direction_type::ALL.into_iter().zip(self.inner.into_iter())
             }
         }
 

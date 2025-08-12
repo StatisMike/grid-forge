@@ -1,10 +1,26 @@
-use grid_forge::{id::{BasicTypedData, TypeIdMap}, image::{ops::{init_map_image_buffer, write_to_image_const_typed}, TilePixConst}, procgen_collapse::PositionQueue2D};
-use grid_forge_2d::procgen_collapse::pattern::{CollapsiblePatternGrid2D, Pattern2DAnalyzer, Pattern2DResolver};
+use std::fs::File;
+
 use grid_forge::prelude::*;
+use grid_forge::procgen_collapse::DebugSubscriber2D;
+use grid_forge::{
+    id::{BasicTypedData, TypeIdMap},
+    image::{
+        ops::{init_map_image_buffer, write_to_image_const_typed},
+        TilePixConst,
+    },
+    procgen_collapse::PositionQueue2D,
+};
+use grid_forge::procgen_collapse::pattern::{
+    CollapsiblePatternGrid2D, Pattern2DAnalyzer, Pattern2DResolver,
+};
 use image::Rgb;
 use rand_chacha::ChaChaRng;
 
-use crate::utils::{collapse::{try_n_times_2d, try_n_times_2d_overlap, ArgHelper, GifSubscriber}, image::{VisGridLoaderHelper, VisRotate}, RngHelper};
+use crate::utils::{
+    collapse::{try_n_times_2d_tile, try_n_times_2d_pattern, ArgHelper, GifSubscriber},
+    image::{VisGridLoaderHelper, VisRotate},
+    RngHelper,
+};
 
 #[path = "../../example_utils/mod.rs"]
 mod utils;
@@ -26,7 +42,6 @@ fn main() {
     let outputs_size = GridSize2D::new(30, 30);
 
     if !args.skip_entrophy() {
-
         // Create overlap analyzer.
         let mut analyzer = Pattern2DAnalyzer::<3, 3, BasicTypedData>::default();
 
@@ -42,12 +57,12 @@ fn main() {
             let file = std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "overlap_entrophy.gif"))
                 .unwrap();
 
-            let subscriber = GifSubscriber::new(file, &outputs_size, id_pixel_map.clone())
-                .with_rescale(3);
+            let subscriber =
+                GifSubscriber::new(file, &outputs_size, id_pixel_map.clone()).with_rescale(3);
 
             resolver = resolver.with_subscriber(Box::new(subscriber));
         } else if args.debug() {
-            let subsciber = DebugSubscriber::new(Some(
+            let subsciber = DebugSubscriber2D::new(Some(
                 File::create(format!("{}{}", OUTPUTS_DIR, "overlap_entrophy_debug.txt")).unwrap(),
             ));
             resolver = resolver.with_subscriber(Box::new(subsciber));
@@ -59,7 +74,6 @@ fn main() {
         let mut rng: ChaChaRng = RngHelper::init_str("overlap entrophy", 1)
             .with_pos(45138)
             .into();
-
 
         let to_collapse = CollapsiblePatternGrid2D::new_empty(
             outputs_size,
@@ -79,20 +93,17 @@ fn main() {
 
         let collapsed = after_collapse.retrieve_collapsed();
 
-
         // let collapsed = try_n_times_2d_overlap(200, || {
-            
+
         //     RngHelper::print_state(&rng);
         //     resolver.generate_entrophy(to_collapse.clone(), &mut rng, &outputs_size.get_all_possible_positions())
 
         // }).unwrap();
 
-
-
         // We will generate output image using the same `VisCollection`.
         let mut out_buffer = init_map_image_buffer(collapsed.grid().size(), (4, 4));
         write_to_image_const_typed(&mut out_buffer, collapsed.grid(), &id_pixel_map).unwrap();
-        
+
         out_buffer = image::imageops::resize(
             &out_buffer,
             outputs_size.x() * 4 * 3,
@@ -120,8 +131,8 @@ fn main() {
             let file = std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "overlap_position.gif"))
                 .unwrap();
 
-            let subscriber = GifSubscriber::new(file, &outputs_size, id_pixel_map.clone())
-                .with_rescale(3);
+            let subscriber =
+                GifSubscriber::new(file, &outputs_size, id_pixel_map.clone()).with_rescale(3);
 
             resolver = resolver.with_subscriber(Box::new(subscriber));
         }

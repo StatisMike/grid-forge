@@ -6,6 +6,7 @@ use super::size::GridSize2D;
 /// These are all the directions that are possible on the rectangular 2D grid.
 /// Diagonal directions are not taken into account.
 #[repr(u8)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Direction2D {
     Up = 0,

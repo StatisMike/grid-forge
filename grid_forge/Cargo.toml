@@ -39,11 +39,14 @@ image = [
 
 # Serde feature enables serialization/deserialization with serde crate.
 serde = [
-    "dep:serde"
-#    , "grid_forge_core/serde"
-#    , "grid_forge_2d?/serde"
-#    , "grid_forge_3d?/serde"
+    "dep:serde", 
+    "grid_forge_core/serde",
+    "grid_forge_2d?/serde",
+    "grid_forge_3d?/serde"
     ]
+
+# Utilities for benchmarks, tests and examples
+dev_utils = ["grid_forge_core/dev_utils"]
 
 [[example]]
 name = "2d_collapse_singular"

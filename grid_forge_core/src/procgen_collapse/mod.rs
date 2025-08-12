@@ -1,9 +1,9 @@
-pub mod option;
 pub mod data;
-pub mod queue;
-pub mod grid;
 pub mod error;
+pub mod grid;
+pub mod option;
 pub mod pattern;
+pub mod queue;
 pub mod tile;
 
 #[macro_export]
@@ -25,7 +25,7 @@ macro_rules! __impl_debug_subscriber {
                 Self { file }
             }
         }
-    }
+    };
 }
 
 #[macro_export]
@@ -37,10 +37,12 @@ macro_rules! __impl_collapse_history_subscriber {
     ) => {
         /// Event in the history of tile generation process, containing the position of the tile alongside its collapsed
         /// `tile_type_id` and `pattern_id` (if applicable).
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[derive(Debug, Clone)]
         pub struct $history_item {
             pub position: $position,
             pub tile_type_id: u64,
+            #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
             pub pattern_id: Option<u64>,
         }
 
@@ -58,5 +60,5 @@ macro_rules! __impl_collapse_history_subscriber {
                 &self.history
             }
         }
-    }
+    };
 }

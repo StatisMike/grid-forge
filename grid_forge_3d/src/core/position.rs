@@ -1,6 +1,7 @@
 use std::ops::{Add, AddAssign, Sub};
 
 /// Position of the tile in 3D rectangular grid.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone)]
 pub struct GridPosition3D {
     x: u32,

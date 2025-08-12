@@ -28,7 +28,7 @@ macro_rules! __impl_pattern_collection {
             by_tile_id: TypeIdMap<TypeIdSet>,
         }
 
-        impl<$(const $size_const: usize),*> Default for $name<$($size_const),*> { 
+        impl<$(const $size_const: usize),*> Default for $name<$($size_const),*> {
             fn default() -> Self {
                 Self {
                     inner: TypeIdMap::default(),
@@ -59,7 +59,7 @@ macro_rules! __impl_pattern_collection {
                     return false;
                 }
                 self.inner.insert(data.pattern_id(), data);
-                
+
                 match self.by_tile_id.entry(data.tile_type_id()) {
                     std::collections::hash_map::Entry::Occupied(mut e) => {
                         e.get_mut().insert(data.pattern_id());
@@ -215,7 +215,7 @@ macro_rules! __impl_pattern_collapsible_grid {
             pub(crate) option_data: $per_option_data,
             types: PhantomData<Tile>,
         }
-        
+
         impl<$(const $size_const: usize),*, Tile: TypedData> Clone for $name<$($size_const),*, Tile> {
             fn clone(&self) -> Self {
                 Self {
@@ -226,7 +226,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                 }
             }
         }
-        
+
         impl<$(const $size_const: usize),*, Tile: TypedData> $name<$($size_const),*, Tile>
         {
             pub fn new_empty(
@@ -237,7 +237,7 @@ macro_rules! __impl_pattern_collapsible_grid {
             ) -> Result<Self, $collapsible_grid_error> {
                 let mut option_data = $per_option_data::default();
                 option_data.populate(&frequencies.get_all_weights_cloned(), adjacencies.inner().clone());
-        
+
                 let pattern_ids: TypeIdSet =
                     TypeIdSet::from_iter(patterns.inner().values().map(|p| p.pattern_id()));
                 let option_ids: TypeIdSet = TypeIdSet::from_iter(option_data.option_map.keys().copied());
@@ -246,11 +246,11 @@ macro_rules! __impl_pattern_collapsible_grid {
                     .copied()
                     .collect::<Vec<_>>();
                 missing_ids.sort();
-        
+
                 if !missing_ids.is_empty() {
                     return Err($collapsible_grid_error::new_missing(missing_ids));
                 }
-        
+
                 Ok(Self {
                     pattern_grid: $grid::new(size),
                     patterns,
@@ -258,7 +258,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                     types: PhantomData,
                 })
             }
-        
+
             pub fn new_from_collapsed<R: Rng>(
                 rng: &mut R,
                 collapsed: &$collapsed_grid,
@@ -269,7 +269,7 @@ macro_rules! __impl_pattern_collapsible_grid {
 
                 let mut option_data = $per_option_data::default();
                 option_data.populate(&frequencies.get_all_weights_cloned(), adjacencies.inner().clone());
-        
+
                 let pattern_ids: TypeIdSet = TypeIdSet::from_iter(patterns.iter_tile_types().copied());
                 let option_ids: TypeIdSet = TypeIdSet::from_iter(option_data.option_map.keys().copied());
                 let mut missing_ids = pattern_ids
@@ -280,15 +280,15 @@ macro_rules! __impl_pattern_collapsible_grid {
                 if !missing_ids.is_empty() {
                     return Err($collapsible_grid_error::new_missing(missing_ids));
                 }
-        
+
                 let mut grid = $grid::new(*collapsed.grid.size());
-        
+
                 for tile in
                     Self::collapsed_into_collapsible_pattern(rng, collapsed, &patterns, &option_data)?
                 {
                     grid.insert(tile);
                 }
-        
+
                 Ok(Self {
                     pattern_grid: grid,
                     patterns,
@@ -299,12 +299,12 @@ macro_rules! __impl_pattern_collapsible_grid {
 
             pub fn retrieve_collapsed(&self) -> $collapsed_grid {
                 let mut out = $collapsed_grid::new(self.pattern_grid.size().clone());
-        
+
                 for tile in self.pattern_grid.tiles() {
                     if !tile.data().is_collapsed() {
                         continue;
                     }
-        
+
                     out.grid.insert_data(
                         &tile.grid_position(),
                         CollapsedTileData::new(
@@ -313,20 +313,20 @@ macro_rules! __impl_pattern_collapsible_grid {
                         ),
                     );
                 }
-        
+
                 out
             }
-        
+
             pub fn retrieve_ident<Builder: IdentTileBuilder<OutputTile>, OutputTile>(
                 &self,
                 builder: &Builder,
-            ) -> Result<$grid<OutputTile>, $collapsible_grid_error> 
+            ) -> Result<$grid<OutputTile>, $collapsible_grid_error>
             where
                 Builder: IdentTileBuilder<OutputTile>,
                 OutputTile: TypedData,
-            { 
+            {
                 let mut out = $grid::<OutputTile>::new(*self.pattern_grid.size());
-        
+
                 for tile in self.pattern_grid.tiles() {
                     if !tile.data().is_collapsed() {
                         continue;
@@ -345,16 +345,16 @@ macro_rules! __impl_pattern_collapsible_grid {
                         ),
                     );
                 }
-        
+
                 Ok(out)
             }
-        
+
             pub fn retrieve_ident_default<OutputTile>(&self) -> $grid<OutputTile>
             where
                 OutputTile: TypedData + IdDefault,
             {
                 let mut out = $grid::<OutputTile>::new(*self.pattern_grid.size());
-        
+
                 for tile in self.pattern_grid.tiles() {
                     if !tile.data().is_collapsed() {
                         continue;
@@ -373,7 +373,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                         ),
                     );
                 }
-        
+
                 out
             }
 
@@ -396,7 +396,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                     })
                     .collect()
             }
-        
+
             pub fn remove_uncollapsed(&mut self) {
                 for t in self.pattern_grid.iter_mut() {
                     if let Some(d) = t {
@@ -413,7 +413,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                 let mut cache = TypeIdMap::default();
                 let mut check_generated = HashSet::<$position>::default();
                 let check_provided = HashSet::<$position>::from_iter(to_collapse.iter().copied());
-    
+
                 for pos_to_collapse in to_collapse {
                     for neighbour_tile in self.pattern_grid.neighbors(pos_to_collapse).inner().iter().flatten() {
                         if !neighbour_tile.as_ref().is_collapsed()
@@ -451,7 +451,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                         if tile.as_ref().is_collapsed() {
                             continue;
                         }
-    
+
                         let enabled =
                             option_data.get_all_enabled_in_direction(collapsed_option, direction);
                         for possible_option in tile
@@ -531,7 +531,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                 true
             }
 
-        
+
             fn collapsed_into_collapsible_pattern<R: Rng>(
                 rng: &mut R,
                 collapsed: &$collapsed_grid,
@@ -541,7 +541,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                 let entrophy_uniform = EntrophyUniform::new();
                 let ways = &options.ways_to_be_option;
                 let mut out = Vec::new();
-        
+
                 for position in collapsed.grid.positions() {
                     let mut possible_patterns = Vec::new();
                     let tile_type_id = collapsed
@@ -562,7 +562,7 @@ macro_rules! __impl_pattern_collapsible_grid {
                                 }
                             }
                         }
-        
+
                         possible_patterns.push(
                             options
                                 .get_tile_offset(pattern.pattern_id())
@@ -574,16 +574,16 @@ macro_rules! __impl_pattern_collapsible_grid {
                     }
                     let mut current_ways = ways.clone();
                     current_ways.purge_others(&possible_patterns);
-        
+
                     let num_options = possible_patterns.len();
-        
+
                     let mut weights = OptionWeights::default();
                     for pattern in possible_patterns {
                         let w = options.get_weights(pattern);
                         weights.0 += w.0;
                         weights.1 += w.1;
                     }
-        
+
                     out.push(
                         $tile::new(
                             position,
@@ -596,15 +596,15 @@ macro_rules! __impl_pattern_collapsible_grid {
                         )
                     );
                 }
-        
+
                 Ok(out)
             }
-        
+
             fn retrieve_tile_type_id(&self, tile: &impl AsRef<$collapsible_data>) -> Option<u64> {
                 match tile.as_ref().collapsed_idx() {
                     Some(pattern_idx) => {
                         let pattern_id = self.option_data.get_tile_type_id(pattern_idx).unwrap();
-        
+
                         let pattern = self.patterns.get_pattern(pattern_id).unwrap();
                         Some(pattern.tile_type_id())
                     }
@@ -628,7 +628,7 @@ macro_rules! __impl_pattern_frequency_hints {
         /// Describes the frequency of occurence of each discovered pattern. Generated automatically while analyzing sample
         /// maps with [`Analyzer`], though afterwards frequencies could be tweaked manually.
         #[derive(Debug)]
-        pub struct $name<$(const $size_const: usize),*, Data: TypedData> 
+        pub struct $name<$(const $size_const: usize),*, Data: TypedData>
         {
             weights: BTreeMap<u64, u32>,
             data_type: PhantomData<Data>,
@@ -728,7 +728,7 @@ macro_rules! __impl_pattern_adjacency_rules {
         ///
         /// Two patterns are considered compatible in given direction if the overlapping tiles contained within them are identical.
         #[derive(Clone, Debug)]
-        pub struct $name<$(const $size_const: usize),*, Data: TypedData> 
+        pub struct $name<$(const $size_const: usize),*, Data: TypedData>
         {
             inner: $adjacency_table,
             data_type: PhantomData<Data>,
@@ -789,7 +789,7 @@ macro_rules! __impl_pattern_adjacency_rules {
 
 #[macro_export]
 macro_rules! __impl_pattern_analyzer {
-    ( 
+    (
         struct_name: $name:ident,
         pattern_grid: $pattern_grid:ident,
         collection: $collection:ident,
@@ -805,7 +805,7 @@ macro_rules! __impl_pattern_analyzer {
         /// It allows analyzing the [`GridMap2D`] of [`TypedData`], producing all elements necessary for
         /// creation of [`CollapsiblePatternGrid`](crate::gen::collapse::overlap::CollapsiblePatternGrid) for
         /// [`overlap::Resolver`](crate::gen::collapse::overlap::Resolver) to collapse into new map.
-        pub struct $name<$(const $size_const: usize),*, Data: TypedData> 
+        pub struct $name<$(const $size_const: usize),*, Data: TypedData>
         {
             collection: $collection<$($size_const),*>,
             frequency: $frequency_hints<$($size_const),*, Data>,
@@ -858,7 +858,6 @@ macro_rules! __impl_pattern_subscriber_trait {
         trait_name: $trait_name:ident,
         position: $position:ty,
     ) => {
-
         /// When applied to the struct allows injecting it into [`singular::Resolver`](Resolver) to react on each tile being collapsed.
         pub trait $trait_name: Any {
             /// Called when the generation process starts. No-op by default, should be overridden to clear the state of the subcscriber
@@ -875,7 +874,7 @@ macro_rules! __impl_pattern_subscriber_trait {
             /// To retrieve the concrete subscriber type from [`singular::Resolver`](Resolver).
             fn as_any(&self) -> &dyn Any;
         }
-    }
+    };
 }
 
 #[macro_export]
@@ -940,9 +939,9 @@ macro_rules! __impl_pattern_resolver {
                 grid.remove_uncollapsed();
 
                 let option_data = &grid.option_data;
-                let tiles = 
+                let tiles =
                     $collapsible_tile::new_from_frequency(positions, option_data);
-                
+
                 for tile in tiles {
                     queue.update_queue(tile.0, tile.1.calc_entrophy());
                     grid.pattern_grid.insert_data(&tile.0, tile.1);
@@ -1023,9 +1022,9 @@ macro_rules! __impl_pattern_resolver {
                 grid.remove_uncollapsed();
 
                 let option_data = &grid.option_data;
-                let tiles = 
+                let tiles =
                     $collapsible_tile::new_from_frequency(position, option_data);
-                
+
                 for tile in tiles {
                     queue.update_queue(tile.0);
                     grid.pattern_grid.insert_data(&tile.0, tile.1);
@@ -1109,7 +1108,7 @@ macro_rules! __impl_pattern_debug_subscriber {
                     println!("collapsed tile_type_id: {tile_type_id} on position: {position:?}; pattern_id: {pattern_id}");
                 }
             }
-        
+
             fn as_any(&self) -> &dyn std::any::Any {
                 self
             }
@@ -1144,5 +1143,5 @@ macro_rules! __impl_pattern_history_subscriber {
                 self
             }
         }
-    }
+    };
 }

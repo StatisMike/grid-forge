@@ -1,25 +1,27 @@
 use std::any::Any;
-use std::collections::{HashMap, HashSet, BTreeMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::io::Write;
 use std::marker::PhantomData;
 
 use rand::Rng;
 
-use grid_forge_core::id::{IdDefault, TypedData, IdentTileBuilder, TypeIdMap};
+use grid_forge_core::id::{IdDefault, IdentTileBuilder, TypeIdMap, TypedData};
 use grid_forge_core::procgen_collapse::data::CollapsedTileData;
 use grid_forge_core::procgen_collapse::error::CollapseErrorKind;
 
-use crate::procgen_collapse::{HistoryItem2D, HistorySubscriber2D, DebugSubscriber2D};
+use crate::procgen_collapse::{DebugSubscriber2D, HistoryItem2D, HistorySubscriber2D};
 use crate::{
-    core::{Direction2D, DirectionTable2D, Grid2D, GridPosition2D, GridSize2D, GridMap2D, TileContainer2D},
+    core::{
+        Direction2D, DirectionTable2D, Grid2D, GridMap2D, GridPosition2D, GridSize2D,
+        TileContainer2D,
+    },
     procgen_collapse::{
+        data::CollapsibleData2D,
         option::{AdjacencyTable2D, PerOptionData2D},
         queue::{EntrophyQueue2D, PositionQueue2D, PropagateItem2D, Propagator2D},
-        data::CollapsibleData2D,
         CollapseError2D, CollapsedGrid2D, CollapsibleGridError2D,
     },
 };
-
 
 grid_forge_core::__impl_collapsible_grid! {
     struct_name: CollapsibleTileGrid2D,
@@ -45,7 +47,7 @@ grid_forge_core::__impl_singular_adjacency_rules! {
 }
 
 grid_forge_core::__impl_singular_identity_analyzer! {
-    struct_name: SingularIdentityAnalyzer2D,
+    struct_name: TileIdentityAnalyzer2D,
     adjacency_rules: TileAdjacencyRules2D,
     grid: Grid2D,
     position: GridPosition2D,

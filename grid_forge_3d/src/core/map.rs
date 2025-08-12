@@ -1,9 +1,9 @@
 use super::*;
 
 #[cfg(feature = "2d")]
-use grid_forge_2d::core::{GridPosition2D, GridSize2D, Tile2D, GridMap2D, Grid2D as _};
+use grid_forge_2d::core::{Grid2D as _, GridMap2D, GridPosition2D, GridSize2D, Tile2D};
 
-use grid_forge_core::{procgen_collapse::grid, TileData};
+use grid_forge_core::TileData;
 
 grid_forge_core::__impl_grid_trait! {
     grid_map_trait: Grid3D,
@@ -37,6 +37,8 @@ grid_forge_core::__impl_grid_shared_trait! {
 
 grid_forge_core::__impl_grid! {
 
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[derive(Clone, Debug)]
     pub struct GridMap3D {}
 
     direction: Direction3D,
@@ -56,6 +58,9 @@ grid_forge_core::__impl_grid! {
 }
 
 grid_forge_core::__impl_grid_with_shared! {
+
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[derive(Clone, Debug)]
     pub struct GridMapShared3D {}
 
     direction: Direction3D,

@@ -96,7 +96,9 @@
 
 pub mod core;
 pub mod prelude {
-    pub use crate::core::*;
     pub use crate::core::Grid3D as _;
+    pub use crate::core::*;
 }
 
+#[cfg(feature = "procgen")]
+pub mod procgen_collapse;

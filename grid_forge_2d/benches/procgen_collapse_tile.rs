@@ -7,7 +7,7 @@ use grid_forge_2d::image::ops::load_from_image_const_typed_auto;
 use grid_forge_2d::image::TilePixConst;
 use grid_forge_2d::procgen_collapse::queue::PositionQueue2D;
 use grid_forge_2d::procgen_collapse::tile::{
-    CollapsibleTileGrid2D, FrequencyHints2D, TileBorderAnalyzer2D, SingularIdentityAnalyzer2D,
+    CollapsibleTileGrid2D, FrequencyHints2D, TileIdentityAnalyzer2D, TileBorderAnalyzer2D,
     TileResolver2D,
 };
 use grid_forge_core::id::{BasicTypedData, IdentTileDefaultBuilder, TypeIdMap};
@@ -29,7 +29,7 @@ fn analyze_adjacency_identity_10x10(c: &mut Criterion) {
 
     c.bench_function("analyze_adjacency_identity_10x10", |b| {
         b.iter(|| {
-            let mut analyzer = SingularIdentityAnalyzer2D::default();
+            let mut analyzer = TileIdentityAnalyzer2D::default();
             analyzer.analyze(&seas_grid);
         });
     });
@@ -96,7 +96,7 @@ fn gen_identity_position_10x10(c: &mut Criterion) {
     let builder = IdentTileDefaultBuilder::<BasicTypedData>::default();
     let mut id_pixel_map = TypeIdMap::<TilePixConst<4, 4, Rgb<u8>>>::default();
 
-    let mut analyzer = SingularIdentityAnalyzer2D::default();
+    let mut analyzer = TileIdentityAnalyzer2D::default();
     let mut frequency_hints = FrequencyHints2D::default();
 
     for path in &[MAP_10X10, MAP_20X20] {
@@ -137,7 +137,7 @@ fn gen_identity_entrophy_10x10(c: &mut Criterion) {
     let builder = IdentTileDefaultBuilder::<BasicTypedData>::default();
     let mut id_pixel_map = TypeIdMap::<TilePixConst<4, 4, Rgb<u8>>>::default();
 
-    let mut analyzer = SingularIdentityAnalyzer2D::default();
+    let mut analyzer = TileIdentityAnalyzer2D::default();
     let mut frequency_hints = FrequencyHints2D::default();
 
     for path in &[MAP_10X10, MAP_20X20] {

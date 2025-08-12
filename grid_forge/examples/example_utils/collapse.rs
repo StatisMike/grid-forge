@@ -1,6 +1,17 @@
 use std::fs::File;
 
-use grid_forge::{core::{GridPosition2D, GridSize2D}, id::{TypeIdMap, TypedData}, image::{ops::{init_map_image_buffer, write_tile}, TilePixConst}, procgen_collapse::{singular::{CollapsibleTileGrid2D, TileSubscriber2D}, CollapseError2D, CollapsedGrid2D}};
+use grid_forge::{
+    core::{GridPosition2D, GridSize2D},
+    id::{TypeIdMap, TypedData},
+    image::{
+        ops::{init_map_image_buffer, write_tile},
+        TilePixConst,
+    },
+    procgen_collapse::{
+        tile::{CollapsibleTileGrid2D, TileSubscriber2D},
+        CollapseError2D, CollapsedGrid2D,
+    },
+};
 use grid_forge_2d::procgen_collapse::pattern::{CollapsiblePatternGrid2D, Pattern2DSubscriber};
 use image::{ImageBuffer, Rgb};
 
@@ -55,7 +66,7 @@ impl ArgHelper {
     }
 }
 
-pub fn try_n_times_2d<Tile: TypedData>(
+pub fn try_n_times_2d_tile<Tile: TypedData>(
     n: u32,
     mut f: impl FnMut() -> Result<CollapsibleTileGrid2D<Tile>, CollapseError2D>,
 ) -> Result<CollapsedGrid2D, CollapseError2D> {
@@ -73,7 +84,7 @@ pub fn try_n_times_2d<Tile: TypedData>(
     }
 }
 
-pub fn try_n_times_2d_overlap<const SIZE_X: usize, const SIZE_Y: usize, Tile: TypedData>(
+pub fn try_n_times_2d_pattern<const SIZE_X: usize, const SIZE_Y: usize, Tile: TypedData>(
     n: u32,
     mut f: impl FnMut() -> Result<CollapsiblePatternGrid2D<SIZE_X, SIZE_Y, Tile>, CollapseError2D>,
 ) -> Result<CollapsedGrid2D, CollapseError2D> {
@@ -102,7 +113,11 @@ pub struct GifSubscriber {
 }
 
 impl GifSubscriber {
-    pub fn new(file: File, size: &GridSize2D, collection: TypeIdMap<TilePixConst<4, 4, Rgb<u8>>>) -> Self {
+    pub fn new(
+        file: File,
+        size: &GridSize2D,
+        collection: TypeIdMap<TilePixConst<4, 4, Rgb<u8>>>,
+    ) -> Self {
         let frame = init_map_image_buffer(size, (4, 4));
         let frame_size = (frame.width() as u16, frame.height() as u16);
 
@@ -168,7 +183,12 @@ impl TileSubscriber2D for GifSubscriber {
             self.begin()
         }
 
-        write_tile(&mut self.frame, *position, self.collection.get(&tile_type_id).unwrap()).unwrap();
+        write_tile(
+            &mut self.frame,
+            *position,
+            self.collection.get(&tile_type_id).unwrap(),
+        )
+        .unwrap();
         self.write_frame();
     }
 
@@ -183,7 +203,12 @@ impl Pattern2DSubscriber for GifSubscriber {
             self.begin()
         }
 
-        write_tile(&mut self.frame, *position, self.collection.get(&tile_type_id).unwrap()).unwrap();
+        write_tile(
+            &mut self.frame,
+            *position,
+            self.collection.get(&tile_type_id).unwrap(),
+        )
+        .unwrap();
         self.write_frame();
     }
 

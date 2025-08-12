@@ -3,6 +3,7 @@ use super::GridPosition3D;
 #[cfg(feature = "2d")]
 use grid_forge_2d::core::GridSize2D;
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy)]
 pub struct GridSize3D {
     x: u32,

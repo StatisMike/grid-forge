@@ -31,6 +31,7 @@ grid_forge_core::__impl_grid_shared_trait! {
 
 grid_forge_core::__impl_grid! {
 
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[derive(Clone, Debug)]
     pub struct GridMap2D {}
 
@@ -51,6 +52,7 @@ grid_forge_core::__impl_grid! {
 }
 
 grid_forge_core::__impl_grid_with_shared! {
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
     #[derive(Clone, Debug)]
     pub struct GridMapShared2D {}
 

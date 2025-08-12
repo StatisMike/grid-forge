@@ -30,9 +30,9 @@ macro_rules! __impl_grid_trait {
         macro_rules! __tile_mut_type { () => { $tile_mut_type<'a, Data> }; }
 
         /// Trait for basic grid map operations.
-        /// 
+        ///
         /// Encapsulates all operations on the grid map and data stored in its tiles.
-        /// 
+        ///
         /// For documentation of each method, refer to the documentation on the concrete type implementing this trait.
         pub trait $grid_map_trait<$($($generic_param)*)?>
         $(where $($where_clause)*)?
@@ -157,12 +157,12 @@ macro_rules! __impl_grid_shared_trait {
         macro_rules! __tile_mut_shared_type { () => { $tile_mut_shared<'a, Data, Shared> }; }
 
         /// Trait for grid map operations with shared data.
-        /// 
+        ///
         /// Encapsulates all operations on the grid map containing some [`SharedData`](crate::id::SharedData).
-        /// 
+        ///
         /// For documentation of each method, refer to the documentation on the concrete type implementing this trait.
         pub trait $grid_shared_trait<$($($generic_param)*)?, Shared> : $grid_map_trait<$($($generic_param)*)?>
-        where 
+        where
             $($($where_clause)*)?,
             Shared: grid_forge_core::id::SharedData,
         {
@@ -189,7 +189,6 @@ macro_rules! __impl_grid_shared_trait {
         }
     }
 }
-
 
 #[doc(hidden)]
 #[macro_export]
@@ -1027,7 +1026,7 @@ macro_rules! __impl_grid_tests {
         dimension_count: $dimension_count:literal,
     ) => {
 
-        use grid_forge_core::TileData;        
+        use grid_forge_core::TileData;
 
         /// Test data.
         ///
@@ -1279,13 +1278,13 @@ macro_rules! __impl_shared_grid_tests {
         tile_container_trait: $tile_container_trait:ident,
         dimension_count: $dimension_count:literal,
     ) => {
+        use crate::core::$tile_container_trait as _;
         use grid_forge_core::id::BasicTypedData;
         use grid_forge_core::id::IdDefault;
         use grid_forge_core::id::SharedData;
         use grid_forge_core::id::TypeIdMap;
         use grid_forge_core::id::TypedData;
         use grid_forge_core::id::WithSharedData;
-        use crate::core::$tile_container_trait as _;
         use grid_forge_core::TileData;
 
         /// Test data.

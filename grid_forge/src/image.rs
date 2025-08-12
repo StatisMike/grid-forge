@@ -6,6 +6,4 @@ pub use grid_forge_core::image::PixelWithDefault;
 
 #[cfg(feature = "2d")]
 #[doc(inline)]
-pub use grid_forge_2d::image::{
-    TilePixConst, TilePixVar, TilePixels, WithPixels, ops, error,
-};
+pub use grid_forge_2d::image::{error, ops, TilePixConst, TilePixVar, TilePixels, WithPixels};

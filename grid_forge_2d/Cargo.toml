@@ -14,7 +14,9 @@ bench = false
 default = ['image', 'procgen']
 image = ["grid_forge_core/image","dep:image"]
 procgen = ["grid_forge_core/procgen", "dep:rand"]
+serde = ["dep:serde"]
 
+# Utilities for benchmarks, tests and examples
 dev_utils = ["grid_forge_core/dev_utils"]
 
 [dependencies]
@@ -22,6 +24,7 @@ grid_forge_core = { path = "../grid_forge_core" }
 image = { workspace = true, optional = true }
 rand = { workspace = true, optional = true }
 nohash-hasher = { workspace = true }
+serde = { workspace = true, optional = true }
 
 [dev-dependencies]
 criterion = { workspace = true }

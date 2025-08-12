@@ -1,4 +1,3 @@
-use grid_forge::{id::TypedData, procgen_collapse::{singular::CollapsibleTileGrid2D, CollapseError2D}};
 use rand::SeedableRng as _;
 use rand_chacha::ChaChaRng;
 

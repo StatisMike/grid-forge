@@ -21,7 +21,7 @@ impl DefaultTile {
     }
 }
 
-fn create_default_3d_grid(size: GridSize3D) -> GridMap3D<DefaultTile> { 
+fn create_default_3d_grid(size: GridSize3D) -> GridMap3D<DefaultTile> {
     let mut grid = GridMap3D::new(size);
     let possible_positions = size.get_all_possible_positions();
     let positions_with_offsets = possible_positions
@@ -64,8 +64,7 @@ pub fn grid_access_10000_mut(c: &mut Criterion) {
     c.bench_function("grid_access_10000_mut", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let mut tile: TileMut3D<DefaultTile> =
-                    grid.tile_at_mut(pos).unwrap().into();
+                let mut tile: TileMut3D<DefaultTile> = grid.tile_at_mut(pos).unwrap().into();
                 tile.data().offset = 1;
             }
         })
@@ -81,8 +80,7 @@ pub fn grid_access_10000_mut_track(c: &mut Criterion) {
     c.bench_function("grid_access_10000_mut_track", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let mut tile: TileMut3D<DefaultTile> =
-                    grid.tile_at_mut(pos).unwrap().into();
+                let mut tile: TileMut3D<DefaultTile> = grid.tile_at_mut(pos).unwrap().into();
                 tile.data().offset = 1;
             }
         })
@@ -130,7 +128,6 @@ pub fn grid_access_10000_neighbour(c: &mut Criterion) {
         })
     });
 
-
     c.bench_function("grid_access_10000_neighbour_lower", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
@@ -164,8 +161,6 @@ pub fn grid_access_10000_all_neighbours(c: &mut Criterion) {
         })
     });
 }
-
-
 
 criterion_group!(
     name = grid_10000;

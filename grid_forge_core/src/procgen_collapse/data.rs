@@ -1,5 +1,9 @@
-use crate::{id::{IdDefault, TypedData}, TileData};
+use crate::{
+    id::{IdDefault, TypedData},
+    TileData,
+};
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Debug)]
 pub struct CollapsedTileData {
     tile_type_id: u64,
@@ -34,7 +38,6 @@ macro_rules! __impl_collapsible_tile_data {
         ways_to_be_option: $ways_to_be_option:ident,
         per_option_data: $per_option_data:ident,
     ) => {
-
         #[derive(Clone, Debug)]
         pub struct $name {
             collapsed_option: Option<usize>,
@@ -47,7 +50,7 @@ macro_rules! __impl_collapsible_tile_data {
         impl TileData for $name {}
 
         impl $name {
-            pub (crate) fn new_collapsed_data(collapsed_idx: usize) -> Self {
+            pub(crate) fn new_collapsed_data(collapsed_idx: usize) -> Self {
                 Self {
                     collapsed_option: Some(collapsed_idx),
                     num_options: 0,
@@ -79,7 +82,8 @@ macro_rules! __impl_collapsible_tile_data {
             ) -> Vec<($position, Self)> {
                 let rng_range = Self::entrophy_uniform();
 
-                let weight = options_data.ways_to_be_option
+                let weight = options_data
+                    .ways_to_be_option
                     .iter_possible()
                     .map(|option_idx| options_data.get_weights(option_idx))
                     .fold(OptionWeights::default(), |sum, new| sum + new);
@@ -104,7 +108,8 @@ macro_rules! __impl_collapsible_tile_data {
                 positions: &[$position],
                 options_data: &$per_option_data,
             ) -> Vec<($position, Self)> {
-                let weight = options_data.ways_to_be_option
+                let weight = options_data
+                    .ways_to_be_option
                     .iter_possible()
                     .map(|option_idx| options_data.get_weights(option_idx))
                     .fold(OptionWeights::default(), |sum, new| sum + new);
@@ -122,7 +127,7 @@ macro_rules! __impl_collapsible_tile_data {
                             ),
                         )
                     })
-                .collect::<Vec<_>>()
+                    .collect::<Vec<_>>()
             }
 
             pub fn num_possible_options(&self) -> usize {

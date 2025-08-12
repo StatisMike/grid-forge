@@ -1,5 +1,6 @@
 use std::ops::{Add, AddAssign, Sub};
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone)]
 pub struct GridPosition2D {
     x: u32,

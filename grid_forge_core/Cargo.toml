@@ -1,6 +1,6 @@
 [package]
 name = "grid_forge_core"
-description = "Dimensionality - independent functionality of grid_forge"
+description = "Dimensionality-independent functionality of grid_forge"
 version.workspace = true  # Inherit from workspace
 edition.workspace = true  # Inherit from workspace
 authors.workspace = true
@@ -14,6 +14,7 @@ bench = false
 image = ["dep:image"]
 procgen = ["dep:rand"]
 godot = ["dep:godot"]
+serde = ["dep:serde"]
 
 # Utilities for benchmarks, tests and examples
 dev_utils = ["dep:rand_chacha"]
@@ -26,32 +27,9 @@ grid = { version = "0.13.*" }
 godot = { version = "^0.2.4", optional = true }
 nohash-hasher = { workspace = true }
 rand_chacha = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
 
 [dev-dependencies]
 criterion = { workspace = true }
 image = { workspace = true, features = ["png"]}
 gif = { version ="^0.13.*" }
-
-#[[bench]]
-#name = "grid_bench"
-#harness = false
-
-#[[bench]]
-#name = "vis"
-#harness = false
-
-#[[bench]]
-#name = "gen_collapse_singular"
-#harness = false
-
-#[[example]]
-#name = "gen_collapse_singular"
-#path = "examples/collapse/gen_collapse_singular.rs"
-
-#[[example]]
-#name = "gen_walker"
-#path = "examples/gen_walker.rs"
-
-#[[example]]
-#name = "vis"
-#path = "examples/vis.rs"

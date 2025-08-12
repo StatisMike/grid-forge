@@ -1,4 +1,8 @@
-use grid_forge::{core::GridMap2D, id::{BasicTypedData, IdentTileDefaultBuilder, TypeIdMap}, image::{ops::load_from_image_const_typed_auto, TilePixConst}};
+use grid_forge::{
+    core::GridMap2D,
+    id::{BasicTypedData, IdentTileDefaultBuilder, TypeIdMap},
+    image::{ops::load_from_image_const_typed_auto, TilePixConst},
+};
 use image::{ImageBuffer, Rgb};
 
 pub enum VisRotate {

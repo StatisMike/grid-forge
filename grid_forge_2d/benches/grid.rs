@@ -17,7 +17,10 @@ impl DefaultTile {
     const TYPE_COUNT: u64 = 10;
 
     pub fn new(offset: usize) -> Self {
-        Self { offset, tile_id: tile_id_from_offset(offset) }
+        Self {
+            offset,
+            tile_id: tile_id_from_offset(offset),
+        }
     }
 
     pub fn offset_matches(&self, offset: usize) -> bool {
@@ -32,11 +35,11 @@ impl TypedData for DefaultTile {
 }
 
 pub struct DefaultTileShared {
+    #[allow(dead_code)]
     foo: bool,
 }
 
 impl DefaultTileShared {
-    #[allow(dead_code)]
     pub fn new(tile_type_id: u64) -> Self {
         Self {
             foo: tile_type_id % 2 == 0,
@@ -93,8 +96,7 @@ pub fn grid_access_100x100_mut(c: &mut Criterion) {
     c.bench_function("grid_access_100x100_mut", |b| {
         b.iter(|| {
             for pos in possible_positions.iter() {
-                let mut tile: TileMut2D<DefaultTile> =
-                    grid.tile_at_mut(pos).unwrap().into();
+                let mut tile: TileMut2D<DefaultTile> = grid.tile_at_mut(pos).unwrap().into();
                 tile.data().offset = 1;
             }
         })

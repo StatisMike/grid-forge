@@ -7,8 +7,8 @@ use grid_forge::id::TypeIdMap;
 use grid_forge::image::ops::{init_map_image_buffer, write_to_image_const_typed};
 use grid_forge::image::TilePixConst;
 use grid_forge::prelude::*;
+use grid_forge::procgen_collapse::{tile::*, DebugSubscriber2D};
 use grid_forge::procgen_collapse::PositionQueue2D;
-use grid_forge::procgen_collapse::singular::*; 
 
 use image::Rgb;
 use rand_chacha::ChaChaRng;
@@ -19,7 +19,7 @@ use utils::RngHelper;
 
 use crate::utils::collapse::GifSubscriber;
 
-const MAP_10X10: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../assets/samples/seas.png"); 
+const MAP_10X10: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../assets/samples/seas.png");
 const MAP_20X20: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../assets/samples/roads.png");
 
 const OUTPUTS_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/examples/2d/procgen/output/");
@@ -32,11 +32,13 @@ fn main() {
     let mut id_pixel_map = TypeIdMap::<TilePixConst<4, 4, Rgb<u8>>>::default();
 
     // Load two sample maps with 90 deegrees rotation to increase variety of rules.
-    let maps = VisGridLoaderHelper::new(&mut id_pixel_map)
-        .load_w_rotate(&[MAP_10X10, MAP_20X20], &[VisRotate::None, VisRotate::R90, VisRotate::R180]);
+    let maps = VisGridLoaderHelper::new(&mut id_pixel_map).load_w_rotate(
+        &[MAP_10X10, MAP_20X20],
+        &[VisRotate::None, VisRotate::R90, VisRotate::R180],
+    );
 
     // Create Identity (for `identity_entrophy`) and Border (for `border_position`) analyzers and FrequencyRules.
-    let mut identity_analyzer = SingularIdentityAnalyzer2D::default();
+    let mut identity_analyzer = TileIdentityAnalyzer2D::default();
     let mut border_analyzer = TileBorderAnalyzer2D::default();
     let mut frequency_hints = FrequencyHints2D::default();
 
@@ -63,12 +65,11 @@ fn main() {
                     std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "identity_entrophy.gif"))
                         .unwrap();
                 let subscriber =
-                    GifSubscriber::new(file, &outputs_size, id_pixel_map.clone())
-                        .with_rescale(3);
+                    GifSubscriber::new(file, &outputs_size, id_pixel_map.clone()).with_rescale(3);
 
                 resolver = resolver.with_subscriber(Box::new(subscriber));
             } else if args.debug() {
-                let subsciber = DebugSubscriber::new(Some(
+                let subsciber = DebugSubscriber2D::new(Some(
                     File::create(format!("{}{}", OUTPUTS_DIR, "identity_entrophy_debug.txt"))
                         .unwrap(),
                 ));
@@ -126,8 +127,8 @@ fn main() {
         if args.gif() {
             let file =
                 std::fs::File::create(format!("{}{}", OUTPUTS_DIR, "border_position.gif")).unwrap();
-            let subscriber = GifSubscriber::new(file, &outputs_size, id_pixel_map.clone())
-                .with_rescale(3);
+            let subscriber =
+                GifSubscriber::new(file, &outputs_size, id_pixel_map.clone()).with_rescale(3);
 
             resolver = resolver.with_subscriber(Box::new(subscriber));
         } else if args.debug() {

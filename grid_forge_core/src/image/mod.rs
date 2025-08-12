@@ -4,10 +4,6 @@ use std::hash::Hash;
 
 use image::{Luma, LumaA, Pixel, Rgb, Rgba};
 
-// pub mod grid;
-// pub mod tile;
-// pub mod io;
-
 /// Trait for retrieving default value for pixels.
 ///
 /// Implemented for common pixel types.

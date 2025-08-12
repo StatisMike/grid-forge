@@ -1,10 +1,10 @@
-use super::{TypeIdSet, TypeIdMap};
+use super::{TypeIdMap, TypeIdSet};
 
 /// Marker trait for data shared between tiles of the same type.
 ///
 /// With tiles implementing [`TypedData`](crate::id::TypedData) trait, you can use this trait
 /// to store data shared between tiles of the same type. With this implemented, you can use
-/// the [`TypedData`](crate::id::TypedData) to store a _'state'_ of the tile, and the shared data 
+/// the [`TypedData`](crate::id::TypedData) to store a _'state'_ of the tile, and the shared data
 /// to store the immutable information about the tile, shared between all tiles of the same type.
 pub trait SharedData {}
 
@@ -15,6 +15,7 @@ pub trait WithSharedData<Shared: SharedData> {
 }
 
 #[doc(hidden)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug)]
 pub struct SharedDataContainer<Shared: SharedData> {
     inner: TypeIdMap<Shared>,

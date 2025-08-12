@@ -68,6 +68,7 @@ pub trait IdDefault: TypedData {
 }
 
 /// Basic tile struct that implements [`TypedData`], holding only the `tile_type_id`.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Debug)]
 pub struct BasicTypedData(pub u64);
 

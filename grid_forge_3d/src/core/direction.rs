@@ -3,6 +3,7 @@ use grid_forge_core::__impl_direction_table;
 use super::{GridPosition3D, GridSize3D};
 
 #[repr(u8)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Direction3D {
     Up = 0,

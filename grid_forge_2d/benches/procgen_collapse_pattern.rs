@@ -5,10 +5,12 @@ use criterion::*;
 use grid_forge_2d::core::GridSize2D;
 use grid_forge_2d::image::ops::load_from_image_const_typed_auto;
 use grid_forge_2d::image::TilePixConst;
-use grid_forge_2d::procgen_collapse::pattern::{CollapsiblePatternGrid2D, Pattern2D, Pattern2DAnalyzer, Pattern2DResolver};
+use grid_forge_2d::procgen_collapse::pattern::{
+    CollapsiblePatternGrid2D, Pattern2D, Pattern2DAnalyzer, Pattern2DResolver,
+};
 use grid_forge_2d::procgen_collapse::queue::PositionQueue2D;
 use grid_forge_2d::procgen_collapse::tile::{
-    CollapsibleTileGrid2D, FrequencyHints2D, TileBorderAnalyzer2D, SingularIdentityAnalyzer2D,
+    CollapsibleTileGrid2D, FrequencyHints2D, TileIdentityAnalyzer2D, TileBorderAnalyzer2D,
     TileResolver2D,
 };
 use grid_forge_core::id::{BasicTypedData, IdentTileDefaultBuilder, TypeIdMap};
@@ -60,8 +62,7 @@ fn analyze_build_collapsible_pattern_grid(c: &mut Criterion) {
     let map_img = image::open(MAP).unwrap().into_rgb8();
     let mut id_pixel_map = TypeIdMap::<TilePixConst<4, 4, Rgb<u8>>>::default();
 
-    let map_grid =
-        load_from_image_const_typed_auto(&map_img, &builder, &mut id_pixel_map).unwrap();
+    let map_grid = load_from_image_const_typed_auto(&map_img, &builder, &mut id_pixel_map).unwrap();
 
     let mut analyzer = Pattern2DAnalyzer::<3, 3, BasicTypedData>::default();
     analyzer.analyze(&map_grid);
@@ -71,14 +72,13 @@ fn analyze_build_collapsible_pattern_grid(c: &mut Criterion) {
 
     c.bench_function("analyze_build_collapsible_pattern_grid", |b| {
         b.iter(|| {
-            let _grid =
-                CollapsiblePatternGrid2D::new_empty(
-                    GridSize2D::new(10, 10), 
-                    analyzer.get_collection().clone(), 
-                    analyzer.get_frequency(), 
-                    analyzer.get_adjacency()
-                )
-                .unwrap();
+            let _grid = CollapsiblePatternGrid2D::new_empty(
+                GridSize2D::new(10, 10),
+                analyzer.get_collection().clone(),
+                analyzer.get_frequency(),
+                analyzer.get_adjacency(),
+            )
+            .unwrap();
         });
     });
 }
@@ -184,7 +184,12 @@ fn generate_10x10_pattern_2x2_position(c: &mut Criterion) {
             let mut rng: ChaChaRng = RngHelper::init_str("overlap_position", 0).into();
 
             let mut resolver = Pattern2DResolver::default();
-            let res = resolver.generate_position(grid.clone(), &mut rng, &positions, PositionQueue2D::default());
+            let res = resolver.generate_position(
+                grid.clone(),
+                &mut rng,
+                &positions,
+                PositionQueue2D::default(),
+            );
 
             assert!(res.is_ok());
         });
@@ -217,12 +222,17 @@ fn generate_10x10_pattern_3x3_position(c: &mut Criterion) {
 
     c.bench_function("generate_10x10_pattern_3x3_position", |b| {
         b.iter(|| {
-                let mut rng: ChaChaRng = RngHelper::init_str("overlap_position", 0)
+            let mut rng: ChaChaRng = RngHelper::init_str("overlap_position", 0)
                 .with_pos(3767)
                 .into();
 
             let mut resolver = Pattern2DResolver::default();
-            let res = resolver.generate_position(grid.clone(), &mut rng, &positions, PositionQueue2D::default());
+            let res = resolver.generate_position(
+                grid.clone(),
+                &mut rng,
+                &positions,
+                PositionQueue2D::default(),
+            );
 
             assert!(res.is_ok());
         });
@@ -521,6 +531,6 @@ criterion_group!(
 //     // gen_border_entrophy_10x10
 // }
 criterion_main!(
-    analyze, 
+    analyze,
     // generate
 );

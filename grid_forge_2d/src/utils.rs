@@ -1,4 +1,5 @@
-macro_rules! asset_path {
+#[macro_export]
+macro_rules! gf_asset_path {
     ($path:expr) => {
         Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
@@ -7,5 +8,3 @@ macro_rules! asset_path {
             .join($path)
     };
 }
-
-pub(crate) use asset_path;

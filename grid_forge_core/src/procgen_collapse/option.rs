@@ -2,6 +2,7 @@ use std::ops::{Add, Sub, SubAssign};
 
 use crate::utils::OrderedFloat;
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, Default)]
 pub struct OptionWeights(pub u32, pub f32);
 
@@ -39,7 +40,6 @@ impl Sub for OptionWeights {
 }
 
 impl SubAssign for OptionWeights {
-
     #[inline]
     fn sub_assign(&mut self, rhs: Self) {
         self.0 -= rhs.0;
@@ -49,7 +49,7 @@ impl SubAssign for OptionWeights {
 }
 
 #[macro_export]
-// #[doc(hidden)]
+#[doc(hidden)]
 macro_rules! __impl_collapse_adjacencies {
     (
         struct_name: $struct_name:ident,
@@ -57,6 +57,7 @@ macro_rules! __impl_collapse_adjacencies {
         direction_table: $direction_table:ident,
         direction_count: $direction_count:literal,
     ) => {
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[derive(Clone, Debug)]
         pub struct $struct_name {
             inner: $direction_table<TypeIdSet>,
@@ -65,7 +66,7 @@ macro_rules! __impl_collapse_adjacencies {
         impl $struct_name {
             pub fn new() -> Self {
                 Self {
-                    inner: $direction_table::new(core::array::from_fn(|_| TypeIdSet::default())),   
+                    inner: $direction_table::new(core::array::from_fn(|_| TypeIdSet::default())),
                 }
             }
 
@@ -75,9 +76,9 @@ macro_rules! __impl_collapse_adjacencies {
             }
         }
 
-        impl std::ops::Index<$direction> for $struct_name { 
+        impl std::ops::Index<$direction> for $struct_name {
             type Output = TypeIdSet;
-        
+
             #[inline]
             fn index(&self, index: $direction) -> &Self::Output {
                 &self.inner[index]
@@ -93,13 +94,14 @@ macro_rules! __impl_collapse_adjacencies {
 }
 
 #[macro_export]
-// #[doc(hidden)]
+#[doc(hidden)]
 macro_rules! __impl_adjacency_table {
     (
         struct_name: $struct_name:ident,
         adjacencies: $adjacencies:ident,
         direction: $direction:ident,
     ) => {
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         #[derive(Clone, Debug)]
         pub struct $struct_name {
             inner: TypeIdMap<$adjacencies>,
@@ -120,11 +122,14 @@ macro_rules! __impl_adjacency_table {
         }
 
         impl $struct_name {
-            pub(crate) fn insert_adjacency(&mut self, el_id: u64, direction: $direction, adj_id: u64) {
+            pub(crate) fn insert_adjacency(
+                &mut self,
+                el_id: u64,
+                direction: $direction,
+                adj_id: u64,
+            ) {
                 match self.inner.entry(el_id) {
-                    Entry::Occupied(mut e) => {
-                        e.get_mut().add_at_dir(direction, adj_id)
-                    }
+                    Entry::Occupied(mut e) => e.get_mut().add_at_dir(direction, adj_id),
                     Entry::Vacant(e) => {
                         let mut adjacencies = $adjacencies::new();
                         adjacencies.add_at_dir(direction, adj_id);
@@ -144,11 +149,11 @@ macro_rules! __impl_adjacency_table {
                     .iter()
             }
         }
-    }
+    };
 }
 
 #[macro_export]
-// #[doc(hidden)]
+#[doc(hidden)]
 macro_rules! __impl_ways_to_be_option {
     (
         struct_name: $struct_name:ident,
@@ -162,12 +167,12 @@ macro_rules! __impl_ways_to_be_option {
         }
 
         impl $struct_name {
-            const EMPTY_DIR_TABLE: $direction_table<usize> = $direction_table::new([0; $direction_count]);
+            const EMPTY_DIR_TABLE: $direction_table<usize> =
+                $direction_table::new([0; $direction_count]);
 
             /// Decrements number of ways to become option from given direction. If reaches
             /// 0, returns `true` and given option should be removed.
-            pub (crate) fn decrement(&mut self, option_idx: usize, direction: $direction) -> bool {
-
+            pub(crate) fn decrement(&mut self, option_idx: usize, direction: $direction) -> bool {
                 if self.inner[option_idx][direction] == 0 {
                     return false;
                 }
@@ -179,7 +184,7 @@ macro_rules! __impl_ways_to_be_option {
                 true
             }
 
-            pub (crate) fn iter_possible(&self) -> impl Iterator<Item = usize> + '_ {
+            pub(crate) fn iter_possible(&self) -> impl Iterator<Item = usize> + '_ {
                 self.inner.iter().enumerate().filter_map(|(idx, t)| {
                     if t[$direction::from_idx(0).unwrap()] == 0 {
                         None
@@ -189,7 +194,7 @@ macro_rules! __impl_ways_to_be_option {
                 })
             }
 
-            pub (crate) fn purge_others(&mut self, options: &[usize]) {
+            pub(crate) fn purge_others(&mut self, options: &[usize]) {
                 for (option_id, ways) in self.inner.iter_mut().enumerate() {
                     if options.contains(&option_id) {
                         continue;
@@ -198,7 +203,7 @@ macro_rules! __impl_ways_to_be_option {
                 }
             }
 
-            pub (crate) fn purge_option(&mut self, option_idx: usize) -> bool {
+            pub(crate) fn purge_option(&mut self, option_idx: usize) -> bool {
                 if self.inner[option_idx]
                     .inner()
                     .as_ref()
@@ -211,13 +216,13 @@ macro_rules! __impl_ways_to_be_option {
                 true
             }
 
-            pub (crate)fn insert_from_slice(&mut self, slice: &[usize]) {
+            pub(crate) fn insert_from_slice(&mut self, slice: &[usize]) {
                 let mut inner = [0; $direction_count];
                 inner.copy_from_slice(slice);
                 self.inner.push($direction_table::new(inner));
             }
 
-            pub (crate)fn insert_empty(&mut self) {
+            pub(crate) fn insert_empty(&mut self) {
                 self.inner.push(Self::EMPTY_DIR_TABLE);
             }
         }
@@ -225,7 +230,7 @@ macro_rules! __impl_ways_to_be_option {
 }
 
 #[macro_export]
-// #[doc(hidden)]
+#[doc(hidden)]
 macro_rules! __impl_per_option_data {
     (
         struct_name: $struct_name:ident,
@@ -234,21 +239,19 @@ macro_rules! __impl_per_option_data {
         adjacency_table: $adjacency_table:ident,
         ways_to_be_option: $ways:ident,
     ) => {
-
         #[derive(Debug, Clone, Default)]
         pub struct $struct_name {
-            pub (crate) option_map: TypeIdMap<usize>,
+            pub(crate) option_map: TypeIdMap<usize>,
             option_map_rev: TypeIdMap<u64>,
             adjacencies: Vec<$direction_table<Vec<usize>>>,
-            pub (crate) ways_to_be_option: $ways,
+            pub(crate) ways_to_be_option: $ways,
             opt_with_weight: Vec<OptionWeights>,
-            pub (crate) option_count: usize,
-            pub (crate) possible_options_count: usize,
+            pub(crate) option_count: usize,
+            pub(crate) possible_options_count: usize,
         }
 
         impl $struct_name {
-
-            pub (crate) fn populate(
+            pub(crate) fn populate(
                 &mut self,
                 options_with_weights: &BTreeMap<u64, u32>,
                 adjacencies: $adjacency_table,
@@ -258,20 +261,21 @@ macro_rules! __impl_per_option_data {
                     self.opt_with_weight
                         .push(OptionWeights::new(*option_weight));
                 }
-    
-                self.option_count = self.option_map.len(); 
+
+                self.option_count = self.option_map.len();
                 self.possible_options_count = self.option_count;
-    
+
                 for trans_id in 0..self.option_count {
                     let original_id = self.get_tile_type_id(trans_id).unwrap();
-                    let translated_table = self.translate_adjacency_table(original_id, &adjacencies);
+                    let translated_table =
+                        self.translate_adjacency_table(original_id, &adjacencies);
                     self.adjacencies.push(translated_table);
                 }
-    
+
                 self.generate_ways_to_be_option();
             }
 
-            pub (crate) fn generate_ways_to_be_option(&mut self) {
+            pub(crate) fn generate_ways_to_be_option(&mut self) {
                 for adj in self.adjacencies.iter() {
                     let table = $direction::ALL
                         .iter()
@@ -286,11 +290,15 @@ macro_rules! __impl_per_option_data {
                 }
             }
 
-            pub (crate) fn get_all_enabled_in_direction(&self, option_id: usize, direction: $direction) -> &[usize] {
+            pub(crate) fn get_all_enabled_in_direction(
+                &self,
+                option_id: usize,
+                direction: $direction,
+            ) -> &[usize] {
                 &self.adjacencies[option_id][direction]
             }
 
-            pub (crate) fn translate_adjacency_table(
+            pub(crate) fn translate_adjacency_table(
                 &self,
                 original_id: u64,
                 adjacencies: &$adjacency_table,
@@ -298,21 +306,24 @@ macro_rules! __impl_per_option_data {
                 let mut translated_table = $direction_table::default();
                 if let Some(adj) = adjacencies.inner.get(&original_id) {
                     for dir in $direction::ALL.iter() {
-                        translated_table[*dir] = adj[*dir].iter().map(|&id| self.get_tile_offset(id).expect("cannot get mapped id")).collect();
+                        translated_table[*dir] = adj[*dir]
+                            .iter()
+                            .map(|&id| self.get_tile_offset(id).expect("cannot get mapped id"))
+                            .collect();
                     }
                 }
                 translated_table
             }
 
-            pub (crate) fn get_weights(&self, option_idx: usize) -> OptionWeights {
+            pub(crate) fn get_weights(&self, option_idx: usize) -> OptionWeights {
                 self.opt_with_weight[option_idx]
             }
-    
-            pub (crate) fn iter_weights(&self) -> impl Iterator<Item = (usize, &OptionWeights)> {
+
+            pub(crate) fn iter_weights(&self) -> impl Iterator<Item = (usize, &OptionWeights)> {
                 self.opt_with_weight.iter().enumerate()
             }
 
-            pub (crate) fn add_tile_offset(&mut self, option_id: u64, offset: usize) {
+            pub(crate) fn add_tile_offset(&mut self, option_id: u64, offset: usize) {
                 self.option_map.insert(option_id, offset);
                 self.option_map_rev.insert(offset as u64, option_id);
             }
@@ -321,10 +332,9 @@ macro_rules! __impl_per_option_data {
                 self.option_map.get(&option_id).copied()
             }
 
-            pub (crate) fn get_tile_type_id(&self, offset: usize) -> Option<u64> {
+            pub(crate) fn get_tile_type_id(&self, offset: usize) -> Option<u64> {
                 self.option_map_rev.get(&(offset as u64)).copied()
             }
         }
     };
 }
-

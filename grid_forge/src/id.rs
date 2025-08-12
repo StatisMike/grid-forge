@@ -1,9 +1,18 @@
 #[doc(inline)]
 pub use grid_forge_core::id::{
     // Basic things
-    BasicTypedData, IdDefault, TypedData, TypeIdSet, TypeIdMap,
-    // Shared data
-    SharedData, WithSharedData,
+    BasicTypedData,
+    IdDefault,
     // Builders
-    IdentTileBuilder, IdentTileDefaultBuilder, IdentTileFunBuilder, IdentTileCloneBuilder, TileBuilderError,
+    IdentTileBuilder,
+    IdentTileCloneBuilder,
+    IdentTileDefaultBuilder,
+    IdentTileFunBuilder,
+    // Shared data
+    SharedData,
+    TileBuilderError,
+    TypeIdMap,
+    TypeIdSet,
+    TypedData,
+    WithSharedData,
 };
